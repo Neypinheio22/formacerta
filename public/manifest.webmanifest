@@ -1,0 +1,11 @@
+{
+  "name": "FormaCerta",
+  "short_name": "FormaCerta",
+  "description": "Correção de postura com IA. Treine certo. Evolua sempre.",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#020B16",
+  "theme_color": "#020B16",
+  "lang": "pt-BR",
+  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}
