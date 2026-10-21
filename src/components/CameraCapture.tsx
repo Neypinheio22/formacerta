@@ -4,6 +4,7 @@ import { bodyVisible } from '../pose/analysis'
 import { detectPose } from '../pose/detector'
 import { drawSkeleton } from '../pose/draw'
 import type { Point, ViewId } from '../pose/types'
+import { speak } from '../voz'
 
 export type Capture = { image: string; width: number; height: number; landmarks: Point[] | null }
 
@@ -14,17 +15,6 @@ type Props = {
 }
 
 const LARGURA_MAX = 960
-
-function speak(texto: string) {
-  try {
-    const u = new SpeechSynthesisUtterance(texto)
-    u.lang = 'pt-BR'
-    speechSynthesis.cancel()
-    speechSynthesis.speak(u)
-  } catch {
-    /* navegador sem voz */
-  }
-}
 
 /** Reduz a foto e detecta o corpo nela. A foto guardada nunca é espelhada. */
 function captureFrom(detector: PoseLandmarker, source: HTMLVideoElement | HTMLImageElement, w: number, h: number): Capture {

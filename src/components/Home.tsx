@@ -5,6 +5,7 @@ type Props = {
   history: Assessment[]
   onStart: () => void
   onOpen: (a: Assessment) => void
+  onEstudio: () => void
 }
 
 const EM_BREVE = [
@@ -13,7 +14,7 @@ const EM_BREVE = [
   { titulo: 'Caminhada de 6 minutos', texto: 'Distância, tempo, frequência cardíaca e esforço.' },
 ]
 
-export function Home({ history, onStart, onOpen }: Props) {
+export function Home({ history, onStart, onOpen, onEstudio }: Props) {
   return (
     <div className="tela">
       <header className="marca">
@@ -29,6 +30,15 @@ export function Home({ history, onStart, onOpen }: Props) {
         <p className="dica">4 fotos rápidas: frente, costas e as duas laterais. A análise acontece no seu celular, e as fotos não saem dele.</p>
         <button className="botao grande" onClick={onStart}>
           Começar avaliação
+        </button>
+      </section>
+
+      <section className="cartao destaque">
+        <span className="etiqueta">Para o personal</span>
+        <h2>Modo estúdio</h2>
+        <p className="dica-sec">Grave o exercício certo com 2 ou 3 celulares ao mesmo tempo (frente, lateral e costas) e use como referência para os clientes.</p>
+        <button className="botao-sec" onClick={onEstudio}>
+          Abrir modo estúdio
         </button>
       </section>
 
