@@ -15,6 +15,16 @@ Primeira versão web (feita para o celular). Depois o mesmo código vira app par
 - dá uma nota de 0 a 100 e monta um plano de exercícios de correção;
 - guarda o histórico no aparelho.
 
+**Exercício por vídeo (em movimento):** a avaliação de postura acima usa fotos paradas porque mede a postura em pé. Exercício é diferente: o erro aparece no meio do movimento. Aqui o app lê o vídeo **quadro a quadro**:
+
+- câmera ao vivo (conta as repetições em voz alta e fala a correção logo depois de cada uma) ou vídeo enviado da galeria (lido a 15 quadros por segundo, pulando de quadro em quadro, sem perder nenhum mesmo em celular lento);
+- em cada quadro mede o ângulo principal (joelho no agachamento, cotovelo na flexão) e as medidas de técnica;
+- separa as repetições e as fases (descida, fundo, subida) pelo ângulo principal: a rep começa quando sai da posição inicial e só conta se passar do mínimo, assim balanço não conta;
+- avalia cada repetição: profundidade, tronco caindo, joelhos para dentro, peso para um lado, quadril caindo na flexão e ritmo da descida;
+- mostra o vídeo com o esqueleto, um gráfico do ângulo ao longo do tempo com cada repetição marcada, o resumo da série e exercícios para melhorar a técnica.
+
+Exercícios: agachamento de lado, agachamento de frente (usa os pontos em 3D do MediaPipe, porque de frente a dobra do joelho quase não aparece na imagem plana) e flexão de braço de lado. Para incluir outro, basta descrever o exercício em `src/movimento/exercicios.ts`.
+
 **Modo estúdio (para o personal):** grava o exercício de referência com 2 ou 3 celulares ao mesmo tempo (frente, lateral e costas).
 
 - um celular é o **controle**: abre o estúdio e mostra um código de 6 dígitos (ou manda o link pelo WhatsApp); ele também pode filmar;
@@ -42,7 +52,7 @@ A câmera só funciona em `localhost` ou em endereço `https`.
 npm test
 ```
 
-As regras de análise ficam em `src/pose/analysis.ts` e os limites (em graus) de "Atenção" e "Corrigir" podem ser ajustados com o personal.
+As regras de análise ficam em `src/pose/analysis.ts` (postura) e `src/movimento/exercicios.ts` (exercícios), e os limites (em graus) de "Atenção" e "Corrigir" podem ser ajustados com o personal.
 
 ## Publicação
 

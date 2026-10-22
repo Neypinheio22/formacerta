@@ -745,3 +745,86 @@ h3 {
   color: var(--vermelho);
   align-self: center;
 }
+
+/* Exercício por vídeo */
+.contador-reps {
+  position: absolute;
+  left: 14px;
+  bottom: 12px;
+  font-size: 3.4rem;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--verde);
+  text-shadow: 0 0 18px rgba(0, 0, 0, 0.85);
+}
+
+.contador-reps small {
+  font-size: 1.4rem;
+  color: var(--texto);
+}
+
+.retorno-rep {
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: 14px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.barra {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--borda);
+  overflow: hidden;
+}
+
+.barra span {
+  display: block;
+  height: 100%;
+  background: var(--verde);
+  transition: width 0.2s;
+}
+
+.grafico {
+  width: 100%;
+  height: auto;
+  margin-top: 12px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.timer.sem-margem {
+  margin: 0;
+  justify-content: center;
+}
+
+.reps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.reps > li > button {
+  width: 100%;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+  background: transparent;
+  border: 1px solid var(--borda);
+  border-radius: 12px;
+  color: var(--texto);
+  padding: 10px 12px;
+}
+
+.reps > li > button.ativo {
+  border-color: var(--verde);
+}
+
+.reps .achados {
+  padding: 10px 4px 4px;
+}

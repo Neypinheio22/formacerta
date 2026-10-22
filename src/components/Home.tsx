@@ -6,6 +6,7 @@ type Props = {
   onStart: () => void
   onOpen: (a: Assessment) => void
   onEstudio: () => void
+  onExercicio: () => void
 }
 
 const EM_BREVE = [
@@ -14,7 +15,7 @@ const EM_BREVE = [
   { titulo: 'Caminhada de 6 minutos', texto: 'Distância, tempo, frequência cardíaca e esforço.' },
 ]
 
-export function Home({ history, onStart, onOpen, onEstudio }: Props) {
+export function Home({ history, onStart, onOpen, onEstudio, onExercicio }: Props) {
   return (
     <div className="tela">
       <header className="marca">
@@ -27,9 +28,20 @@ export function Home({ history, onStart, onOpen, onEstudio }: Props) {
       <section className="cartao destaque">
         <span className="etiqueta">Correção de postura com IA</span>
         <h1>Avaliação de postura</h1>
-        <p className="dica">4 fotos rápidas: frente, costas e as duas laterais. A análise acontece no seu celular, e as fotos não saem dele.</p>
+        <p className="dica">4 fotos rápidas, paradas: frente, costas e as duas laterais. É a avaliação da postura em pé. A análise acontece no seu celular, e as fotos não saem dele.</p>
         <button className="botao grande" onClick={onStart}>
           Começar avaliação
+        </button>
+      </section>
+
+      <section className="cartao destaque">
+        <span className="etiqueta">Novo · análise em vídeo</span>
+        <h2>Exercício em movimento</h2>
+        <p className="dica-sec">
+          Grave ou envie um vídeo do agachamento ou da flexão. O app lê o movimento quadro a quadro, conta as repetições e mostra o que corrigir em cada uma.
+        </p>
+        <button className="botao" onClick={onExercicio}>
+          Analisar exercício
         </button>
       </section>
 
