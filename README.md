@@ -15,6 +15,16 @@ Primeira versão web (feita para o celular). Depois o mesmo código vira app par
 - dá uma nota de 0 a 100 e monta um plano de exercícios de correção;
 - guarda o histórico no aparelho.
 
+**Modo estúdio (para o personal):** grava o exercício de referência com 2 ou 3 celulares ao mesmo tempo (frente, lateral e costas).
+
+- um celular é o **controle**: abre o estúdio e mostra um código de 6 dígitos (ou manda o link pelo WhatsApp); ele também pode filmar;
+- os outros entram como **câmera** com o código e escolhem o ângulo; mostram o esqueleto para ajudar a enquadrar;
+- o controle acerta o relógio de todos e manda começar no mesmo instante, depois de uma contagem de 3 segundos com voz;
+- ao parar, cada câmera envia o vídeo direto para o controle (WebRTC, de celular para celular; o servidor gratuito do PeerJS só apresenta um ao outro);
+- o controle mostra os ângulos lado a lado, sincronizados, com câmera lenta e esqueleto, e salva como **exercício de referência** no aparelho (IndexedDB), com opção de baixar os vídeos.
+
+Para testar sem internet, use `?local=1` no endereço: cada aba do navegador vira um celular.
+
 **Em breve:** análise da corrida, teste de mobilidade, caminhada de 6 minutos, painel do personal com relatórios e chamada com personal de plantão.
 
 ## Rodar no computador
