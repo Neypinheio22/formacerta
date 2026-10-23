@@ -36,9 +36,9 @@ Exercícios: agachamento de lado, agachamento de frente (usa os pontos em 3D do 
 
 As regras ficam em `src/corrida/analise.ts` e os músculos e exercícios em `src/corrida/recomendacoes.ts`; os limites são valores de referência e podem ser ajustados com o personal.
 
-**Banco de Wells:** flexibilidade da cadeia posterior. O personal digita as 3 tentativas e o app classifica sozinho pela tabela canadense/ACSM (sexo e idade, pés na marca de 26 cm; outra marca é convertida), mostra quanto falta para a próxima classe, guarda o histórico por avaliado com gráfico de evolução e tem campo de observações e diagnóstico. Foto lateral opcional mede o ângulo tronco-coxa e avisa se o joelho dobrou.
+**Banco de Wells Digital:** flexibilidade da cadeia posterior. O personal digita as 3 tentativas e o app classifica sozinho pela tabela canadense/ACSM (sexo e idade, pés na marca de 26 cm; outra marca é convertida), mostra quanto falta para a próxima classe, guarda o histórico por avaliado com gráfico de evolução e tem campo de observações e diagnóstico. Foto lateral opcional mede o ângulo tronco-coxa e avisa se o joelho dobrou.
 
-**Teste de Adams:** foto da pessoa com o tronco inclinado para frente. O app recorta o contorno das costas, compara o ponto mais alto de cada lado e estima o ângulo de rotação do tronco (como o escoliômetro), com o lado da gibosidade. Cortes: menos de 5° normal, 5° a 6,9° reavaliar, 7° ou mais encaminhar ao médico. Aceita também a leitura de um escoliômetro físico, guarda histórico e observações.
+**Teste de Adams Digital:** foto da pessoa com o tronco inclinado para frente. O app recorta o contorno das costas, compara o ponto mais alto de cada lado e estima o ângulo de rotação do tronco (como o escoliômetro), com o lado da gibosidade. Cortes: menos de 5° normal, 5° a 6,9° reavaliar, 7° ou mais encaminhar ao médico. Aceita também a leitura de um escoliômetro físico, guarda histórico e observações.
 
 Os dois testes trazem desenhos de como fazer, para o aluno usar como referência. São **triagem, não diagnóstico médico**, e o app diz isso nas telas.
 
