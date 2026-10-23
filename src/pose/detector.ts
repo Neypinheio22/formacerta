@@ -5,14 +5,15 @@ const asset = (path: string) => new URL(`${import.meta.env.BASE_URL}${path}`, wi
 
 let pending: Promise<PoseLandmarker> | null = null
 let pendingMascara: Promise<PoseLandmarker> | null = null
+let pendingFoto: Promise<PoseLandmarker> | null = null
 let pendingSegmentador: Promise<ImageSegmenter> | null = null
 let lastTimestamp = 0
 
-async function criar(mascara: boolean): Promise<PoseLandmarker> {
+async function criar(modo: 'VIDEO' | 'IMAGE', mascara = false): Promise<PoseLandmarker> {
   const vision = await FilesetResolver.forVisionTasks(asset('mediapipe/wasm'))
   const options = (delegate: 'GPU' | 'CPU') => ({
     baseOptions: { modelAssetPath: asset('models/pose_landmarker_full.task'), delegate },
-    runningMode: mascara ? ('IMAGE' as const) : ('VIDEO' as const),
+    runningMode: modo,
     numPoses: 1,
     outputSegmentationMasks: mascara,
   })
@@ -28,16 +29,34 @@ async function criar(mascara: boolean): Promise<PoseLandmarker> {
  * cliente não saem do celular para fazer a análise.
  */
 export function loadDetector(): Promise<PoseLandmarker> {
-  pending ??= criar(false)
+  pending ??= criar('VIDEO')
   pending.catch(() => (pending = null))
   return pending
 }
 
 /** Detector que também recorta o contorno do corpo (usado no Teste de Adams). */
 export function loadDetectorComMascara(): Promise<PoseLandmarker> {
-  pendingMascara ??= criar(true)
+  pendingMascara ??= criar('IMAGE', true)
   pendingMascara.catch(() => (pendingMascara = null))
   return pendingMascara
+}
+
+/**
+ * Detector para fotos paradas (galeria ou foto tirada). O modo VIDEO segue a
+ * pessoa de um quadro para o outro e, numa foto nova, procura no lugar onde a
+ * pessoa estava no vídeo: a primeira tentativa falha. Por isso fotos usam o
+ * modo IMAGE, que procura a pessoa na imagem inteira toda vez.
+ */
+export function loadDetectorFoto(): Promise<PoseLandmarker> {
+  pendingFoto ??= criar('IMAGE')
+  pendingFoto.catch(() => (pendingFoto = null))
+  return pendingFoto
+}
+
+/** Detecta os pontos do corpo numa foto parada. */
+export async function detectarFoto(source: HTMLCanvasElement | HTMLImageElement): Promise<Point[] | null> {
+  const detector = await loadDetectorFoto()
+  return detector.detect(source).landmarks[0] ?? null
 }
 
 export type Mascara = { dados: Float32Array; largura: number; altura: number }
