@@ -12,7 +12,7 @@ const MAX_QUADROS = 1200
 const r3 = (v: number) => Math.round(v * 1000) / 1000
 
 /** Guarda só o necessário de cada ponto, para o resultado ficar leve. */
-const enxugar = (lm: Point[]): Point[] => lm.map((p) => ({ x: r3(p.x), y: r3(p.y), visibility: r3(p.visibility ?? 1) }))
+export const enxugar = (lm: Point[]): Point[] => lm.map((p) => ({ x: r3(p.x), y: r3(p.y), visibility: r3(p.visibility ?? 1) }))
 
 /** Detecta o corpo e tira as medidas do exercício num quadro. */
 export function analisarQuadro(detector: PoseLandmarker, ex: Exercicio, fonte: HTMLVideoElement, t: number): Quadro {
@@ -35,7 +35,7 @@ function esperar(video: HTMLVideoElement, evento: string, limite = 4000) {
   })
 }
 
-async function irPara(video: HTMLVideoElement, t: number) {
+export async function irPara(video: HTMLVideoElement, t: number) {
   const pronto = esperar(video, 'seeked')
   video.currentTime = t
   await pronto

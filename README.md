@@ -25,6 +25,16 @@ Primeira versão web (feita para o celular). Depois o mesmo código vira app par
 
 Exercícios: agachamento de lado, agachamento de frente (usa os pontos em 3D do MediaPipe, porque de frente a dobra do joelho quase não aparece na imagem plana) e flexão de braço de lado. Para incluir outro, basta descrever o exercício em `src/movimento/exercicios.ts`.
 
+**Avaliação da corrida (esteira ou rua):** o cliente grava (ou envia da galeria) 10 a 20 segundos correndo, um vídeo de lado e outro de trás. Câmera lenta (120 ou 240 qps) deixa a pisada mais precisa; o app desconta a câmera lenta no cálculo do tempo. O vídeo é lido quadro a quadro (30 por segundo de vídeo) e os passos são encontrados pelo sobe e desce da pelve, que desce uma vez em cada apoio.
+
+- **De lado:** cadência (passos por minuto), pisada (calcanhar, meio do pé ou antepé), pé à frente do corpo (overstriding, pela inclinação da canela no contato), joelho no contato, inclinação do tronco e sobe e desce do corpo (em cm, usando a altura da pessoa).
+- **De trás:** joelho para dentro (ângulo do joelho no plano frontal, no meio do apoio), queda da pelve e pés cruzando a linha do meio, separados por perna.
+- Cada ponto a corrigir mostra os músculos a alongar e a fortalecer (com o lado, quando é de um lado só), exercícios e um botão para ver o momento no vídeo.
+- Pisar de calcanhar não é marcado como erro sozinho, só junto com o pé muito à frente do corpo.
+- É **triagem, não diagnóstico**: o aviso aparece no resultado.
+
+As regras ficam em `src/corrida/analise.ts` e os músculos e exercícios em `src/corrida/recomendacoes.ts`; os limites são valores de referência e podem ser ajustados com o personal.
+
 **Modo estúdio (para o personal):** grava o exercício de referência com 2 ou 3 celulares ao mesmo tempo (frente, lateral e costas).
 
 - um celular é o **controle**: abre o estúdio e mostra um código de 6 dígitos (ou manda o link pelo WhatsApp); ele também pode filmar;
@@ -35,7 +45,7 @@ Exercícios: agachamento de lado, agachamento de frente (usa os pontos em 3D do 
 
 Para testar sem internet, use `?local=1` no endereço: cada aba do navegador vira um celular.
 
-**Em breve:** análise da corrida, teste de mobilidade, caminhada de 6 minutos, painel do personal com relatórios e chamada com personal de plantão.
+**Em breve:** teste de mobilidade, caminhada de 6 minutos, painel do personal com relatórios e chamada com personal de plantão.
 
 ## Rodar no computador
 

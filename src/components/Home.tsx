@@ -7,15 +7,15 @@ type Props = {
   onOpen: (a: Assessment) => void
   onEstudio: () => void
   onExercicio: () => void
+  onCorrida: () => void
 }
 
 const EM_BREVE = [
-  { titulo: 'Análise da corrida', texto: 'Grave 10 a 20 segundos correndo, de lado e de frente.' },
   { titulo: 'Teste de mobilidade', texto: 'Agachamento, tornozelo, elevação dos braços e equilíbrio.' },
   { titulo: 'Caminhada de 6 minutos', texto: 'Distância, tempo, frequência cardíaca e esforço.' },
 ]
 
-export function Home({ history, onStart, onOpen, onEstudio, onExercicio }: Props) {
+export function Home({ history, onStart, onOpen, onEstudio, onExercicio, onCorrida }: Props) {
   return (
     <div className="tela">
       <header className="marca">
@@ -42,6 +42,15 @@ export function Home({ history, onStart, onOpen, onEstudio, onExercicio }: Props
         </p>
         <button className="botao" onClick={onExercicio}>
           Analisar exercício
+        </button>
+      </section>
+
+      <section className="cartao destaque">
+        <span className="etiqueta">Novo · esteira ou rua</span>
+        <h2>Avaliação da corrida</h2>
+        <p className="dica-sec">Grave 10 a 20 segundos correndo, de lado e de trás. O app mede cadência, pisada, passada, joelhos, pelve e tronco, e indica músculos e exercícios.</p>
+        <button className="botao" onClick={onCorrida}>
+          Avaliar corrida
         </button>
       </section>
 

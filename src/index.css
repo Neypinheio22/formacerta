@@ -828,3 +828,65 @@ h3 {
 .reps .achados {
   padding: 10px 4px 4px;
 }
+
+/* Avaliação da corrida */
+.aviso-triagem {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(251, 141, 26, 0.45);
+  background: rgba(251, 141, 26, 0.08);
+  color: var(--texto-sec);
+  font-size: 0.82rem;
+}
+
+.aviso-triagem strong {
+  color: var(--laranja);
+}
+
+.musculos {
+  margin-top: 8px;
+  font-size: 0.82rem;
+}
+
+.musculos p {
+  margin: 0 0 4px;
+}
+
+.rotulo-musculo {
+  display: inline-block;
+  margin-right: 4px;
+  padding: 0 8px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  background: rgba(159, 179, 194, 0.15);
+  color: var(--texto-sec);
+}
+
+.rotulo-musculo.forte {
+  background: rgba(54, 242, 148, 0.15);
+  color: var(--verde);
+}
+
+.achados .exercicios {
+  margin-top: 8px;
+  gap: 6px;
+  font-size: 0.82rem;
+}
+
+.ver-video {
+  margin-top: 8px;
+  background: none;
+  border: 1px solid var(--borda);
+  border-radius: 999px;
+  color: var(--verde);
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 4px 12px;
+}
+
+label.botao,
+label.botao-sec {
+  cursor: pointer;
+}
