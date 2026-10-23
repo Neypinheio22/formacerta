@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { analisarCorrida } from '../../corrida/analise'
 import { lerCorrida } from '../../corrida/leitura'
+import { liberarVideo } from '../../movimento/video'
 import type { ConfigCorrida, ResultadoCorrida } from '../../corrida/tipos'
 import { loadDetector } from '../../pose/detector'
 import { desenharCorredor, useUrlDoArquivo } from './desenho'
@@ -14,9 +15,18 @@ export function CorridaArquivo({ config, arquivo, onCancel, onDone }: Props) {
   const overlayRef = useRef<HTMLCanvasElement>(null)
   const [progresso, setProgresso] = useState(0)
   const [erro, setErro] = useState<string | null>(null)
+  const [iniciado, setIniciado] = useState(false)
+
+  // Já carrega o modelo enquanto a pessoa não toca em começar.
+  useEffect(() => void loadDetector().catch(() => {}), [])
+
+  function comecar() {
+    if (videoRef.current) liberarVideo(videoRef.current)
+    setIniciado(true)
+  }
 
   useEffect(() => {
-    if (!url) return
+    if (!url || !iniciado) return
     let cancelado = false
     ;(async () => {
       try {
@@ -46,7 +56,7 @@ export function CorridaArquivo({ config, arquivo, onCancel, onDone }: Props) {
     return () => {
       cancelado = true
     }
-  }, [url, config, arquivo, onDone])
+  }, [url, iniciado, config, arquivo, onDone])
 
   return (
     <div className="tela">
@@ -67,6 +77,11 @@ export function CorridaArquivo({ config, arquivo, onCancel, onDone }: Props) {
           <div className="camera-frame">
             <video ref={videoRef} src={url ?? undefined} playsInline muted preload="auto" />
             <canvas ref={overlayRef} />
+            {!iniciado && (
+              <button className="botao grande comecar-analise" onClick={comecar}>
+                Começar análise
+              </button>
+            )}
           </div>
           <div className="barra">
             <span style={{ width: `${Math.round(progresso * 100)}%` }} />
