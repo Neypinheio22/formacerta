@@ -70,11 +70,11 @@ export function Home({ history, onStart, onOpen, onEstudio, onExercicio, onCorri
         <h2>Flexibilidade e coluna</h2>
         <div className="opcoes">
           <button className="opcao" onClick={onWells}>
-            Banco de Wells
+            Banco de Wells Digital
             <span>Flexibilidade da cadeia posterior, com classificação automática e evolução.</span>
           </button>
           <button className="opcao" onClick={onAdams}>
-            Teste de Adams
+            Teste de Adams Digital
             <span>Flexão do tronco para achar gibosidade, rotação vertebral e assimetria nas costas.</span>
           </button>
         </div>

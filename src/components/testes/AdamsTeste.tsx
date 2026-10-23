@@ -138,7 +138,7 @@ function NovoAdams({ nomes, onSalvo }: { nomes: string[]; onSalvo: (r: RegistroA
     <>
       <section className="cartao destaque">
         <span className="etiqueta">Triagem de escoliose</span>
-        <h1>Teste de Adams</h1>
+        <h1>Teste de Adams Digital</h1>
         <p className="dica-sec">
           A pessoa fica em pé, pés juntos, e inclina o tronco para frente até as costas ficarem quase na horizontal, com os braços soltos e as palmas unidas. O
           app compara a altura dos dois lados das costas para achar gibosidade e rotação vertebral.
@@ -220,7 +220,7 @@ function NovoAdams({ nomes, onSalvo }: { nomes: string[]; onSalvo: (r: RegistroA
         Salvar no histórico
       </button>
       <AvisoTriagem>
-        O Teste de Adams aponta sinais de assimetria nas costas. Só o médico, com exame de imagem, confirma escoliose.
+        O Teste de Adams Digital aponta sinais de assimetria nas costas. Só o médico, com exame de imagem, confirma escoliose.
       </AvisoTriagem>
     </>
   )
@@ -283,7 +283,7 @@ function Historico({ lista, onAbrir }: { lista: RegistroAdams[]; onAbrir: (id: s
   const grupos = useMemo(() => avaliados(lista).map((n) => doAvaliado(lista, n)), [lista])
   return (
     <>
-      <h1>Histórico do Teste de Adams</h1>
+      <h1>Histórico do Teste de Adams Digital</h1>
       {grupos.map((g) => (
         <section className="cartao" key={g[0].avaliado}>
           <h2>{g[0].avaliado}</h2>
@@ -316,7 +316,7 @@ function Detalhe(props: { registro: RegistroAdams; doMesmo: RegistroAdams[]; onA
     <>
       <h1>{r.avaliado}</h1>
       <p className="dica-sec">
-        Teste de Adams · {dataCurta(r.date)} · celular {r.vista === 'costas' ? 'atrás' : 'na frente'}
+        Teste de Adams Digital · {dataCurta(r.date)} · celular {r.vista === 'costas' ? 'atrás' : 'na frente'}
         {r.atr !== null ? ` · foto: ${numero(r.atr)}°` : ''}
         {r.escoliometro !== null ? ` · escoliômetro: ${numero(r.escoliometro)}°` : ''}
       </p>
@@ -375,7 +375,7 @@ function Detalhe(props: { registro: RegistroAdams; doMesmo: RegistroAdams[]; onA
       >
         Apagar teste
       </button>
-      <AvisoTriagem>O Teste de Adams aponta sinais de assimetria nas costas. Só o médico, com exame de imagem, confirma escoliose.</AvisoTriagem>
+      <AvisoTriagem>O Teste de Adams Digital aponta sinais de assimetria nas costas. Só o médico, com exame de imagem, confirma escoliose.</AvisoTriagem>
     </>
   )
 }

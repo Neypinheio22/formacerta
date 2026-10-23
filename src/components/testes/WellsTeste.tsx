@@ -108,7 +108,7 @@ function NovoWells({ nomes, onSalvo }: { nomes: string[]; onSalvo: (r: RegistroW
     <>
       <section className="cartao destaque">
         <span className="etiqueta">Flexibilidade da cadeia posterior</span>
-        <h1>Banco de Wells</h1>
+        <h1>Banco de Wells Digital</h1>
         <p className="dica-sec">
           Sentado, pés descalços apoiados no banco e joelhos esticados. Com uma mão sobre a outra, deslize o mais longe possível e segure 2 segundos. Faça 3
           tentativas: vale a melhor.
@@ -270,7 +270,7 @@ function Historico({ lista, onAbrir }: { lista: RegistroWells[]; onAbrir: (id: s
   const grupos = useMemo(() => avaliados(lista).map((n) => doAvaliado(lista, n)), [lista])
   return (
     <>
-      <h1>Histórico do Banco de Wells</h1>
+      <h1>Histórico do Banco de Wells Digital</h1>
       {grupos.length === 0 && <p className="dica-sec">Nenhum teste salvo ainda.</p>}
       {grupos.map((g) => (
         <section className="cartao" key={g[0].avaliado}>
@@ -304,7 +304,7 @@ function Detalhe(props: { registro: RegistroWells; doMesmo: RegistroWells[]; onA
     <>
       <h1>{r.avaliado}</h1>
       <p className="dica-sec">
-        Banco de Wells · {dataCurta(r.date)} · {r.sexo === 'F' ? 'feminino' : 'masculino'}, {r.idade} anos · tentativas: {r.tentativas.map((t) => numero(t)).join(' / ')} cm
+        Banco de Wells Digital · {dataCurta(r.date)} · {r.sexo === 'F' ? 'feminino' : 'masculino'}, {r.idade} anos · tentativas: {r.tentativas.map((t) => numero(t)).join(' / ')} cm
       </p>
 
       <section className="cartao">
