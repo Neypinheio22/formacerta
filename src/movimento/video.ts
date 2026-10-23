@@ -41,6 +41,17 @@ export async function irPara(video: HTMLVideoElement, t: number, limite = 1500) 
   await pronto
 }
 
+/**
+ * Chamar dentro do toque do usuário. O iPhone (principalmente em modo de
+ * pouca bateria) só deixa um vídeo tocar se a primeira vez vier de um toque;
+ * depois disso a leitura pode tocar e pausar à vontade.
+ */
+export function liberarVideo(video: HTMLVideoElement) {
+  video.muted = true
+  video.playsInline = true
+  video.play().catch(() => {})
+}
+
 /** Carrega o vídeo e descobre a duração (vídeos gravados no Chrome às vezes vêm sem ela). */
 export async function prepararVideo(video: HTMLVideoElement): Promise<number> {
   if (video.readyState < 1) await Promise.race([esperar(video, 'loadedmetadata', 15000), esperar(video, 'error', 15000)])

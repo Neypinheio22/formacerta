@@ -1178,3 +1178,14 @@ ul.musculos.fortalecer li {
 .como-fazer figure.errado strong {
   color: var(--vermelho);
 }
+
+/* Botão sobre o vídeo: o iPhone só deixa o vídeo tocar depois de um toque. */
+.comecar-analise {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: auto;
+  white-space: nowrap;
+  z-index: 2;
+}

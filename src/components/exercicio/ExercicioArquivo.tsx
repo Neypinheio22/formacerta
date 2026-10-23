@@ -3,7 +3,7 @@ import { montarResultado } from '../../movimento/analise'
 import { ContadorReps } from '../../movimento/contador'
 import { exercicioPorId } from '../../movimento/exercicios'
 import type { ResultadoExercicio } from '../../movimento/tipos'
-import { analisarVideo } from '../../movimento/video'
+import { analisarVideo, liberarVideo } from '../../movimento/video'
 import { loadDetector } from '../../pose/detector'
 import { drawSkeleton } from '../../pose/draw'
 import type { ConfigExercicio } from './ExercicioInicio'
@@ -19,10 +19,20 @@ export function ExercicioArquivo({ exercicio, arquivo, onCancel, onDone }: Props
   const [progresso, setProgresso] = useState(0)
   const [reps, setReps] = useState(0)
   const [erro, setErro] = useState<string | null>(null)
+  const [iniciado, setIniciado] = useState(false)
+
+  // Já carrega o modelo enquanto a pessoa não toca em começar.
+  useEffect(() => void loadDetector().catch(() => {}), [])
+
+  function comecar() {
+    if (videoRef.current) liberarVideo(videoRef.current)
+    setIniciado(true)
+  }
 
   useEffect(() => () => URL.revokeObjectURL(url), [url])
 
   useEffect(() => {
+    if (!iniciado) return
     let cancelado = false
     const contador = new ContadorReps(ex.cima, ex.baixo)
     let n = 0
@@ -58,7 +68,7 @@ export function ExercicioArquivo({ exercicio, arquivo, onCancel, onDone }: Props
     return () => {
       cancelado = true
     }
-  }, [ex, arquivo, onDone])
+  }, [ex, iniciado, arquivo, onDone])
 
   return (
     <div className="tela">
@@ -81,6 +91,11 @@ export function ExercicioArquivo({ exercicio, arquivo, onCancel, onDone }: Props
           <div className="camera-frame">
             <video ref={videoRef} src={url} playsInline muted preload="auto" />
             <canvas ref={overlayRef} />
+            {!iniciado && (
+              <button className="botao grande comecar-analise" onClick={comecar}>
+                Começar análise
+              </button>
+            )}
             <span className="contador-reps">{reps}</span>
           </div>
           <div className="barra">
