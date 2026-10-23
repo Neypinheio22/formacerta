@@ -16,6 +16,26 @@ Primeira versão web (feita para o celular). Depois o mesmo código vira app par
 - dá uma nota de 0 a 100;
 - guarda o histórico no aparelho.
 
+**Exercício por vídeo (em movimento):** a avaliação de postura acima usa fotos paradas porque mede a postura em pé. Exercício é diferente: o erro aparece no meio do movimento. Aqui o app lê o vídeo **quadro a quadro**:
+
+- câmera ao vivo (conta as repetições em voz alta e fala a correção logo depois de cada uma) ou vídeo enviado da galeria (lido a 15 quadros por segundo, pulando de quadro em quadro, sem perder nenhum mesmo em celular lento);
+- em cada quadro mede o ângulo principal (joelho no agachamento, cotovelo na flexão) e as medidas de técnica;
+- separa as repetições e as fases (descida, fundo, subida) pelo ângulo principal: a rep começa quando sai da posição inicial e só conta se passar do mínimo, assim balanço não conta;
+- avalia cada repetição: profundidade, tronco caindo, joelhos para dentro, peso para um lado, quadril caindo na flexão e ritmo da descida;
+- mostra o vídeo com o esqueleto, um gráfico do ângulo ao longo do tempo com cada repetição marcada, o resumo da série e exercícios para melhorar a técnica.
+
+Exercícios: agachamento de lado, agachamento de frente (usa os pontos em 3D do MediaPipe, porque de frente a dobra do joelho quase não aparece na imagem plana) e flexão de braço de lado. Para incluir outro, basta descrever o exercício em `src/movimento/exercicios.ts`.
+
+**Avaliação da corrida (esteira ou rua):** o cliente grava (ou envia da galeria) 10 a 20 segundos correndo, um vídeo de lado e outro de trás. Câmera lenta (120 ou 240 qps) deixa a pisada mais precisa; o app desconta a câmera lenta no cálculo do tempo. O vídeo é lido quadro a quadro (30 por segundo de vídeo) e os passos são encontrados pelo sobe e desce da pelve, que desce uma vez em cada apoio.
+
+- **De lado:** cadência (passos por minuto), pisada (calcanhar, meio do pé ou antepé), pé à frente do corpo (overstriding, pela inclinação da canela no contato), joelho no contato, inclinação do tronco e sobe e desce do corpo (em cm, usando a altura da pessoa).
+- **De trás:** joelho para dentro (ângulo do joelho no plano frontal, no meio do apoio), queda da pelve e pés cruzando a linha do meio, separados por perna.
+- Cada ponto a corrigir mostra os músculos a alongar e a fortalecer (com o lado, quando é de um lado só), exercícios e um botão para ver o momento no vídeo.
+- Pisar de calcanhar não é marcado como erro sozinho, só junto com o pé muito à frente do corpo.
+- É **triagem, não diagnóstico**: o aviso aparece no resultado.
+
+As regras ficam em `src/corrida/analise.ts` e os músculos e exercícios em `src/corrida/recomendacoes.ts`; os limites são valores de referência e podem ser ajustados com o personal.
+
 **Banco de Wells digital:** flexibilidade da cadeia posterior. O personal digita as 3 tentativas e o app classifica sozinho pela tabela canadense/ACSM (sexo e idade, pés na marca de 26 cm; outra marca é convertida), mostra quanto falta para a próxima classe, guarda o histórico por avaliado com gráfico de evolução e tem campo de observações e diagnóstico. Foto lateral opcional mede o ângulo tronco-coxa e avisa se o joelho dobrou.
 
 **Teste de Adams digital:** foto da pessoa com o tronco inclinado para frente. O app recorta o contorno das costas, compara o ponto mais alto de cada lado e estima o ângulo de rotação do tronco (como o escoliômetro), com o lado da gibosidade. Cortes: menos de 5° normal, 5° a 6,9° reavaliar, 7° ou mais encaminhar ao médico. Aceita também a leitura de um escoliômetro físico, guarda histórico e observações.
@@ -32,7 +52,7 @@ Os dois testes são **triagem, não diagnóstico médico**, e o app diz isso nas
 
 Para testar sem internet, use `?local=1` no endereço: cada aba do navegador vira um celular.
 
-**Em breve:** análise da corrida, teste de mobilidade, caminhada de 6 minutos, painel do personal com relatórios e chamada com personal de plantão.
+**Em breve:** teste de mobilidade, caminhada de 6 minutos, painel do personal com relatórios e chamada com personal de plantão.
 
 ## Rodar no computador
 
@@ -49,7 +69,7 @@ A câmera só funciona em `localhost` ou em endereço `https`.
 npm test
 ```
 
-As regras de análise ficam em `src/pose/analysis.ts` e os limites (em graus) de "Atenção" e "Corrigir" podem ser ajustados com o personal.
+As regras de análise ficam em `src/pose/analysis.ts` (postura) e `src/movimento/exercicios.ts` (exercícios), e os limites (em graus) de "Atenção" e "Corrigir" podem ser ajustados com o personal.
 
 ## Publicação
 

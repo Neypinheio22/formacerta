@@ -71,12 +71,23 @@ export function detectarComMascara(detector: PoseLandmarker, source: HTMLCanvasE
   return landmarks && mascara ? { landmarks, mascara } : null
 }
 
-/** Detecta os pontos do corpo num quadro de vídeo, foto ou canvas. */
-export function detectPose(detector: PoseLandmarker, source: HTMLVideoElement | HTMLCanvasElement | HTMLImageElement): Point[] | null {
+type Fonte = HTMLVideoElement | HTMLCanvasElement | HTMLImageElement
+
+/**
+ * Pontos na imagem (0 a 1) e também em 3D (metros, centro no quadril). O 3D
+ * mede o ângulo do joelho mesmo quando a pessoa está de frente para a câmera.
+ */
+export function detectPoseCompleta(detector: PoseLandmarker, source: Fonte): { lm: Point[]; mundo: Point[] | null } | null {
   // O modo VIDEO exige carimbos de tempo sempre crescentes.
   lastTimestamp = Math.max(lastTimestamp + 1, performance.now())
   const result = detector.detectForVideo(source, lastTimestamp)
-  return result.landmarks[0] ?? null
+  const lm = result.landmarks[0]
+  return lm ? { lm, mundo: result.worldLandmarks[0] ?? null } : null
+}
+
+/** Detecta os pontos do corpo num quadro de vídeo, foto ou canvas. */
+export function detectPose(detector: PoseLandmarker, source: Fonte): Point[] | null {
+  return detectPoseCompleta(detector, source)?.lm ?? null
 }
 
 /**

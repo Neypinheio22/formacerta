@@ -6,17 +6,18 @@ type Props = {
   onStart: () => void
   onOpen: (a: Assessment) => void
   onEstudio: () => void
+  onExercicio: () => void
+  onCorrida: () => void
   onWells: () => void
   onAdams: () => void
 }
 
 const EM_BREVE = [
-  { titulo: 'Análise da corrida', texto: 'Grave 10 a 20 segundos correndo, de lado e de frente.' },
   { titulo: 'Teste de mobilidade', texto: 'Agachamento, tornozelo, elevação dos braços e equilíbrio.' },
   { titulo: 'Caminhada de 6 minutos', texto: 'Distância, tempo, frequência cardíaca e esforço.' },
 ]
 
-export function Home({ history, onStart, onOpen, onEstudio, onWells, onAdams }: Props) {
+export function Home({ history, onStart, onOpen, onEstudio, onExercicio, onCorrida, onWells, onAdams }: Props) {
   return (
     <div className="tela">
       <header className="marca">
@@ -29,9 +30,29 @@ export function Home({ history, onStart, onOpen, onEstudio, onWells, onAdams }: 
       <section className="cartao destaque">
         <span className="etiqueta">Correção de postura com IA</span>
         <h1>Avaliação de postura</h1>
-        <p className="dica">4 fotos rápidas: frente, costas e as duas laterais. A análise acontece no seu celular, e as fotos não saem dele.</p>
+        <p className="dica">4 fotos rápidas, paradas: frente, costas e as duas laterais. É a avaliação da postura em pé. A análise acontece no seu celular, e as fotos não saem dele.</p>
         <button className="botao grande" onClick={onStart}>
           Começar avaliação
+        </button>
+      </section>
+
+      <section className="cartao destaque">
+        <span className="etiqueta">Novo · análise em vídeo</span>
+        <h2>Exercício em movimento</h2>
+        <p className="dica-sec">
+          Grave ou envie um vídeo do agachamento ou da flexão. O app lê o movimento quadro a quadro, conta as repetições e mostra o que corrigir em cada uma.
+        </p>
+        <button className="botao" onClick={onExercicio}>
+          Analisar exercício
+        </button>
+      </section>
+
+      <section className="cartao destaque">
+        <span className="etiqueta">Novo · esteira ou rua</span>
+        <h2>Avaliação da corrida</h2>
+        <p className="dica-sec">Grave 10 a 20 segundos correndo, de lado e de trás. O app mede cadência, pisada, passada, joelhos, pelve e tronco, e indica músculos e exercícios.</p>
+        <button className="botao" onClick={onCorrida}>
+          Avaliar corrida
         </button>
       </section>
 
