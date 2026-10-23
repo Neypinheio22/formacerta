@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { PoseLandmarker } from '@mediapipe/tasks-vision'
 import { bodyVisible } from '../pose/analysis'
-import { detectPose } from '../pose/detector'
+import { detectarFoto, detectPose } from '../pose/detector'
 import { drawSkeleton } from '../pose/draw'
 import type { Point, ViewId } from '../pose/types'
 import { speak } from '../voz'
@@ -12,12 +12,16 @@ type Props = {
   view: ViewId
   detector: PoseLandmarker
   onCapture: (c: Capture) => void
+  /** Troca a checagem de corpo inteiro em pé, para testes em outras posições. */
+  validar?: (lm: Point[]) => boolean
+  textoOk?: string
+  textoAviso?: string
 }
 
 const LARGURA_MAX = 960
 
 /** Reduz a foto e detecta o corpo nela. A foto guardada nunca é espelhada. */
-function captureFrom(detector: PoseLandmarker, source: HTMLVideoElement | HTMLImageElement, w: number, h: number): Capture {
+async function captureFrom(source: HTMLVideoElement | HTMLImageElement, w: number, h: number): Promise<Capture> {
   const escala = Math.min(1, LARGURA_MAX / w)
   const canvas = document.createElement('canvas')
   canvas.width = Math.round(w * escala)
@@ -27,11 +31,11 @@ function captureFrom(detector: PoseLandmarker, source: HTMLVideoElement | HTMLIm
     image: canvas.toDataURL('image/jpeg', 0.8),
     width: canvas.width,
     height: canvas.height,
-    landmarks: detectPose(detector, canvas),
+    landmarks: await detectarFoto(canvas),
   }
 }
 
-export function CameraCapture({ view, detector, onCapture }: Props) {
+export function CameraCapture({ view, detector, onCapture, validar, textoOk = 'Corpo inteiro visível', textoAviso = 'Afaste-se até aparecer da cabeça aos pés' }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const overlayRef = useRef<HTMLCanvasElement>(null)
   const [facing, setFacing] = useState<'user' | 'environment'>('user')
@@ -39,6 +43,8 @@ export function CameraCapture({ view, detector, onCapture }: Props) {
   const [visible, setVisible] = useState(false)
   const [timer, setTimer] = useState(10)
   const [countdown, setCountdown] = useState<number | null>(null)
+  const [analisando, setAnalisando] = useState(false)
+  const [erroArquivo, setErroArquivo] = useState<string | null>(null)
 
   useEffect(() => {
     let stream: MediaStream | null = null
@@ -70,7 +76,7 @@ export function CameraCapture({ view, detector, onCapture }: Props) {
           const ctx = canvas.getContext('2d')!
           if (lm) drawSkeleton(ctx, lm, canvas.width, canvas.height)
           else ctx.clearRect(0, 0, canvas.width, canvas.height)
-          setVisible(!!lm && bodyVisible(view, lm))
+          setVisible(!!lm && (validar ? validar(lm) : bodyVisible(view, lm)))
         }
         frame = requestAnimationFrame(loop)
       }
@@ -83,21 +89,30 @@ export function CameraCapture({ view, detector, onCapture }: Props) {
       cancelAnimationFrame(frame)
       stream?.getTracks().forEach((t) => t.stop())
     }
-  }, [facing, detector, view])
+  }, [facing, detector, view, validar])
+
+  const analisar = useCallback(
+    (c: Promise<Capture>) => {
+      setAnalisando(true)
+      setErroArquivo(null)
+      c.then(onCapture, () => setErroArquivo('Não foi possível analisar a foto. Tente de novo.')).finally(() => setAnalisando(false))
+    },
+    [onCapture],
+  )
 
   useEffect(() => {
     if (countdown === null) return
     if (countdown === 0) {
       const video = videoRef.current!
       speak('Pronto')
-      onCapture(captureFrom(detector, video, video.videoWidth, video.videoHeight))
       setCountdown(null)
+      analisar(captureFrom(video, video.videoWidth, video.videoHeight))
       return
     }
     if (countdown <= 3) speak(String(countdown))
     const id = setTimeout(() => setCountdown(countdown - 1), 1000)
     return () => clearTimeout(id)
-  }, [countdown, detector, onCapture])
+  }, [countdown, analisar])
 
   function startCountdown() {
     speak(`Foto em ${timer} segundos. Fique parado.`)
@@ -106,14 +121,18 @@ export function CameraCapture({ view, detector, onCapture }: Props) {
 
   function onFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
+    e.target.value = ''
     if (!file) return
     const img = new Image()
     img.onload = () => {
-      onCapture(captureFrom(detector, img, img.naturalWidth, img.naturalHeight))
       URL.revokeObjectURL(img.src)
+      analisar(captureFrom(img, img.naturalWidth, img.naturalHeight))
+    }
+    img.onerror = () => {
+      URL.revokeObjectURL(img.src)
+      setErroArquivo('Este navegador não abriu a foto. Se for HEIC (iPhone), envie em JPG ou tire a foto pela câmera do app.')
     }
     img.src = URL.createObjectURL(file)
-    e.target.value = ''
   }
 
   const espelhar = facing === 'user'
@@ -128,12 +147,15 @@ export function CameraCapture({ view, detector, onCapture }: Props) {
             <video ref={videoRef} playsInline muted className={espelhar ? 'espelho' : ''} />
             <canvas ref={overlayRef} className={espelhar ? 'espelho' : ''} />
             <span className={`pill ${visible ? 'pill-ok' : 'pill-aviso'}`}>
-              {visible ? 'Corpo inteiro visível' : 'Afaste-se até aparecer da cabeça aos pés'}
+              {visible ? textoOk : textoAviso}
             </span>
             {countdown !== null && <span className="contagem">{countdown}</span>}
           </>
         )}
       </div>
+
+      {analisando && <p className="carregando">Analisando a foto…</p>}
+      {erroArquivo && <p className="camera-erro">{erroArquivo}</p>}
 
       <div className="camera-controles">
         <label className="botao-sec">
@@ -141,7 +163,7 @@ export function CameraCapture({ view, detector, onCapture }: Props) {
           <input type="file" accept="image/*" onChange={onFile} hidden />
         </label>
         {!cameraError && (
-          <button className="disparo" onClick={startCountdown} disabled={countdown !== null} aria-label="Tirar foto">
+          <button className="disparo" onClick={startCountdown} disabled={countdown !== null || analisando} aria-label="Tirar foto">
             <span />
           </button>
         )}

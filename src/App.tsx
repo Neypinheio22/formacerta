@@ -15,6 +15,8 @@ import { Home } from './components/Home'
 import { PostureAssessment } from './components/PostureAssessment'
 import type { ConfigCorrida, ResultadoCorrida, VistaCorrida } from './corrida/tipos'
 import type { ResultadoExercicio } from './movimento/tipos'
+import { AdamsTeste } from './components/testes/AdamsTeste'
+import { WellsTeste } from './components/testes/WellsTeste'
 import type { Assessment } from './pose/types'
 import { loadAssessments, saveAssessment } from './storage'
 
@@ -33,6 +35,8 @@ type Screen =
   | { name: 'corrida'; vista?: VistaCorrida }
   | { name: 'corrida-arquivo'; config: ConfigCorrida; arquivo: File }
   | { name: 'corrida-resultado'; resultado: ResultadoCorrida }
+  | { name: 'wells' }
+  | { name: 'adams' }
 
 // Link enviado pelo celular de controle: ...?estudio=123456 abre direto como câmera.
 function telaInicial(): Screen {
@@ -124,6 +128,9 @@ export default function App() {
   if (screen.name === 'corrida-resultado') {
     return <CorridaResultado resultado={screen.resultado} onVoltar={() => go({ name: 'inicio' })} onOutraVista={(vista) => go({ name: 'corrida', vista })} />
   }
+  if (screen.name === 'wells') return <WellsTeste onVoltar={() => go({ name: 'inicio' })} />
+
+  if (screen.name === 'adams') return <AdamsTeste onVoltar={() => go({ name: 'inicio' })} />
 
   return (
     <Home
@@ -133,6 +140,8 @@ export default function App() {
       onEstudio={() => go({ name: 'estudio' })}
       onExercicio={() => go({ name: 'exercicio' })}
       onCorrida={() => go({ name: 'corrida' })}
+      onWells={() => go({ name: 'wells' })}
+      onAdams={() => go({ name: 'adams' })}
     />
   )
 }
