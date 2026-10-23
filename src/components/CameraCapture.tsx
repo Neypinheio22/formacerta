@@ -12,6 +12,10 @@ type Props = {
   view: ViewId
   detector: PoseLandmarker
   onCapture: (c: Capture) => void
+  /** Troca a checagem de corpo inteiro em pé, para testes em outras posições. */
+  validar?: (lm: Point[]) => boolean
+  textoOk?: string
+  textoAviso?: string
 }
 
 const LARGURA_MAX = 960
@@ -31,7 +35,7 @@ function captureFrom(detector: PoseLandmarker, source: HTMLVideoElement | HTMLIm
   }
 }
 
-export function CameraCapture({ view, detector, onCapture }: Props) {
+export function CameraCapture({ view, detector, onCapture, validar, textoOk = 'Corpo inteiro visível', textoAviso = 'Afaste-se até aparecer da cabeça aos pés' }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const overlayRef = useRef<HTMLCanvasElement>(null)
   const [facing, setFacing] = useState<'user' | 'environment'>('user')
@@ -70,7 +74,7 @@ export function CameraCapture({ view, detector, onCapture }: Props) {
           const ctx = canvas.getContext('2d')!
           if (lm) drawSkeleton(ctx, lm, canvas.width, canvas.height)
           else ctx.clearRect(0, 0, canvas.width, canvas.height)
-          setVisible(!!lm && bodyVisible(view, lm))
+          setVisible(!!lm && (validar ? validar(lm) : bodyVisible(view, lm)))
         }
         frame = requestAnimationFrame(loop)
       }
@@ -83,7 +87,7 @@ export function CameraCapture({ view, detector, onCapture }: Props) {
       cancelAnimationFrame(frame)
       stream?.getTracks().forEach((t) => t.stop())
     }
-  }, [facing, detector, view])
+  }, [facing, detector, view, validar])
 
   useEffect(() => {
     if (countdown === null) return
@@ -128,7 +132,7 @@ export function CameraCapture({ view, detector, onCapture }: Props) {
             <video ref={videoRef} playsInline muted className={espelhar ? 'espelho' : ''} />
             <canvas ref={overlayRef} className={espelhar ? 'espelho' : ''} />
             <span className={`pill ${visible ? 'pill-ok' : 'pill-aviso'}`}>
-              {visible ? 'Corpo inteiro visível' : 'Afaste-se até aparecer da cabeça aos pés'}
+              {visible ? textoOk : textoAviso}
             </span>
             {countdown !== null && <span className="contagem">{countdown}</span>}
           </>

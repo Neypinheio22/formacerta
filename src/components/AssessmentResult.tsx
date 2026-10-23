@@ -1,3 +1,4 @@
+import { planoCorretivo, recomendacao } from '../pose/recomendacoes'
 import { VIEWS, type Assessment, type Status } from '../pose/types'
 import { PosePhoto } from './PosePhoto'
 
@@ -11,7 +12,9 @@ function scoreText(score: number) {
 
 export function AssessmentResult({ assessment, onBack }: { assessment: Assessment; onBack: () => void }) {
   const problemas = assessment.views.flatMap((v) => v.findings).filter((f) => f.status !== 'ok')
-  const exercicios = [...new Set(problemas.flatMap((f) => f.exercises))]
+  const plano = planoCorretivo(problemas)
+  // Avaliações salvas antes das recomendações por músculo só têm a lista de exercícios.
+  const antigos = problemas.some((f) => !f.correcao) ? [...new Set(problemas.filter((f) => !f.correcao).flatMap((f) => f.exercises))] : []
   const data = new Date(assessment.date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })
 
   return (
@@ -35,15 +38,41 @@ export function AssessmentResult({ assessment, onBack }: { assessment: Assessmen
         </div>
       </section>
 
-      {exercicios.length > 0 && (
+      {problemas.length > 0 && (
         <section className="cartao">
           <h2>Seu plano de correção</h2>
+          {plano.alongar.length > 0 && (
+            <div className="grupo-musculos">
+              <h3>Alongar</h3>
+              <ul className="musculos alongar">
+                {plano.alongar.map((m) => (
+                  <li key={m}>{m}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {plano.fortalecer.length > 0 && (
+            <div className="grupo-musculos">
+              <h3>Fortalecer</h3>
+              <ul className="musculos fortalecer">
+                {plano.fortalecer.map((m) => (
+                  <li key={m}>{m}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {(plano.exercicios.length > 0 || antigos.length > 0) && <h3 className="sub">Exercícios</h3>}
           <ul className="exercicios">
-            {exercicios.map((e) => (
+            {plano.exercicios.map((e) => (
+              <li key={e.nome}>
+                <span className={`foco foco-${e.foco}`}>{e.foco === 'alongar' ? 'Alongar' : 'Fortalecer'}</span> {e.nome} <span className="valor">{e.dose}</span>
+              </li>
+            ))}
+            {antigos.map((e) => (
               <li key={e}>{e}</li>
             ))}
           </ul>
-          <p className="dica-sec">Faça 3 a 4 vezes por semana e repita a avaliação em 30 dias para ver sua evolução.</p>
+          <p className="dica-sec">Faça 3 a 4 vezes por semana e repita a avaliação em 30 dias para ver sua evolução. Os músculos indicados são uma triagem pelas fotos: o personal confirma na avaliação presencial.</p>
         </section>
       )}
 
@@ -62,6 +91,7 @@ export function AssessmentResult({ assessment, onBack }: { assessment: Assessmen
                   <span className="achado-detalhe">
                     {f.detail} <span className="valor">{f.value}</span>
                   </span>
+                  <MusculosDoAchado rec={recomendacao(f)} />
                 </li>
               ))}
             </ul>
@@ -78,8 +108,22 @@ export function AssessmentResult({ assessment, onBack }: { assessment: Assessmen
       </section>
 
       <p className="aviso-legal">
-        A análise é automática e serve como orientação. Ela não substitui a avaliação de um profissional de educação física ou de saúde. Em caso de dor, procure um profissional.
+        Esta avaliação é uma triagem e não é um diagnóstico médico. A análise é automática e serve como orientação. Ela não substitui a avaliação de um profissional de educação física ou de saúde. Em caso de dor, procure um profissional.
       </p>
     </div>
+  )
+}
+
+function MusculosDoAchado({ rec }: { rec: ReturnType<typeof recomendacao> }) {
+  if (!rec) return null
+  return (
+    <span className="achado-musculos">
+      <span>
+        <b>Alongar:</b> {rec.alongar.join(', ')}
+      </span>
+      <span>
+        <b>Fortalecer:</b> {rec.fortalecer.join(', ')}
+      </span>
+    </span>
   )
 }

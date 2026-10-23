@@ -6,6 +6,8 @@ type Props = {
   onStart: () => void
   onOpen: (a: Assessment) => void
   onEstudio: () => void
+  onWells: () => void
+  onAdams: () => void
 }
 
 const EM_BREVE = [
@@ -14,7 +16,7 @@ const EM_BREVE = [
   { titulo: 'Caminhada de 6 minutos', texto: 'Distância, tempo, frequência cardíaca e esforço.' },
 ]
 
-export function Home({ history, onStart, onOpen, onEstudio }: Props) {
+export function Home({ history, onStart, onOpen, onEstudio, onWells, onAdams }: Props) {
   return (
     <div className="tela">
       <header className="marca">
@@ -40,6 +42,22 @@ export function Home({ history, onStart, onOpen, onEstudio }: Props) {
         <button className="botao-sec" onClick={onEstudio}>
           Abrir modo estúdio
         </button>
+      </section>
+
+      <section className="cartao destaque">
+        <span className="etiqueta">Testes do personal</span>
+        <h2>Flexibilidade e coluna</h2>
+        <div className="opcoes">
+          <button className="opcao" onClick={onWells}>
+            Banco de Wells
+            <span>Flexibilidade da cadeia posterior, com classificação automática e evolução.</span>
+          </button>
+          <button className="opcao" onClick={onAdams}>
+            Teste de Adams
+            <span>Flexão do tronco para achar gibosidade, rotação vertebral e assimetria nas costas.</span>
+          </button>
+        </div>
+        <p className="dica-sec">São testes de triagem: não substituem o diagnóstico médico.</p>
       </section>
 
       {history.length > 0 && (

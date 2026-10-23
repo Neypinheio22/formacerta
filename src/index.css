@@ -745,3 +745,253 @@ h3 {
   color: var(--vermelho);
   align-self: center;
 }
+
+/* Recomendações por músculo */
+.grupo-musculos {
+  margin-top: 10px;
+}
+
+.grupo-musculos h3,
+.sub {
+  font-size: 0.85rem;
+  color: var(--texto-sec);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 12px 0 6px;
+}
+
+.musculos {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.musculos li {
+  border-radius: 999px;
+  padding: 3px 10px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.musculos.alongar li {
+  background: rgba(96, 165, 250, 0.15);
+  color: #8cc3ff;
+}
+
+.musculos.fortalecer li {
+  background: rgba(54, 242, 148, 0.15);
+  color: var(--verde);
+}
+
+.foco {
+  font-size: 0.7rem;
+  font-weight: 700;
+  border-radius: 6px;
+  padding: 1px 6px;
+  margin-right: 4px;
+}
+
+.foco-alongar {
+  background: rgba(96, 165, 250, 0.15);
+  color: #8cc3ff;
+}
+
+.foco-fortalecer {
+  background: rgba(54, 242, 148, 0.15);
+  color: var(--verde);
+}
+
+.achado-musculos {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 4px;
+  font-size: 0.78rem;
+  color: var(--texto-sec);
+}
+
+.achado-musculos b {
+  color: var(--texto);
+  font-weight: 600;
+}
+
+/* Testes do personal (Wells, Adams) */
+.formulario {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.campo textarea {
+  font: inherit;
+  font-weight: 400;
+  background: var(--fundo);
+  border: 1px solid var(--borda);
+  border-radius: 12px;
+  color: var(--texto);
+  padding: 12px 14px;
+  resize: vertical;
+}
+
+.campo textarea:focus {
+  outline: 2px solid var(--verde);
+  outline-offset: 1px;
+}
+
+.linha-campos {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.linha-campos.tres {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.linha-campos input {
+  min-width: 0;
+  font: inherit;
+  font-weight: 500;
+  background: var(--cartao);
+  border: 1px solid var(--borda);
+  border-radius: 12px;
+  color: var(--texto);
+  padding: 12px 14px;
+  width: 100%;
+}
+
+.escolha {
+  display: flex;
+  gap: 8px;
+}
+
+.escolha button {
+  flex: 1;
+  background: transparent;
+  border: 1px solid var(--borda);
+  border-radius: 999px;
+  color: var(--texto);
+  padding: 10px;
+  font-weight: 600;
+}
+
+.escolha button.ativo {
+  border-color: var(--verde);
+  color: var(--verde);
+  box-shadow: 0 0 0 1px var(--verde);
+}
+
+.resultado-teste {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.valor-grande {
+  font-size: 2.4rem;
+  font-weight: 800;
+  color: var(--verde);
+}
+
+.valor-grande small {
+  font-size: 1rem;
+  color: var(--texto-sec);
+}
+
+.resultado-teste .chip {
+  font-size: 0.85rem;
+  padding: 4px 12px;
+}
+
+.tabela-classes {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 12px;
+  font-size: 0.85rem;
+}
+
+.tabela-classes caption {
+  text-align: left;
+  color: var(--texto-sec);
+  font-size: 0.8rem;
+  margin-bottom: 6px;
+}
+
+.tabela-classes td {
+  padding: 6px 8px;
+  border-top: 1px solid var(--borda);
+}
+
+.tabela-classes td:last-child {
+  text-align: right;
+  color: var(--texto-sec);
+}
+
+.tabela-classes tr.atual td {
+  color: var(--verde);
+  font-weight: 700;
+  background: rgba(54, 242, 148, 0.08);
+}
+
+.grafico {
+  width: 100%;
+  margin-top: 8px;
+}
+
+.grafico-linha {
+  fill: none;
+  stroke: var(--verde);
+  stroke-width: 2;
+}
+
+.grafico-ref {
+  stroke: var(--texto-sec);
+  stroke-opacity: 0.5;
+  stroke-dasharray: 4 4;
+}
+
+.grafico-ref-texto,
+.grafico-eixo {
+  fill: var(--texto-sec);
+  font-size: 10px;
+}
+
+.historico button {
+  gap: 12px;
+  text-align: right;
+}
+
+.historico button span:first-child {
+  flex: none;
+}
+
+.historico button.ativo {
+  border-color: var(--verde);
+}
+
+.aviso-triagem {
+  border: 1px solid rgba(251, 141, 26, 0.5);
+  background: rgba(251, 141, 26, 0.08);
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-size: 0.8rem;
+  color: var(--texto-sec);
+  margin: 0;
+}
+
+.aviso-triagem strong {
+  color: var(--laranja);
+}
+
+.dicas-foto li {
+  font-size: 0.85rem;
+  color: var(--texto-sec);
+}
+
+.centro {
+  text-align: center;
+}

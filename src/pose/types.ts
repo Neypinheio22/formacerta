@@ -1,3 +1,5 @@
+import type { CorrecaoId, Lado } from './recomendacoes'
+
 export type Point = { x: number; y: number; z?: number; visibility?: number }
 
 export type ViewId = 'frente' | 'costas' | 'lateral-direita' | 'lateral-esquerda'
@@ -11,6 +13,10 @@ export type Finding = {
   status: Status
   detail: string
   exercises: string[]
+  /** Alteração postural encontrada, para indicar músculos e exercícios. */
+  correcao?: CorrecaoId
+  /** Lado mais alto (ombro, quadril, cabeça) ou lado do joelho avaliado. */
+  lado?: Lado
 }
 
 export type ViewResult = {

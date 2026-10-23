@@ -12,8 +12,15 @@ Primeira versão web (feita para o celular). Depois o mesmo código vira app par
 - confere se o corpo apareceu inteiro antes de aceitar a foto;
 - mede ombros e quadril desnivelados, inclinação da cabeça, tronco deslocado e joelhos para dentro/fora (frente e costas);
 - mede cabeça projetada para frente, inclinação do tronco e joelhos hiperestendidos ou flexionados (laterais);
-- dá uma nota de 0 a 100 e monta um plano de exercícios de correção;
+- para cada alteração, indica os músculos a alongar e a fortalecer (com o lado do corpo) e os exercícios, e junta tudo num plano de correção (`src/pose/recomendacoes.ts`);
+- dá uma nota de 0 a 100;
 - guarda o histórico no aparelho.
+
+**Banco de Wells digital:** flexibilidade da cadeia posterior. O personal digita as 3 tentativas e o app classifica sozinho pela tabela canadense/ACSM (sexo e idade, pés na marca de 26 cm; outra marca é convertida), mostra quanto falta para a próxima classe, guarda o histórico por avaliado com gráfico de evolução e tem campo de observações e diagnóstico. Foto lateral opcional mede o ângulo tronco-coxa e avisa se o joelho dobrou.
+
+**Teste de Adams digital:** foto da pessoa com o tronco inclinado para frente. O app recorta o contorno das costas, compara o ponto mais alto de cada lado e estima o ângulo de rotação do tronco (como o escoliômetro), com o lado da gibosidade. Cortes: menos de 5° normal, 5° a 6,9° reavaliar, 7° ou mais encaminhar ao médico. Aceita também a leitura de um escoliômetro físico, guarda histórico e observações.
+
+Os dois testes são **triagem, não diagnóstico médico**, e o app diz isso nas telas.
 
 **Modo estúdio (para o personal):** grava o exercício de referência com 2 ou 3 celulares ao mesmo tempo (frente, lateral e costas).
 
