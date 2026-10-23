@@ -3,6 +3,7 @@ import { LM, type Point } from '../../pose/types'
 import { apagar, atualizar, avaliados, carregar, doAvaliado, reduzirFoto, salvar } from '../../testes/historico'
 import { CHAVE_WELLS, MARCA_PADRAO, ajustarMarca, classificarWells, medirFotoWells, melhorTentativa, type RegistroWells, type Sexo } from '../../testes/wells'
 import { PosePhoto } from '../PosePhoto'
+import { ComoFazerWells } from './Ilustracoes'
 import { AvisoTriagem, CampoAvaliado, CampoObservacoes, GraficoEvolucao, TirarFoto } from './comum'
 import { dataCurta, lerNumero, numero } from '../../testes/formato'
 
@@ -113,6 +114,8 @@ function NovoWells({ nomes, onSalvo }: { nomes: string[]; onSalvo: (r: RegistroW
           tentativas: vale a melhor.
         </p>
       </section>
+
+      <ComoFazerWells />
 
       <section className="cartao formulario">
         <CampoAvaliado valor={avaliado} onChange={setAvaliado} nomes={nomes} />

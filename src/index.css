@@ -799,21 +799,6 @@ h3 {
 }
 
 .reps {
-/* Recomendações por músculo */
-.grupo-musculos {
-  margin-top: 10px;
-}
-
-.grupo-musculos h3,
-.sub {
-  font-size: 0.85rem;
-  color: var(--texto-sec);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin: 12px 0 6px;
-}
-
-.musculos {
   list-style: none;
   margin: 0;
   padding: 0;
@@ -853,23 +838,95 @@ h3 {
   background: rgba(251, 141, 26, 0.08);
   color: var(--texto-sec);
   font-size: 0.82rem;
+}
+
+.aviso-triagem strong {
+  color: var(--laranja);
+}
+
+.musculos {
+  margin-top: 8px;
+  font-size: 0.82rem;
+}
+
+.musculos p {
+  margin: 0 0 4px;
+}
+
+.rotulo-musculo {
+  display: inline-block;
+  margin-right: 4px;
+  padding: 0 8px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  background: rgba(159, 179, 194, 0.15);
+  color: var(--texto-sec);
+}
+
+.rotulo-musculo.forte {
+  background: rgba(54, 242, 148, 0.15);
+  color: var(--verde);
+}
+
+.achados .exercicios {
+  margin-top: 8px;
+  gap: 6px;
+  font-size: 0.82rem;
+}
+
+.ver-video {
+  margin-top: 8px;
+  background: none;
+  border: 1px solid var(--borda);
+  border-radius: 999px;
+  color: var(--verde);
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 4px 12px;
+}
+
+label.botao,
+label.botao-sec {
+  cursor: pointer;
+}
+
+/* Recomendações por músculo */
+.grupo-musculos {
+  margin-top: 10px;
+}
+
+.grupo-musculos h3,
+.sub {
+  font-size: 0.85rem;
+  color: var(--texto-sec);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 12px 0 6px;
+}
+
+ul.musculos {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
   flex-wrap: wrap;
   gap: 6px;
 }
 
-.musculos li {
+ul.musculos li {
   border-radius: 999px;
   padding: 3px 10px;
   font-size: 0.8rem;
   font-weight: 600;
 }
 
-.musculos.alongar li {
+ul.musculos.alongar li {
   background: rgba(96, 165, 250, 0.15);
   color: #8cc3ff;
 }
 
-.musculos.fortalecer li {
+ul.musculos.fortalecer li {
   background: rgba(54, 242, 148, 0.15);
   color: var(--verde);
 }
@@ -1061,65 +1118,8 @@ h3 {
   border-color: var(--verde);
 }
 
-.aviso-triagem {
-  border: 1px solid rgba(251, 141, 26, 0.5);
-  background: rgba(251, 141, 26, 0.08);
-  border-radius: 12px;
-  padding: 10px 12px;
-  font-size: 0.8rem;
-  color: var(--texto-sec);
-  margin: 0;
-}
 
-.aviso-triagem strong {
-  color: var(--laranja);
-}
 
-.musculos {
-  margin-top: 8px;
-  font-size: 0.82rem;
-}
-
-.musculos p {
-  margin: 0 0 4px;
-}
-
-.rotulo-musculo {
-  display: inline-block;
-  margin-right: 4px;
-  padding: 0 8px;
-  border-radius: 999px;
-  font-size: 0.72rem;
-  font-weight: 700;
-  background: rgba(159, 179, 194, 0.15);
-  color: var(--texto-sec);
-}
-
-.rotulo-musculo.forte {
-  background: rgba(54, 242, 148, 0.15);
-  color: var(--verde);
-}
-
-.achados .exercicios {
-  margin-top: 8px;
-  gap: 6px;
-  font-size: 0.82rem;
-}
-
-.ver-video {
-  margin-top: 8px;
-  background: none;
-  border: 1px solid var(--borda);
-  border-radius: 999px;
-  color: var(--verde);
-  font-size: 0.8rem;
-  font-weight: 600;
-  padding: 4px 12px;
-}
-
-label.botao,
-label.botao-sec {
-  cursor: pointer;
 .dicas-foto li {
   font-size: 0.85rem;
   color: var(--texto-sec);
@@ -1127,4 +1127,54 @@ label.botao-sec {
 
 .centro {
   text-align: center;
+}
+
+/* Desenhos de como fazer os testes */
+.como-fazer h2 {
+  margin-bottom: 12px;
+}
+
+.como-fazer-passos {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(230px, 1fr);
+  gap: 12px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  padding-bottom: 6px;
+}
+
+.como-fazer figure {
+  margin: 0;
+  scroll-snap-align: start;
+  background: var(--fundo);
+  border: 1px solid var(--borda);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.como-fazer figure.errado {
+  border-color: rgba(255, 90, 95, 0.5);
+}
+
+.ilustracao {
+  display: block;
+  width: 100%;
+  background: #071a28;
+}
+
+.como-fazer figcaption {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px 12px;
+  font-size: 0.85rem;
+}
+
+.como-fazer figcaption span {
+  color: var(--texto-sec);
+}
+
+.como-fazer figure.errado strong {
+  color: var(--vermelho);
 }
