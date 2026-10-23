@@ -4,6 +4,7 @@ import { LM, type Point } from '../../pose/types'
 import { CHAVE_ADAMS, analisarAdams, anguloAdams, classificarAdams, type RegistroAdams, type ResultadoAdams, type VistaAdams } from '../../testes/adams'
 import { apagar, atualizar, avaliados, carregar, doAvaliado, reduzirFoto, salvar } from '../../testes/historico'
 import type { Capture } from '../CameraCapture'
+import { ComoFazerAdams } from './Ilustracoes'
 import { AvisoTriagem, CampoAvaliado, CampoObservacoes, GraficoEvolucao, TirarFoto } from './comum'
 import { ROTULO_STATUS, dataCurta, lerNumero, numero } from '../../testes/formato'
 
@@ -144,6 +145,8 @@ function NovoAdams({ nomes, onSalvo }: { nomes: string[]; onSalvo: (r: RegistroA
         </p>
       </section>
 
+      <ComoFazerAdams />
+
       <section className="cartao formulario">
         <CampoAvaliado valor={avaliado} onChange={setAvaliado} nomes={nomes} />
         <div className="campo">
@@ -217,7 +220,7 @@ function NovoAdams({ nomes, onSalvo }: { nomes: string[]; onSalvo: (r: RegistroA
         Salvar no histórico
       </button>
       <AvisoTriagem>
-        O Teste de Adams digital aponta sinais de assimetria nas costas. Só o médico, com exame de imagem, confirma escoliose.
+        O Teste de Adams aponta sinais de assimetria nas costas. Só o médico, com exame de imagem, confirma escoliose.
       </AvisoTriagem>
     </>
   )
@@ -372,7 +375,7 @@ function Detalhe(props: { registro: RegistroAdams; doMesmo: RegistroAdams[]; onA
       >
         Apagar teste
       </button>
-      <AvisoTriagem>O Teste de Adams digital aponta sinais de assimetria nas costas. Só o médico, com exame de imagem, confirma escoliose.</AvisoTriagem>
+      <AvisoTriagem>O Teste de Adams aponta sinais de assimetria nas costas. Só o médico, com exame de imagem, confirma escoliose.</AvisoTriagem>
     </>
   )
 }
