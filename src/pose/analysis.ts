@@ -1,20 +1,8 @@
+import { exerciciosDe, type CorrecaoId } from './recomendacoes'
 import { LM, type Finding, type Point, type Status, type ViewId } from './types'
 
 type Px = { x: number; y: number }
 
-const EXERCICIOS = {
-  ombros: ['Alongamento do trapézio (30 s cada lado)', 'Remada unilateral com elástico (3x12)', 'Prancha lateral (3x20 s cada lado)'],
-  quadril: ['Prancha lateral (3x20 s cada lado)', 'Ponte unilateral (3x10 cada perna)', 'Alongamento do quadrado lombar (30 s cada lado)'],
-  cabecaLado: ['Alongamento lateral do pescoço (30 s cada lado)', 'Retração do queixo (3x10)'],
-  tronco: ['Prancha lateral (3x20 s cada lado)', 'Perdigueiro / bird-dog (3x10 cada lado)'],
-  joelhoDentro: ['Abdução de quadril deitado (3x15)', 'Ponte com mini band nos joelhos (3x12)', 'Agachamento com elástico nos joelhos (3x10)'],
-  joelhoFora: ['Adução com bola entre os joelhos (3x15)', 'Agachamento sumô leve (3x10)'],
-  cabecaFrente: ['Retração do queixo / chin tuck (3x10)', 'Alongamento do peitoral na porta (30 s)', 'Exercício Y-T-W deitado (2x8)'],
-  troncoFrente: ['Extensão torácica no rolo (1 min)', 'Alongamento do peitoral na porta (30 s)', 'Remada com elástico (3x12)'],
-  troncoTras: ['Prancha frontal (3x30 s)', 'Dead bug (3x10)', 'Alongamento do flexor do quadril (30 s cada lado)'],
-  hiperextensao: ['Ponte de glúteo (3x12)', 'Flexão de joelhos com elástico (3x12)', 'Treino de ficar em pé com joelhos "destravados"'],
-  joelhoFlexionado: ['Alongamento de posterior de coxa (30 s)', 'Alongamento do flexor do quadril (30 s cada lado)'],
-}
 
 const px = (p: Point, w: number, h: number): Px => ({ x: p.x * w, y: p.y * h })
 
@@ -35,6 +23,10 @@ export function jointAngle(a: Px, b: Px, c: Px): number {
   return deg(Math.acos(Math.min(1, Math.max(-1, cos))))
 }
 
+function corrigir(status: Status, correcao: CorrecaoId): Pick<Finding, 'exercises' | 'correcao'> {
+  return status === 'ok' ? { exercises: [] } : { exercises: exerciciosDe(correcao), correcao }
+}
+
 function grade(value: number, atencao: number, alerta: number): Status {
   if (value >= alerta) return 'alerta'
   if (value >= atencao) return 'atencao'
@@ -51,7 +43,7 @@ function sides(view: ViewId, a: Px, b: Px): { esq: Px; dir: Px } {
   return view === 'frente' ? { esq: imgDir, dir: imgEsq } : { esq: imgEsq, dir: imgDir }
 }
 
-function levelFinding(id: string, title: string, parte: string, view: ViewId, a: Px, b: Px, limites: [number, number], exercises: string[]): Finding {
+function levelFinding(id: string, title: string, parte: string, view: ViewId, a: Px, b: Px, limites: [number, number], correcao: CorrecaoId): Finding {
   const angle = tiltFromHorizontal(a, b)
   const status = grade(angle, ...limites)
   const { esq, dir } = sides(view, a, b)
@@ -62,7 +54,8 @@ function levelFinding(id: string, title: string, parte: string, view: ViewId, a:
     value: formatDeg(angle),
     status,
     detail: status === 'ok' ? `${parte} alinhados.` : `${parte}: lado ${maisAlto} mais alto.`,
-    exercises: status === 'ok' ? [] : exercises,
+    ...corrigir(status, correcao),
+    lado: maisAlto,
   }
 }
 
@@ -79,7 +72,8 @@ function kneeFinding(view: ViewId, quadril: Px, joelho: Px, tornozelo: Px, meioX
     value: formatDeg(desvio),
     status,
     detail: status === 'ok' ? 'Joelho alinhado com quadril e tornozelo.' : `Joelho ${lado} desviando ${direcao}.`,
-    exercises: status === 'ok' ? [] : paraDentro ? EXERCICIOS.joelhoDentro : EXERCICIOS.joelhoFora,
+    ...corrigir(status, paraDentro ? 'joelhoValgo' : 'joelhoVaro'),
+    lado,
   }
 }
 
@@ -89,12 +83,12 @@ export function analyzeFrontBack(view: 'frente' | 'costas', lm: Point[], w: numb
   const quadrilA = P(LM.quadrilEsq), quadrilB = P(LM.quadrilDir)
 
   const findings: Finding[] = [
-    levelFinding(`ombros-${view}`, 'Altura dos ombros', 'Ombros', view, ombroA, ombroB, [3, 6], EXERCICIOS.ombros),
-    levelFinding(`quadril-${view}`, 'Altura do quadril', 'Quadril', view, quadrilA, quadrilB, [3, 6], EXERCICIOS.quadril),
+    levelFinding(`ombros-${view}`, 'Altura dos ombros', 'Ombros', view, ombroA, ombroB, [3, 6], 'ombroElevado'),
+    levelFinding(`quadril-${view}`, 'Altura do quadril', 'Quadril', view, quadrilA, quadrilB, [3, 6], 'quadrilElevado'),
   ]
 
   if (view === 'frente') {
-    findings.push(levelFinding('cabeca-frente', 'Inclinação da cabeça', 'Orelhas', view, P(LM.orelhaEsq), P(LM.orelhaDir), [4, 8], EXERCICIOS.cabecaLado))
+    findings.push(levelFinding('cabeca-frente', 'Inclinação da cabeça', 'Orelhas', view, P(LM.orelhaEsq), P(LM.orelhaDir), [4, 8], 'cabecaInclinada'))
   }
 
   const meioOmbro = (ombroA.x + ombroB.x) / 2
@@ -108,7 +102,7 @@ export function analyzeFrontBack(view: 'frente' | 'costas', lm: Point[], w: numb
     value: `${deslocamento.toFixed(0)}%`,
     status: statusTronco,
     detail: statusTronco === 'ok' ? 'Tronco centralizado sobre o quadril.' : 'Tronco deslocado para um dos lados em relação ao quadril.',
-    exercises: statusTronco === 'ok' ? [] : EXERCICIOS.tronco,
+    ...corrigir(statusTronco, 'troncoDeslocado'),
   })
 
   const pernas = [
@@ -153,7 +147,7 @@ export function analyzeSide(view: 'lateral-direita' | 'lateral-esquerda', lm: Po
     value: formatDeg(Math.max(0, cabeca)),
     status: statusCabeca,
     detail: statusCabeca === 'ok' ? 'Orelha alinhada sobre o ombro.' : 'Cabeça projetada para frente.',
-    exercises: statusCabeca === 'ok' ? [] : EXERCICIOS.cabecaFrente,
+    ...corrigir(statusCabeca, 'cabecaAnteriorizada'),
   })
 
   const tronco = leanFromVertical(quadril, ombro, facing)
@@ -164,7 +158,7 @@ export function analyzeSide(view: 'lateral-direita' | 'lateral-esquerda', lm: Po
     value: formatDeg(Math.abs(tronco)),
     status: statusTronco,
     detail: statusTronco === 'ok' ? 'Ombro alinhado sobre o quadril.' : tronco > 0 ? 'Tronco inclinado para frente (ombros à frente do quadril).' : 'Tronco inclinado para trás.',
-    exercises: statusTronco === 'ok' ? [] : tronco > 0 ? EXERCICIOS.troncoFrente : EXERCICIOS.troncoTras,
+    ...corrigir(statusTronco, tronco > 0 ? 'troncoAFrente' : 'troncoParaTras'),
   })
 
   const desvio = 180 - jointAngle(quadril, joelho, tornozelo)
@@ -178,7 +172,7 @@ export function analyzeSide(view: 'lateral-direita' | 'lateral-esquerda', lm: Po
     value: formatDeg(desvio),
     status: statusJoelho,
     detail: statusJoelho === 'ok' ? 'Joelhos em posição neutra.' : joelhoAFrente ? 'Joelhos flexionados em pé.' : 'Joelhos hiperestendidos (travados para trás).',
-    exercises: statusJoelho === 'ok' ? [] : joelhoAFrente ? EXERCICIOS.joelhoFlexionado : EXERCICIOS.hiperextensao,
+    ...corrigir(statusJoelho, joelhoAFrente ? 'joelhoFlexionado' : 'joelhoHiperestendido'),
   })
 
   return findings

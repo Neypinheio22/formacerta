@@ -6,6 +6,8 @@ import { EstudioInicio } from './components/estudio/EstudioInicio'
 import { Referencias } from './components/estudio/Referencias'
 import { Home } from './components/Home'
 import { PostureAssessment } from './components/PostureAssessment'
+import { AdamsTeste } from './components/testes/AdamsTeste'
+import { WellsTeste } from './components/testes/WellsTeste'
 import type { Assessment } from './pose/types'
 import { loadAssessments, saveAssessment } from './storage'
 
@@ -17,6 +19,8 @@ type Screen =
   | { name: 'estudio-controle' }
   | { name: 'estudio-camera'; codigo?: string }
   | { name: 'referencias'; abrir?: string }
+  | { name: 'wells' }
+  | { name: 'adams' }
 
 // Link enviado pelo celular de controle: ...?estudio=123456 abre direto como câmera.
 function telaInicial(): Screen {
@@ -73,12 +77,18 @@ export default function App() {
     return <Referencias abrir={screen.abrir} onVoltar={() => go({ name: 'estudio' })} onGravar={() => go({ name: 'estudio-controle' })} />
   }
 
+  if (screen.name === 'wells') return <WellsTeste onVoltar={() => go({ name: 'inicio' })} />
+
+  if (screen.name === 'adams') return <AdamsTeste onVoltar={() => go({ name: 'inicio' })} />
+
   return (
     <Home
       history={history}
       onStart={() => go({ name: 'avaliacao' })}
       onOpen={(a) => go({ name: 'resultado', assessment: a })}
       onEstudio={() => go({ name: 'estudio' })}
+      onWells={() => go({ name: 'wells' })}
+      onAdams={() => go({ name: 'adams' })}
     />
   )
 }
