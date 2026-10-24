@@ -1,7 +1,7 @@
 import { supabase } from './cliente'
 import { erroAmigavel } from './conta'
 
-export type TipoResultado = 'postura' | 'corrida' | 'exercicio' | 'flexibilidade' | 'adams'
+export type TipoResultado = 'postura' | 'corrida' | 'exercicio' | 'flexibilidade' | 'adams' | 'idoso'
 
 export const ROTULO_TIPO: Record<TipoResultado, string> = {
   postura: 'Avaliação de postura',
@@ -9,6 +9,7 @@ export const ROTULO_TIPO: Record<TipoResultado, string> = {
   exercicio: 'Exercício em movimento',
   flexibilidade: 'Teste de Flexibilidade',
   adams: 'Teste de Adams',
+  idoso: 'Avaliação funcional do idoso',
 }
 
 // Fotos, vídeos e os pontos do corpo quadro a quadro ficam só no celular.

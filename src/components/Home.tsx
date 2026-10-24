@@ -11,6 +11,7 @@ type Props = {
   onCorrida: () => void
   onFlexibilidade: () => void
   onAdams: () => void
+  onIdoso: () => void
   perfil: Perfil | null
   onAdmin: () => void
   onAlunos: () => void
@@ -19,10 +20,9 @@ type Props = {
 
 const EM_BREVE = [
   { titulo: 'Teste de mobilidade', texto: 'Agachamento, tornozelo, elevação dos braços e equilíbrio.' },
-  { titulo: 'Caminhada de 6 minutos', texto: 'Distância, tempo, frequência cardíaca e esforço.' },
 ]
 
-export function Home({ history, onStart, onOpen, onEstudio, onExercicio, onCorrida, onFlexibilidade, onAdams, perfil, onAdmin, onAlunos, onConta }: Props) {
+export function Home({ history, onStart, onOpen, onEstudio, onExercicio, onCorrida, onFlexibilidade, onAdams, onIdoso, perfil, onAdmin, onAlunos, onConta }: Props) {
   return (
     <div className="tela">
       <header className="marca">
@@ -85,6 +85,18 @@ export function Home({ history, onStart, onOpen, onEstudio, onExercicio, onCorri
         <p className="dica-sec">Grave o exercício certo com 2 ou 3 celulares ao mesmo tempo (frente, lateral e costas) e use como referência para os clientes.</p>
         <button className="botao-sec" onClick={onEstudio}>
           Abrir modo estúdio
+        </button>
+      </section>
+
+      <section className="cartao destaque">
+        <span className="etiqueta">Novo · terceira idade</span>
+        <h2>Avaliação funcional do idoso</h2>
+        <p className="dica-sec">
+          Anamnese, IMC automático, perimetria, Escala de Berg, caminhada de 6 minutos, marcha estacionária e outros testes com vídeo, cronômetro e contador. Mostra a
+          evolução em gráficos e os pontos de atenção.
+        </p>
+        <button className="botao" onClick={onIdoso}>
+          Avaliar idoso
         </button>
       </section>
 
