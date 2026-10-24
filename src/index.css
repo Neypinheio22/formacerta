@@ -1205,3 +1205,163 @@ ul.musculos.fortalecer li {
 .resultado-teste .valor-grande.texto {
   font-size: 26px;
 }
+
+/* Conta, login e administração */
+.campo select {
+  font: inherit;
+  font-weight: 500;
+  background: var(--cartao);
+  border: 1px solid var(--borda);
+  border-radius: 12px;
+  color: var(--texto);
+  padding: 12px 14px;
+}
+
+.aceite {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font-size: 0.9rem;
+  color: var(--texto-sec);
+}
+
+.aceite input {
+  width: 20px;
+  height: 20px;
+  margin-top: 2px;
+  accent-color: var(--verde);
+  flex: none;
+}
+
+.link {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--verde);
+  text-decoration: underline;
+  font-weight: 600;
+}
+
+.mensagem {
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 0.9rem;
+}
+
+.mensagem.erro {
+  background: color-mix(in srgb, var(--vermelho) 15%, transparent);
+  color: var(--vermelho);
+}
+
+.mensagem.ok {
+  background: color-mix(in srgb, var(--verde) 12%, transparent);
+  color: var(--verde);
+}
+
+.barra-conta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.barra-conta .botao-sec {
+  width: auto;
+  padding: 8px 14px;
+}
+
+.numeros {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin: 14px 0;
+}
+
+.numeros div {
+  background: var(--cartao);
+  border: 1px solid var(--borda);
+  border-radius: 14px;
+  padding: 10px;
+  font-size: 0.8rem;
+  color: var(--texto-sec);
+  text-align: center;
+}
+
+.numeros strong {
+  display: block;
+  font-size: 1.4rem;
+  color: var(--verde);
+}
+
+.abas {
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.abas button {
+  font-size: 0.85rem;
+  padding: 8px;
+}
+
+.pessoa-topo {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.pessoa-topo p {
+  margin: 4px 0 0;
+}
+
+.sem-botao {
+  width: 100%;
+  background: none;
+  border: none;
+  color: inherit;
+  padding: 0;
+  text-align: left;
+}
+
+.acoes-linha {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.acoes-linha > * {
+  flex: 1;
+}
+
+.historico .linha {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid var(--borda);
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+
+.tres-campos {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.tres-campos input,
+.tres-campos select {
+  min-width: 0;
+  width: 100%;
+}
+
+.texto-longo p {
+  line-height: 1.55;
+  color: var(--texto-sec);
+}
+
+.texto-longo h2 {
+  margin: 18px 0 4px;
+}

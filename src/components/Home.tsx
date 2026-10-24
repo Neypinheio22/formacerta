@@ -1,3 +1,4 @@
+import type { Perfil } from '../nuvem/conta'
 import type { Assessment } from '../pose/types'
 import { Logo } from './Logo'
 
@@ -10,6 +11,10 @@ type Props = {
   onCorrida: () => void
   onFlexibilidade: () => void
   onAdams: () => void
+  perfil: Perfil | null
+  onAdmin: () => void
+  onAlunos: () => void
+  onConta: () => void
 }
 
 const EM_BREVE = [
@@ -17,7 +22,7 @@ const EM_BREVE = [
   { titulo: 'Caminhada de 6 minutos', texto: 'Distância, tempo, frequência cardíaca e esforço.' },
 ]
 
-export function Home({ history, onStart, onOpen, onEstudio, onExercicio, onCorrida, onFlexibilidade, onAdams }: Props) {
+export function Home({ history, onStart, onOpen, onEstudio, onExercicio, onCorrida, onFlexibilidade, onAdams, perfil, onAdmin, onAlunos, onConta }: Props) {
   return (
     <div className="tela">
       <header className="marca">
@@ -26,6 +31,24 @@ export function Home({ history, onStart, onOpen, onEstudio, onExercicio, onCorri
           Treine certo. <span className="verde">Evolua sempre.</span>
         </p>
       </header>
+
+      {perfil && (
+        <div className="barra-conta">
+          <button className="link" onClick={onConta}>
+            {perfil.nome ? perfil.nome.split(' ')[0] : perfil.email} · Minha conta
+          </button>
+          {perfil.papel === 'admin' && (
+            <button className="botao-sec" onClick={onAdmin}>
+              Administração
+            </button>
+          )}
+          {perfil.papel === 'profissional' && (
+            <button className="botao-sec" onClick={onAlunos}>
+              Meus alunos
+            </button>
+          )}
+        </div>
+      )}
 
       <section className="cartao destaque">
         <span className="etiqueta">Correção de postura com IA</span>

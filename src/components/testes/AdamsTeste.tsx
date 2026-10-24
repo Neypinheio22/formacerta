@@ -1,3 +1,4 @@
+import { EnviarResultado } from '../conta/EnviarResultado'
 import { useMemo, useState } from 'react'
 import { detectarComMascara, loadDetectorComMascara, loadSegmentador, segmentar, type Mascara } from '../../pose/detector'
 import { LM, type Point } from '../../pose/types'
@@ -352,6 +353,8 @@ function Detalhe(props: { registro: RegistroAdams; doMesmo: RegistroAdams[]; onA
           </ul>
         )}
       </section>
+      <EnviarResultado tipo="adams" id={r.id} feitoEm={r.date} resultado={r} avaliado={r.avaliado} />
+
       <section className="cartao formulario">
         <CampoObservacoes valor={obs} onChange={setObs} />
         <button

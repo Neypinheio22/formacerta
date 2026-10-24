@@ -11,6 +11,10 @@ import { EstudioCamera } from './components/estudio/EstudioCamera'
 import { EstudioControle } from './components/estudio/EstudioControle'
 import { EstudioInicio } from './components/estudio/EstudioInicio'
 import { Referencias } from './components/estudio/Referencias'
+import { Admin } from './components/conta/Admin'
+import { MeusAlunos } from './components/conta/MeusAlunos'
+import { MinhaConta } from './components/conta/MinhaConta'
+import { Portao } from './components/conta/Portao'
 import { Home } from './components/Home'
 import { PostureAssessment } from './components/PostureAssessment'
 import type { ConfigCorrida, ResultadoCorrida, VistaCorrida } from './corrida/tipos'
@@ -18,6 +22,7 @@ import type { ResultadoExercicio } from './movimento/tipos'
 import { AdamsTeste } from './components/testes/AdamsTeste'
 import { FlexTeste } from './components/testes/FlexTeste'
 import type { Assessment } from './pose/types'
+import { useConta } from './nuvem/conta'
 import { loadAssessments, saveAssessment } from './storage'
 
 type Screen =
@@ -37,6 +42,9 @@ type Screen =
   | { name: 'corrida-resultado'; resultado: ResultadoCorrida }
   | { name: 'flexibilidade' }
   | { name: 'adams' }
+  | { name: 'admin' }
+  | { name: 'alunos' }
+  | { name: 'conta' }
 
 // Link enviado pelo celular de controle: ...?estudio=123456 abre direto como câmera.
 function telaInicial(): Screen {
@@ -45,7 +53,19 @@ function telaInicial(): Screen {
 }
 
 export default function App() {
-  const [screen, setScreen] = useState<Screen>(telaInicial)
+  const [inicial] = useState<Screen>(telaInicial)
+  // O celular que só filma no modo estúdio abre pelo link, sem login.
+  if (inicial.name === 'estudio-camera') return <Telas inicial={inicial} />
+  return (
+    <Portao>
+      <Telas inicial={inicial} />
+    </Portao>
+  )
+}
+
+function Telas({ inicial }: { inicial: Screen }) {
+  const [screen, setScreen] = useState<Screen>(inicial)
+  const { perfil } = useConta()
   const [history, setHistory] = useState(loadAssessments)
 
   const go = useCallback((s: Screen) => {
@@ -132,6 +152,12 @@ export default function App() {
 
   if (screen.name === 'adams') return <AdamsTeste onVoltar={() => go({ name: 'inicio' })} />
 
+  if (screen.name === 'admin') return <Admin onVoltar={() => go({ name: 'inicio' })} />
+
+  if (screen.name === 'alunos' && perfil) return <MeusAlunos meuId={perfil.id} onVoltar={() => go({ name: 'inicio' })} />
+
+  if (screen.name === 'conta') return <MinhaConta onVoltar={() => go({ name: 'inicio' })} />
+
   return (
     <Home
       history={history}
@@ -142,6 +168,10 @@ export default function App() {
       onCorrida={() => go({ name: 'corrida' })}
       onFlexibilidade={() => go({ name: 'flexibilidade' })}
       onAdams={() => go({ name: 'adams' })}
+      perfil={perfil}
+      onAdmin={() => go({ name: 'admin' })}
+      onAlunos={() => go({ name: 'alunos' })}
+      onConta={() => go({ name: 'conta' })}
     />
   )
 }
