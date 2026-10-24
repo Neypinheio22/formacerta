@@ -10,6 +10,8 @@ type Props = {
   onCorrida: () => void
   onFlexibilidade: () => void
   onAdams: () => void
+  onRelatorio: () => void
+  onPerfil: () => void
 }
 
 const EM_BREVE = [
@@ -17,7 +19,7 @@ const EM_BREVE = [
   { titulo: 'Caminhada de 6 minutos', texto: 'Distância, tempo, frequência cardíaca e esforço.' },
 ]
 
-export function Home({ history, onStart, onOpen, onEstudio, onExercicio, onCorrida, onFlexibilidade, onAdams }: Props) {
+export function Home({ history, onStart, onOpen, onEstudio, onExercicio, onCorrida, onFlexibilidade, onAdams, onRelatorio, onPerfil }: Props) {
   return (
     <div className="tela">
       <header className="marca">
@@ -79,6 +81,20 @@ export function Home({ history, onStart, onOpen, onEstudio, onExercicio, onCorri
           </button>
         </div>
         <p className="dica-sec">São testes de triagem: não substituem o diagnóstico médico.</p>
+      </section>
+
+      <section className="cartao destaque">
+        <span className="etiqueta">Para o personal</span>
+        <h2>Relatório dos testes</h2>
+        <p className="dica-sec">Junte os testes do avaliado num relatório com a sua logo, nome e CREF. Imprima, salve em PDF ou mande no WhatsApp.</p>
+        <div className="acoes">
+          <button className="botao" onClick={onRelatorio}>
+            Fazer relatório
+          </button>
+          <button className="botao-sec" onClick={onPerfil}>
+            Meu perfil e logo
+          </button>
+        </div>
       </section>
 
       {history.length > 0 && (
