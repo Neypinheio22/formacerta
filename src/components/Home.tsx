@@ -8,7 +8,7 @@ type Props = {
   onEstudio: () => void
   onExercicio: () => void
   onCorrida: () => void
-  onWells: () => void
+  onFlexibilidade: () => void
   onAdams: () => void
 }
 
@@ -17,7 +17,7 @@ const EM_BREVE = [
   { titulo: 'Caminhada de 6 minutos', texto: 'Distância, tempo, frequência cardíaca e esforço.' },
 ]
 
-export function Home({ history, onStart, onOpen, onEstudio, onExercicio, onCorrida, onWells, onAdams }: Props) {
+export function Home({ history, onStart, onOpen, onEstudio, onExercicio, onCorrida, onFlexibilidade, onAdams }: Props) {
   return (
     <div className="tela">
       <header className="marca">
@@ -69,9 +69,9 @@ export function Home({ history, onStart, onOpen, onEstudio, onExercicio, onCorri
         <span className="etiqueta">Testes do personal</span>
         <h2>Flexibilidade e coluna</h2>
         <div className="opcoes">
-          <button className="opcao" onClick={onWells}>
-            Banco de Wells Digital
-            <span>Flexibilidade da cadeia posterior, com classificação automática e evolução.</span>
+          <button className="opcao" onClick={onFlexibilidade}>
+            Teste de Flexibilidade Digital
+            <span>Em pé e sem equipamento: a câmera de lado vê até onde as mãos chegam e classifica sozinha.</span>
           </button>
           <button className="opcao" onClick={onAdams}>
             Teste de Adams Digital

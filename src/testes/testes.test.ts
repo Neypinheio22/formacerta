@@ -3,7 +3,7 @@ import { LM, type Finding, type Point } from '../pose/types'
 import { planoCorretivo, recomendacao } from '../pose/recomendacoes'
 import { analyzeFrontBack } from '../pose/analysis'
 import { analisarAdams, anguloAdams, classificarAdams } from './adams'
-import { ajustarMarca, classificarWells, medirFotoWells } from './wells'
+import { classificarFlex, fotoFlexValida, medirFlex } from './flexibilidade'
 
 describe('recomendações por alteração', () => {
   const pontos = (over: Record<number, [number, number]> = {}): Point[] => {
@@ -63,42 +63,49 @@ describe('recomendações por alteração', () => {
   })
 })
 
-describe('Banco de Wells', () => {
-  it('classifica pela tabela de sexo e idade', () => {
-    expect(classificarWells(41, 'M', 25).classe).toBe('Excelente')
-    expect(classificarWells(34, 'M', 25).classe).toBe('Acima da média')
-    expect(classificarWells(30, 'M', 25).classe).toBe('Média')
-    expect(classificarWells(25, 'M', 25).classe).toBe('Abaixo da média')
-    expect(classificarWells(24, 'M', 25).classe).toBe('Fraco')
-    expect(classificarWells(30, 'F', 45).classe).toBe('Média')
-    expect(classificarWells(22, 'F', 65).classe).toBe('Fraco')
+describe('Teste de flexibilidade em pé', () => {
+  // De lado, virado para a direita: joelho em y=0.6, tornozelo 0.8, chão (calcanhar) 0.84.
+  const pessoa = (mao: number, deitada = false, joelho = { x: 0.42, y: 0.6 }) => {
+    const lm: Point[] = Array.from({ length: 33 }, () => ({ x: 0, y: 0, visibility: 0.05 }))
+    const p = (i: number, x: number, y: number) => (lm[i] = { x, y, visibility: 1 })
+    p(LM.ombroEsq, 0.6, 0.5)
+    p(LM.quadrilEsq, 0.4, 0.4)
+    p(LM.joelhoEsq, joelho.x, joelho.y)
+    p(LM.tornozeloEsq, 0.42, 0.8)
+    p(LM.calcanharEsq, 0.41, 0.84)
+    p(LM.ponteiraEsq, 0.48, 0.83)
+    p(LM.punhoEsq, deitada ? 0.54 : 0.6, deitada ? mao - 0.01 : mao - 0.05)
+    p(LM.indicadorEsq, 0.6, mao)
+    return lm
+  }
+
+  it('classifica pela altura da ponta dos dedos', () => {
+    const nivel = (mao: number, deitada?: boolean) => medirFlex(pessoa(mao, deitada), 1000, 1000).nivel
+    expect(nivel(0.5)).toBe('Muito limitada')
+    expect(nivel(0.6)).toBe('Limitada')
+    expect(nivel(0.7)).toBe('Moderada')
+    expect(nivel(0.8)).toBe('Boa')
+    expect(nivel(0.84)).toBe('Boa') // ponta dos dedos no chão, mão em pé
+    expect(nivel(0.84, true)).toBe('Excelente') // palma apoiada
+    expect(nivel(0.7, true)).toBe('Moderada')
   })
 
-  it('diz quanto falta para a próxima classe', () => {
-    const r = classificarWells(31, 'F', 35)
-    expect(r.classe).toBe('Abaixo da média')
-    expect(r.proximaClasse).toBe('Média')
-    expect(r.faltam).toBe(1)
-    expect(classificarWells(50, 'F', 35).proximaClasse).toBeNull()
+  it('mede o alcance de 0 (joelho) a 100 (chão)', () => {
+    expect(medirFlex(pessoa(0.6), 1000, 1000).alcance).toBe(0)
+    expect(medirFlex(pessoa(0.84), 1000, 1000).alcance).toBe(100)
+    expect(classificarFlex(-30, false)).toBe('Muito limitada')
   })
 
-  it('ajusta banco com outra marca dos pés', () => {
-    expect(ajustarMarca(30, 23)).toBe(33)
-    expect(ajustarMarca(30, 26)).toBe(30)
+  it('avisa quando o joelho dobra', () => {
+    expect(medirFlex(pessoa(0.8), 1000, 1000).joelhosOk).toBe(true)
+    expect(medirFlex(pessoa(0.8, false, { x: 0.52, y: 0.6 }), 1000, 1000).joelhosOk).toBe(false)
   })
 
-  it('avisa quando o joelho dobra na foto', () => {
-    const lm: Point[] = Array.from({ length: 33 }, () => ({ x: 0, y: 0, visibility: 0.1 }))
-    // Sentado de lado: tronco inclinado sobre as pernas esticadas.
-    lm[LM.ombroEsq] = { x: 0.55, y: 0.45, visibility: 1 }
-    lm[LM.quadrilEsq] = { x: 0.3, y: 0.7, visibility: 1 }
-    lm[LM.joelhoEsq] = { x: 0.55, y: 0.7, visibility: 1 }
-    lm[LM.tornozeloEsq] = { x: 0.8, y: 0.7, visibility: 1 }
-    const reto = medirFotoWells(lm, 1000, 1000)
-    expect(reto.quadril).toBeCloseTo(45)
-    expect(reto.joelhosOk).toBe(true)
-    lm[LM.joelhoEsq] = { x: 0.55, y: 0.6, visibility: 1 }
-    expect(medirFotoWells(lm, 1000, 1000).joelhosOk).toBe(false)
+  it('só aceita a foto com o tronco inclinado', () => {
+    expect(fotoFlexValida(pessoa(0.8))).toBe(true)
+    const empe = pessoa(0.55)
+    empe[LM.ombroEsq] = { x: 0.41, y: 0.1, visibility: 1 }
+    expect(fotoFlexValida(empe)).toBe(false)
   })
 })
 

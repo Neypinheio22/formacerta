@@ -47,12 +47,22 @@ export const LM = {
   cotoveloDir: 14,
   punhoEsq: 15,
   punhoDir: 16,
+  mindinhoEsq: 17,
+  mindinhoDir: 18,
+  indicadorEsq: 19,
+  indicadorDir: 20,
+  polegarEsq: 21,
+  polegarDir: 22,
   quadrilEsq: 23,
   quadrilDir: 24,
   joelhoEsq: 25,
   joelhoDir: 26,
   tornozeloEsq: 27,
   tornozeloDir: 28,
+  calcanharEsq: 29,
+  calcanharDir: 30,
+  ponteiraEsq: 31,
+  ponteiraDir: 32,
 } as const
 
 export const VIEWS: { id: ViewId; label: string; hint: string }[] = [
