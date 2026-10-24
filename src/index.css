@@ -1864,3 +1864,9 @@ ul.musculos.fortalecer li {
 .campo input[type='file'] {
   font-size: 0.85rem;
 }
+
+/* No carrossel a foto fica quadrada, para não empurrar o resto da tela. */
+.carrossel .foto-unica img,
+.carrossel .foto-unica .foto-vazia {
+  aspect-ratio: 1 / 1;
+}
