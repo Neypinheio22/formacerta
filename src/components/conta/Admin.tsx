@@ -156,7 +156,7 @@ export function Admin({ onVoltar }: { onVoltar: () => void }) {
 
       {!carregando && aba === 'vitrine' && <ModerarVitrine nomePorId={nomePorId} />}
 
-      {aba === 'planos' && <AdminPlanos />}
+      {!carregando && aba === 'planos' && <AdminPlanos perfis={perfis} />}
 
       {!carregando && aba === 'pagamentos' && <AdminPagamentos nomePorId={nomePorId} />}
     </div>

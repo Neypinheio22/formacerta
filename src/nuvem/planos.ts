@@ -27,6 +27,8 @@ export type ConfigCobranca = {
   comissao_pct: number
   dias_gratis: number
   gateway: 'nenhum' | 'asaas' | 'mercadopago' | 'stripe'
+  /** Enquanto 'testadores', só o administrador e quem ele escolher veem os planos. */
+  planos_para: 'testadores' | 'todos'
 }
 
 export type Assinatura = {
@@ -160,7 +162,7 @@ export const PLANOS_PADRAO: Plano[] = [
   },
 ]
 
-export const CONFIG_PADRAO: ConfigCobranca = { comissao_pct: 10, dias_gratis: 30, gateway: 'nenhum' }
+export const CONFIG_PADRAO: ConfigCobranca = { comissao_pct: 10, dias_gratis: 30, gateway: 'nenhum', planos_para: 'testadores' }
 
 /** Público dos planos que a pessoa vê. O administrador vê os do personal. */
 export const publicoDe = (papel: Papel): Publico => (papel === 'aluno' ? 'aluno' : 'profissional')
@@ -200,6 +202,27 @@ const numeros = <T extends Record<string, unknown>>(linha: T, campos: (keyof T)[
   return r
 }
 
+/** Se esta pessoa já pode ver os planos (administrador, testador ou liberado para todos). */
+export async function planosLiberados(): Promise<boolean> {
+  const { data, error } = await supabase.rpc('planos_liberados')
+  return !error && data === true
+}
+
+export async function listarTestadores(): Promise<string[]> {
+  const { data } = await supabase.from('testadores_planos').select('usuario_id')
+  return (data ?? []).map((t) => t.usuario_id as string)
+}
+
+export async function adicionarTestador(id: string) {
+  const { error } = await supabase.from('testadores_planos').insert({ usuario_id: id })
+  return error ? erroAmigavel(error) : null
+}
+
+export async function tirarTestador(id: string) {
+  const { error } = await supabase.from('testadores_planos').delete().eq('usuario_id', id)
+  return error ? erroAmigavel(error) : null
+}
+
 export async function listarPlanos(): Promise<{ planos: Plano[]; erro: string | null }> {
   const { data, error } = await supabase.from('planos').select('*').order('ordem')
   if (error || !data?.length) return { planos: PLANOS_PADRAO, erro: error ? erroAmigavel(error) : null }
@@ -207,7 +230,7 @@ export async function listarPlanos(): Promise<{ planos: Plano[]; erro: string | 
 }
 
 export async function lerConfig(): Promise<ConfigCobranca> {
-  const { data } = await supabase.from('config_cobranca').select('comissao_pct, dias_gratis, gateway').maybeSingle()
+  const { data } = await supabase.from('config_cobranca').select('comissao_pct, dias_gratis, gateway, planos_para').maybeSingle()
   return data ? numeros(data as ConfigCobranca, ['comissao_pct', 'dias_gratis']) : CONFIG_PADRAO
 }
 
@@ -259,7 +282,7 @@ export async function salvarPlano(p: Plano) {
   return error ? erroAmigavel(error) : null
 }
 
-export async function salvarConfig(c: Pick<ConfigCobranca, 'comissao_pct' | 'dias_gratis'>) {
+export async function salvarConfig(c: Partial<Pick<ConfigCobranca, 'comissao_pct' | 'dias_gratis' | 'planos_para'>>) {
   const { error } = await supabase.from('config_cobranca').update({ ...c, atualizado_em: new Date().toISOString() }).eq('id', true)
   return error ? erroAmigavel(error) : null
 }

@@ -3,6 +3,7 @@ import type { Assessment } from '../pose/types'
 import { Activity, ArrowRight, Clapperboard, Crown, Footprints, HeartPulse, PlayCircle, Ruler, Sparkles, Video } from 'lucide-react'
 import { FundoHex } from './FundoHex'
 import { Logo } from './Logo'
+import { usePlanosLiberados } from './planos/usePlanosLiberados'
 import { VitrineCarrossel } from './vitrine/VitrineCarrossel'
 
 type Props = {
@@ -28,6 +29,7 @@ const EM_BREVE = [
 ]
 
 export function Home({ history, onStart, onOpen, onEstudio, onExercicio, onCorrida, onFlexibilidade, onAdams, onIdoso, perfil, onAdmin, onAlunos, onConta, onVitrine, onPlanos }: Props) {
+  const verPlanos = usePlanosLiberados(perfil)
   return (
     <div className="tela">
       <FundoHex brilho />
@@ -38,9 +40,11 @@ export function Home({ history, onStart, onOpen, onEstudio, onExercicio, onCorri
             {perfil.nome ? perfil.nome.split(' ')[0] : perfil.email} · Minha conta
           </button>
           <span className="barra-botoes">
-            <button className="botao-sec" onClick={onPlanos}>
-              <Crown size={14} /> Planos
-            </button>
+            {verPlanos && (
+              <button className="botao-sec" onClick={onPlanos}>
+                <Crown size={14} /> Planos
+              </button>
+            )}
             {perfil.papel === 'admin' && (
               <button className="botao-sec" onClick={onAdmin}>
                 Administração

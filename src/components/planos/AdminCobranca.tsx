@@ -1,16 +1,20 @@
 import { useEffect, useState } from 'react'
+import { ROTULO_PAPEL, type Perfil } from '../../nuvem/conta'
 import {
   CONFIG_PADRAO,
   ROTULO_FORMA,
   ROTULO_PAGAMENTO,
+  adicionarTestador,
   definirPagamento,
   emReais,
   lerConfig,
   lerReais,
   listarPagamentos,
   listarPlanos,
+  listarTestadores,
   salvarConfig,
   salvarPlano,
+  tirarTestador,
   type ConfigCobranca,
   type Pagamento,
   type Plano,
@@ -18,7 +22,7 @@ import {
 } from '../../nuvem/planos'
 
 /** Administrador: muda preços, recursos, comissão e dias grátis. */
-export function AdminPlanos() {
+export function AdminPlanos({ perfis }: { perfis: Perfil[] }) {
   const [planos, setPlanos] = useState<Plano[]>([])
   const [config, setConfig] = useState<ConfigCobranca>(CONFIG_PADRAO)
   const [erro, setErro] = useState<string | null>(null)
@@ -40,6 +44,8 @@ export function AdminPlanos() {
 
   return (
     <>
+      <QuemVe config={config} perfis={perfis} onMudar={(planos_para) => setConfig({ ...config, planos_para })} />
+
       <section className="cartao">
         <h2>Pagamento pelo app</h2>
         <p className="dica-sec">
@@ -83,6 +89,90 @@ export function AdminPlanos() {
           <EditarPlano key={p.id} plano={p} onSalvo={(n) => setPlanos((ps) => ps.map((x) => (x.id === n.id ? n : x)))} />
         ))}
     </>
+  )
+}
+
+/** Enquanto o Ney configura, os planos só aparecem para ele e os testadores escolhidos. */
+function QuemVe({ config, perfis, onMudar }: { config: ConfigCobranca; perfis: Perfil[]; onMudar: (v: ConfigCobranca['planos_para']) => void }) {
+  const [testadores, setTestadores] = useState<string[]>([])
+  const [escolhido, setEscolhido] = useState('')
+  const [erro, setErro] = useState<string | null>(null)
+
+  useEffect(() => {
+    listarTestadores().then(setTestadores)
+  }, [])
+
+  const nome = (p: Perfil) => `${p.nome || p.email} (${ROTULO_PAPEL[p.papel].toLowerCase()})`
+  const fora = perfis.filter((p) => p.papel !== 'admin' && !testadores.includes(p.id))
+
+  async function mudar(v: ConfigCobranca['planos_para']) {
+    if (v === 'todos' && !confirm('Mostrar os planos e o pagamento para todos os usuários do app?')) return
+    const e = await salvarConfig({ planos_para: v })
+    if (e) setErro(e)
+    else onMudar(v)
+  }
+
+  async function adicionar() {
+    if (!escolhido) return
+    const e = await adicionarTestador(escolhido)
+    if (e) return setErro(e)
+    setTestadores((t) => [...t, escolhido])
+    setEscolhido('')
+  }
+
+  async function tirar(id: string) {
+    const e = await tirarTestador(id)
+    if (e) setErro(e)
+    else setTestadores((t) => t.filter((x) => x !== id))
+  }
+
+  return (
+    <section className="cartao formulario">
+      <h2>Quem vê os planos</h2>
+      <div className="escolha">
+        <button className={config.planos_para === 'testadores' ? 'ativo' : ''} onClick={() => mudar('testadores')}>
+          Só você e testadores
+        </button>
+        <button className={config.planos_para === 'todos' ? 'ativo' : ''} onClick={() => mudar('todos')}>
+          Todos
+        </button>
+      </div>
+      <p className="dica-sec">
+        {config.planos_para === 'testadores'
+          ? 'Escondido: o botão Planos só aparece para você e para as pessoas abaixo. Os outros não veem nada.'
+          : 'Liberado: todo mundo vê o botão Planos.'}
+      </p>
+      {erro && <p className="mensagem erro">{erro}</p>}
+      {config.planos_para === 'testadores' && (
+        <>
+          {testadores.map((id) => {
+            const p = perfis.find((x) => x.id === id)
+            return (
+              <div className="servico" key={id}>
+                <div>{p ? nome(p) : 'conta excluída'}</div>
+                <button className="link perigo" onClick={() => tirar(id)}>
+                  Tirar
+                </button>
+              </div>
+            )
+          })}
+          <label className="campo">
+            Adicionar testador
+            <select value={escolhido} onChange={(e) => setEscolhido(e.target.value)}>
+              <option value="">Escolha um profissional ou aluno</option>
+              {fora.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {nome(p)}
+                </option>
+              ))}
+            </select>
+          </label>
+          <button className="botao-sec" disabled={!escolhido} onClick={adicionar}>
+            Adicionar
+          </button>
+        </>
+      )}
+    </section>
   )
 }
 

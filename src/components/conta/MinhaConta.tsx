@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { ROTULO_PAPEL, sair, useConta } from '../../nuvem/conta'
 import { excluirMinhaConta, salvarMeuPerfil } from '../../nuvem/gestao'
 import { ROTULO_TIPO, apagarResultado, listarResultados, type ResultadoNuvem } from '../../nuvem/resultados'
+import { usePlanosLiberados } from '../planos/usePlanosLiberados'
 import { Privacidade } from './Privacidade'
 import { Suporte } from './Suporte'
 
@@ -12,6 +13,7 @@ export function MinhaConta({ onVoltar, onPlanos }: { onVoltar: () => void; onPla
   const [meus, setMeus] = useState<ResultadoNuvem[]>([])
   const [erro, setErro] = useState<string | null>(null)
   const [verPrivacidade, setVerPrivacidade] = useState(false)
+  const verPlanos = usePlanosLiberados(perfil)
 
   useEffect(() => {
     if (!perfil) return
@@ -97,7 +99,7 @@ export function MinhaConta({ onVoltar, onPlanos }: { onVoltar: () => void; onPla
         </section>
       )}
 
-      {perfil.papel !== 'admin' && (
+      {perfil.papel !== 'admin' && verPlanos && (
         <button className="botao-sec" onClick={onPlanos}>
           Meu plano e pagamentos
         </button>
