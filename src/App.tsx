@@ -21,6 +21,7 @@ import type { ConfigCorrida, ResultadoCorrida, VistaCorrida } from './corrida/ti
 import type { ResultadoExercicio } from './movimento/tipos'
 import { AdamsTeste } from './components/testes/AdamsTeste'
 import { FlexTeste } from './components/testes/FlexTeste'
+import { IdosoModulo } from './components/idoso/IdosoModulo'
 import type { Assessment } from './pose/types'
 import { useConta } from './nuvem/conta'
 import { loadAssessments, saveAssessment } from './storage'
@@ -42,6 +43,7 @@ type Screen =
   | { name: 'corrida-resultado'; resultado: ResultadoCorrida }
   | { name: 'flexibilidade' }
   | { name: 'adams' }
+  | { name: 'idoso' }
   | { name: 'admin' }
   | { name: 'alunos' }
   | { name: 'conta' }
@@ -152,6 +154,8 @@ function Telas({ inicial }: { inicial: Screen }) {
 
   if (screen.name === 'adams') return <AdamsTeste onVoltar={() => go({ name: 'inicio' })} />
 
+  if (screen.name === 'idoso') return <IdosoModulo onVoltar={() => go({ name: 'inicio' })} />
+
   if (screen.name === 'admin') return <Admin onVoltar={() => go({ name: 'inicio' })} />
 
   if (screen.name === 'alunos' && perfil) return <MeusAlunos meuId={perfil.id} onVoltar={() => go({ name: 'inicio' })} />
@@ -168,6 +172,7 @@ function Telas({ inicial }: { inicial: Screen }) {
       onCorrida={() => go({ name: 'corrida' })}
       onFlexibilidade={() => go({ name: 'flexibilidade' })}
       onAdams={() => go({ name: 'adams' })}
+      onIdoso={() => go({ name: 'idoso' })}
       perfil={perfil}
       onAdmin={() => go({ name: 'admin' })}
       onAlunos={() => go({ name: 'alunos' })}

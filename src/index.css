@@ -1374,3 +1374,380 @@ ul.musculos.fortalecer li {
 .suporte .link {
   word-break: break-all;
 }
+
+/* Avaliação funcional do idoso */
+.video-explicativo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.video-explicativo .botao-sec {
+  width: 100%;
+  text-decoration: none;
+}
+
+.video-explicativo iframe {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border: 0;
+  border-radius: 14px;
+}
+
+.passos-teste {
+  margin: 10px 0 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 0.9rem;
+  color: var(--texto-sec);
+}
+
+.cronometro {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 10px 0;
+}
+
+.cronometro-tempo {
+  font-size: 3.2rem;
+  font-weight: 800;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  color: var(--verde);
+}
+
+.cronometro-tempo.fim {
+  color: var(--laranja);
+}
+
+.cronometro .acoes > * {
+  flex: 1;
+}
+
+.contador {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.contador-mais {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  padding: 22px 12px;
+  border-radius: 20px;
+  border: 2px solid var(--verde);
+  background: color-mix(in srgb, var(--verde) 10%, transparent);
+  color: var(--texto);
+  touch-action: manipulation;
+  user-select: none;
+}
+
+.contador-mais:active {
+  background: color-mix(in srgb, var(--verde) 25%, transparent);
+}
+
+.contador-mais strong {
+  font-size: 3.4rem;
+  line-height: 1;
+  color: var(--verde);
+}
+
+.contador-mais span {
+  color: var(--texto-sec);
+  font-size: 0.85rem;
+}
+
+.contador-menos {
+  align-self: center;
+  padding: 8px 22px;
+}
+
+.resultado-teste.imc {
+  margin-top: 4px;
+}
+
+.notas-dor {
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.escolha.notas-dor button {
+  flex: 0 0 calc((100% - 30px) / 6);
+  padding: 8px 0;
+}
+
+.placar-berg {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.itens-berg {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.itens-berg > li.aberto {
+  border-color: var(--verde);
+}
+
+.item-berg-topo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+}
+
+.item-berg {
+  margin-top: 12px;
+}
+
+.instrucao {
+  margin: 0 0 8px;
+  font-style: italic;
+  color: var(--texto-sec);
+  font-size: 0.9rem;
+}
+
+.notas-berg {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.notas-berg button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+  background: transparent;
+  border: 1px solid var(--borda);
+  border-radius: 14px;
+  color: var(--texto);
+  padding: 10px 12px;
+  font-size: 0.88rem;
+}
+
+.notas-berg button strong {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--borda);
+  font-size: 1rem;
+}
+
+.notas-berg button.ativo {
+  border-color: var(--verde);
+  box-shadow: 0 0 0 1px var(--verde);
+}
+
+.notas-berg button.ativo strong {
+  background: var(--verde);
+  color: var(--fundo);
+}
+
+.item-lista {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+}
+
+.opcao .item-lista-texto {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  color: var(--texto);
+  font-size: 1rem;
+}
+
+.opcao .item-lista .chip {
+  font-size: 0.78rem;
+  color: var(--texto-sec);
+  background: var(--borda);
+}
+
+.opcao .item-lista .chip-ok {
+  background: rgba(54, 242, 148, 0.15);
+  color: var(--verde);
+}
+
+.opcao .item-lista .chip-atencao {
+  background: rgba(251, 141, 26, 0.15);
+  color: var(--laranja);
+}
+
+.opcao .item-lista .chip-alerta {
+  background: rgba(255, 90, 95, 0.15);
+  color: var(--vermelho);
+}
+
+.resultado-final h1 {
+  text-transform: uppercase;
+  font-size: 1.25rem;
+  margin: 6px 0 4px;
+}
+
+.resumo-final {
+  list-style: none;
+  margin: 14px 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.resumo-final li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-top: 1px solid var(--borda);
+}
+
+.resumo-valor {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+  text-align: right;
+}
+
+.resumo-valor b {
+  font-size: 1.1rem;
+  color: var(--verde);
+}
+
+.tabela-evolucao {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+  margin: 8px 0 4px;
+}
+
+.tabela-evolucao th {
+  color: var(--texto-sec);
+  font-weight: 600;
+  text-align: right;
+  padding: 6px 4px;
+}
+
+.tabela-evolucao td {
+  border-top: 1px solid var(--borda);
+  padding: 8px 4px;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.tabela-evolucao td:first-child {
+  text-align: left;
+  white-space: normal;
+}
+
+.tabela-evolucao .melhorou {
+  color: var(--verde);
+  font-weight: 700;
+}
+
+.tabela-evolucao .piorou {
+  color: var(--laranja);
+  font-weight: 700;
+}
+
+.grafico-metrica {
+  margin-top: 16px;
+}
+
+.grafico-metrica h3 {
+  font-size: 0.95rem;
+}
+
+.grafico-metrica small {
+  color: var(--texto-sec);
+  font-weight: 400;
+}
+
+.pontos-atencao {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pontos-atencao li {
+  border: 1px solid var(--borda);
+  border-left-width: 4px;
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+.pontos-atencao .area-ok {
+  border-left-color: var(--verde);
+}
+
+.pontos-atencao .area-atencao {
+  border-left-color: var(--laranja);
+}
+
+.pontos-atencao .area-alerta {
+  border-left-color: var(--vermelho);
+}
+
+.pontos-atencao .achado-detalhe {
+  margin: 6px 0 0;
+}
+
+.pontos-atencao .chip:not([class*='chip-']) {
+  background: var(--borda);
+  color: var(--texto-sec);
+}
+
+.anamnese-resumo summary {
+  cursor: pointer;
+  list-style: none;
+}
+
+.anamnese-resumo summary h2::after {
+  content: ' ▾';
+  color: var(--texto-sec);
+}
+
+.anamnese-resumo dl {
+  margin: 10px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.anamnese-resumo dt {
+  color: var(--texto-sec);
+  font-size: 0.8rem;
+}
+
+.anamnese-resumo dd {
+  margin: 0;
+  font-size: 0.9rem;
+}
