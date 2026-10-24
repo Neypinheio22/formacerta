@@ -1,6 +1,7 @@
 import type { Perfil } from '../nuvem/conta'
 import type { Assessment } from '../pose/types'
 import { Logo } from './Logo'
+import { VitrineCarrossel } from './vitrine/VitrineCarrossel'
 
 type Props = {
   history: Assessment[]
@@ -16,13 +17,14 @@ type Props = {
   onAdmin: () => void
   onAlunos: () => void
   onConta: () => void
+  onVitrine: () => void
 }
 
 const EM_BREVE = [
   { titulo: 'Teste de mobilidade', texto: 'Agachamento, tornozelo, elevação dos braços e equilíbrio.' },
 ]
 
-export function Home({ history, onStart, onOpen, onEstudio, onExercicio, onCorrida, onFlexibilidade, onAdams, onIdoso, perfil, onAdmin, onAlunos, onConta }: Props) {
+export function Home({ history, onStart, onOpen, onEstudio, onExercicio, onCorrida, onFlexibilidade, onAdams, onIdoso, perfil, onAdmin, onAlunos, onConta, onVitrine }: Props) {
   return (
     <div className="tela">
       <header className="marca">
@@ -49,6 +51,8 @@ export function Home({ history, onStart, onOpen, onEstudio, onExercicio, onCorri
           )}
         </div>
       )}
+
+      {perfil && <VitrineCarrossel onAbrir={onVitrine} />}
 
       <section className="cartao destaque">
         <span className="etiqueta">Correção de postura com IA</span>

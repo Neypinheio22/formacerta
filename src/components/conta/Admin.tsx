@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
 import { ROTULO_PAPEL, ROTULO_SITUACAO, useConta, type Perfil, type Situacao } from '../../nuvem/conta'
 import { definirSituacao, excluirConta, listarPerfis } from '../../nuvem/gestao'
+import { ModerarVitrine } from '../vitrine/ModerarVitrine'
 import { ROTULO_TIPO, listarResultados, type ResultadoNuvem, type TipoResultado } from '../../nuvem/resultados'
 
-type Aba = 'aguardando' | 'profissionais' | 'alunos' | 'resultados'
+type Aba = 'aguardando' | 'profissionais' | 'alunos' | 'resultados' | 'vitrine'
 
 /** Tela do administrador: libera, bloqueia e exclui profissionais e alunos. */
 export function Admin({ onVoltar }: { onVoltar: () => void }) {
@@ -63,7 +64,7 @@ export function Admin({ onVoltar }: { onVoltar: () => void }) {
       </header>
 
       <h1>Administração</h1>
-      <p className="dica-sec">Você gerencia todos os profissionais, alunos e resultados do FormaCerta.</p>
+      <p className="dica-sec">Você gerencia todos os profissionais, alunos, resultados e fotos da vitrine do FormaCerta.</p>
 
       <div className="numeros">
         <div>
@@ -90,12 +91,15 @@ export function Admin({ onVoltar }: { onVoltar: () => void }) {
         <button className={aba === 'resultados' ? 'ativo' : ''} onClick={() => setAba('resultados')}>
           Resultados
         </button>
+        <button className={aba === 'vitrine' ? 'ativo' : ''} onClick={() => setAba('vitrine')}>
+          Vitrine
+        </button>
       </div>
 
       {erro && <p className="mensagem erro">{erro}</p>}
       {carregando && <p className="carregando">Carregando…</p>}
 
-      {!carregando && aba !== 'resultados' && (
+      {!carregando && aba !== 'resultados' && aba !== 'vitrine' && (
         <>
           {aba !== 'aguardando' && (
             <label className="campo">
@@ -142,6 +146,8 @@ export function Admin({ onVoltar }: { onVoltar: () => void }) {
       )}
 
       {!carregando && aba === 'resultados' && <ResumoResultados resultados={resultados} nomePorId={nomePorId} />}
+
+      {!carregando && aba === 'vitrine' && <ModerarVitrine nomePorId={nomePorId} />}
     </div>
   )
 }

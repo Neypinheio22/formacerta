@@ -20,7 +20,14 @@ export function Privacidade({ onVoltar }: { onVoltar: () => void }) {
         </p>
         <p>
           Dos testes, só quando a pessoa avaliada autoriza: os números do resultado (ângulos, níveis, cadência, repetições), a data, observações do
-          profissional e, se informados, idade, sexo e altura. <strong>Fotos e vídeos não são enviados</strong>: ficam só no celular onde o teste foi feito.
+          profissional e, se informados, idade, sexo e altura. <strong>Fotos e vídeos dos testes não são enviados</strong>: ficam só no celular onde o teste foi feito.
+        </p>
+
+        <h2>Vitrine dos alunos</h2>
+        <p>
+          A única exceção às fotos é a vitrine, e só quando a própria pessoa (ou o responsável, se for menor de 18 anos) autoriza o uso da imagem. A foto
+          passa pela aprovação do administrador antes de aparecer e fica visível só para quem tem conta liberada no app, com o nome que a pessoa escolher.
+          Ela pode ser apagada a qualquer momento em "Vitrine dos alunos" → "Minhas fotos", por quem enviou ou pela pessoa da foto.
         </p>
 
         <h2>Para que usamos</h2>
