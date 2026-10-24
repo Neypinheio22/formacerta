@@ -1751,3 +1751,122 @@ ul.musculos.fortalecer li {
   margin: 0;
   font-size: 0.9rem;
 }
+
+/* Vitrine dos alunos */
+.carrossel {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  border-radius: 14px;
+}
+
+.carrossel::-webkit-scrollbar {
+  display: none;
+}
+
+.carrossel-item {
+  flex: 0 0 100%;
+  scroll-snap-align: start;
+}
+
+.pontinhos {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+}
+
+.pontinhos span {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--borda);
+}
+
+.pontinhos span.ativo {
+  background: var(--verde);
+}
+
+.grade-vitrine {
+  display: grid;
+  gap: 14px;
+}
+
+.foto-vitrine {
+  margin: 0;
+  background: var(--fundo);
+  border: 1px solid var(--borda);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.foto-par,
+.foto-unica {
+  display: grid;
+  gap: 2px;
+}
+
+.foto-par {
+  grid-template-columns: 1fr 1fr;
+}
+
+.foto-par > div,
+.foto-unica > div {
+  position: relative;
+}
+
+.foto-vitrine img,
+.foto-vazia {
+  display: block;
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  object-fit: cover;
+  background: var(--cartao);
+}
+
+.foto-vazia {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--texto-sec);
+  font-size: 0.85rem;
+}
+
+.selo-foto {
+  position: absolute;
+  left: 8px;
+  bottom: 8px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  background: rgba(2, 11, 22, 0.75);
+  color: var(--texto);
+}
+
+.selo-foto.verde-fundo {
+  background: var(--verde);
+  color: var(--fundo);
+}
+
+.foto-vitrine figcaption {
+  padding: 10px 12px 12px;
+}
+
+.foto-vitrine figcaption p {
+  margin: 4px 0 0;
+}
+
+.foto-vitrine .acoes-linha {
+  align-items: center;
+}
+
+.campo input[type='file'] {
+  font-size: 0.85rem;
+}
+
+/* No carrossel a foto fica quadrada, para não empurrar o resto da tela. */
+.carrossel .foto-unica img,
+.carrossel .foto-unica .foto-vazia {
+  aspect-ratio: 1 / 1;
+}

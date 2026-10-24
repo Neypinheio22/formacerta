@@ -16,6 +16,7 @@ import { MeusAlunos } from './components/conta/MeusAlunos'
 import { MinhaConta } from './components/conta/MinhaConta'
 import { Portao } from './components/conta/Portao'
 import { Home } from './components/Home'
+import { Vitrine } from './components/vitrine/Vitrine'
 import { PostureAssessment } from './components/PostureAssessment'
 import type { ConfigCorrida, ResultadoCorrida, VistaCorrida } from './corrida/tipos'
 import type { ResultadoExercicio } from './movimento/tipos'
@@ -47,6 +48,7 @@ type Screen =
   | { name: 'admin' }
   | { name: 'alunos' }
   | { name: 'conta' }
+  | { name: 'vitrine' }
 
 // Link enviado pelo celular de controle: ...?estudio=123456 abre direto como câmera.
 function telaInicial(): Screen {
@@ -160,6 +162,8 @@ function Telas({ inicial }: { inicial: Screen }) {
 
   if (screen.name === 'alunos' && perfil) return <MeusAlunos meuId={perfil.id} onVoltar={() => go({ name: 'inicio' })} />
 
+  if (screen.name === 'vitrine') return <Vitrine onVoltar={() => go({ name: 'inicio' })} />
+
   if (screen.name === 'conta') return <MinhaConta onVoltar={() => go({ name: 'inicio' })} />
 
   return (
@@ -177,6 +181,7 @@ function Telas({ inicial }: { inicial: Screen }) {
       onAdmin={() => go({ name: 'admin' })}
       onAlunos={() => go({ name: 'alunos' })}
       onConta={() => go({ name: 'conta' })}
+      onVitrine={() => go({ name: 'vitrine' })}
     />
   )
 }
