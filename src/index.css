@@ -2208,3 +2208,46 @@ ul.musculos.fortalecer li {
 .historico .linha .nota {
   white-space: nowrap;
 }
+
+.pagar-pendente {
+  width: 100%;
+  margin-top: 8px;
+  padding: 10px;
+}
+
+.pix {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.valor-pix {
+  font-size: 2rem;
+  color: var(--verde);
+}
+
+.qr-pix {
+  width: 220px;
+  height: 220px;
+  background: #fff;
+  padding: 10px;
+  border-radius: 16px;
+}
+
+.copia-cola {
+  width: 100%;
+  font: inherit;
+  font-size: 0.8rem;
+  background: var(--fundo);
+  border: 1px solid var(--borda);
+  border-radius: 12px;
+  color: var(--texto);
+  padding: 10px 12px;
+  resize: none;
+  word-break: break-all;
+}
+
+.pix .botao {
+  align-self: stretch;
+}

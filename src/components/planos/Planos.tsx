@@ -234,6 +234,11 @@ export function Planos({ onVoltar, onPagar }: Props) {
                   </span>
                   <span className="nota">{emReais(p.valor)}</span>
                 </span>
+                {p.situacao === 'pendente' && config.gateway === 'mercadopago' && (
+                  <button className="botao pagar-pendente" onClick={() => onPagar({ tipo: 'pendente', pagamento: p })}>
+                    Pagar agora
+                  </button>
+                )}
               </li>
             ))}
           </ul>

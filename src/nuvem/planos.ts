@@ -56,6 +56,7 @@ export type Pagamento = {
   pagador_id: string
   recebedor_id: string | null
   tipo: 'assinatura' | 'avaliacao'
+  assinatura_id: string | null
   descricao: string
   valor: number
   comissao: number
@@ -63,7 +64,13 @@ export type Pagamento = {
   situacao: SituacaoPagamento
   criado_em: string
   pago_em: string | null
+  /** Cobrança do Mercado Pago, quando já foi gerada. */
+  pix_copia_cola: string | null
+  pix_qr: string | null
+  link_pagamento: string | null
 }
+
+export type Cobranca = { pix_copia_cola?: string; pix_qr?: string | null; link?: string | null }
 
 export const ROTULO_FORMA: Record<Forma, string> = { pix: 'Pix', cartao: 'Cartão de crédito', boleto: 'Boleto' }
 export const ROTULO_ASSINATURA: Record<SituacaoAssinatura, string> = {
@@ -265,9 +272,30 @@ export async function apagarServico(id: string) {
   return error ? erroAmigavel(error) : null
 }
 
-export async function comprarAvaliacao(servico: string, forma: Forma) {
-  const { error } = await supabase.rpc('comprar_avaliacao', { servico, forma })
-  return error ? erroAmigavel(error) : null
+export async function comprarAvaliacao(servico: string, forma: Forma): Promise<{ id: string | null; erro: string | null }> {
+  const { data, error } = await supabase.rpc('comprar_avaliacao', { servico, forma })
+  return error ? { id: null, erro: erroAmigavel(error) } : { id: data as string, erro: null }
+}
+
+export async function lerPagamento(id: string): Promise<Pagamento | null> {
+  const { data } = await supabase.from('pagamentos').select('*').eq('id', id).maybeSingle()
+  return data ? numeros(data as Pagamento, ['valor', 'comissao']) : null
+}
+
+/** Pagamento pendente de uma assinatura (quando não está no teste grátis). */
+export async function pagamentoDaAssinatura(assinatura: string): Promise<Pagamento | null> {
+  const { data } = await supabase.from('pagamentos').select('*').eq('assinatura_id', assinatura).eq('situacao', 'pendente').maybeSingle()
+  return data ? numeros(data as Pagamento, ['valor', 'comissao']) : null
+}
+
+/** Gera o Pix ou a página de pagamento no Mercado Pago. */
+export async function cobrar(pagamento: string, forma: Forma): Promise<{ cobranca: Cobranca | null; erro: string | null }> {
+  const { data, error } = await supabase.functions.invoke('mercado-pago', { body: { pagamento, forma } })
+  if (error) {
+    const corpo = await (error as { context?: Response }).context?.json?.().catch(() => null)
+    return { cobranca: null, erro: corpo?.erro ?? erroAmigavel(error) }
+  }
+  return { cobranca: data as Cobranca, erro: null }
 }
 
 export async function listarPagamentos(): Promise<Pagamento[]> {
@@ -282,7 +310,7 @@ export async function salvarPlano(p: Plano) {
   return error ? erroAmigavel(error) : null
 }
 
-export async function salvarConfig(c: Partial<Pick<ConfigCobranca, 'comissao_pct' | 'dias_gratis' | 'planos_para'>>) {
+export async function salvarConfig(c: Partial<Pick<ConfigCobranca, 'comissao_pct' | 'dias_gratis' | 'planos_para' | 'gateway'>>) {
   const { error } = await supabase.from('config_cobranca').update({ ...c, atualizado_em: new Date().toISOString() }).eq('id', true)
   return error ? erroAmigavel(error) : null
 }

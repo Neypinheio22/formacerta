@@ -1,25 +1,34 @@
-import { Barcode, CircleCheck, CreditCard, Info, QrCode, ShieldCheck } from 'lucide-react'
+import { Barcode, CircleCheck, Copy, CreditCard, Info, QrCode, ShieldCheck } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { SUPORTE, useConta } from '../../nuvem/conta'
 import {
   CONFIG_PADRAO,
   ROTULO_FORMA,
   assinaturaAtual,
+  cobrar,
   comprarAvaliacao,
   emReais,
   escolherPlano,
   lerConfig,
+  lerPagamento,
   minhasAssinaturas,
+  pagamentoDaAssinatura,
   precoDo,
   type Assinatura,
   type Ciclo,
+  type Cobranca,
   type ConfigCobranca,
   type Forma,
+  type Pagamento as PagamentoNuvem,
   type Plano,
   type Servico,
 } from '../../nuvem/planos'
 
-export type Pedido = { tipo: 'assinatura'; plano: Plano; ciclo: Ciclo } | { tipo: 'avaliacao'; servico: Servico }
+export type Pedido =
+  | { tipo: 'assinatura'; plano: Plano; ciclo: Ciclo }
+  | { tipo: 'avaliacao'; servico: Servico }
+  /** Pagar um pedido que ficou pendente. */
+  | { tipo: 'pendente'; pagamento: PagamentoNuvem }
 
 type Props = {
   pedido: Pedido
@@ -29,48 +38,69 @@ type Props = {
 
 const FORMAS: { forma: Forma; icone: typeof QrCode; texto: string }[] = [
   { forma: 'pix', icone: QrCode, texto: 'Na hora. Aparece o QR Code e o código copia e cola.' },
-  { forma: 'cartao', icone: CreditCard, texto: 'Crédito, renova sozinho. Os dados do cartão são digitados na página segura do banco.' },
+  { forma: 'cartao', icone: CreditCard, texto: 'Crédito em até 12x. Os dados do cartão são digitados na página segura do Mercado Pago.' },
   { forma: 'boleto', icone: Barcode, texto: 'Vence em 3 dias úteis. Libera quando o banco confirmar.' },
 ]
 
-/** Resumo do pedido e forma de pagamento. Enquanto o gateway não está ligado, só registra o pedido. */
+type Fim = { tipo: 'assinatura'; assinatura: Assinatura | null } | { tipo: 'pedido' } | { tipo: 'pix'; pagamento: string; cobranca: Cobranca }
+
+/** Resumo do pedido e forma de pagamento. Com o Mercado Pago ligado gera o Pix ou abre a página dele; sem, só registra o pedido. */
 export function Pagamento({ pedido, onVoltar, onPronto }: Props) {
   const { perfil } = useConta()
-  const [forma, setForma] = useState<Forma>('pix')
+  const [forma, setForma] = useState<Forma>(pedido.tipo === 'pendente' ? pedido.pagamento.forma : 'pix')
   const [config, setConfig] = useState<ConfigCobranca>(CONFIG_PADRAO)
   const [jaPagou, setJaPagou] = useState(false)
   const [enviando, setEnviando] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
-  const [feito, setFeito] = useState<Assinatura | 'avaliacao' | null>(null)
+  const [fim, setFim] = useState<Fim | null>(null)
 
   useEffect(() => {
     lerConfig().then(setConfig)
     if (perfil) minhasAssinaturas(perfil.id).then((a) => setJaPagou(a.some((x) => x.valor > 0)))
   }, [perfil])
 
-  const valor = pedido.tipo === 'assinatura' ? precoDo(pedido.plano, pedido.ciclo) : pedido.servico.preco
+  const valor = pedido.tipo === 'assinatura' ? precoDo(pedido.plano, pedido.ciclo) : pedido.tipo === 'avaliacao' ? pedido.servico.preco : pedido.pagamento.valor
   const gratis = valor === 0
   const comTeste = pedido.tipo === 'assinatura' && !gratis && config.dias_gratis > 0 && !jaPagou
-  const titulo = pedido.tipo === 'assinatura' ? `Plano ${pedido.plano.nome}` : pedido.servico.nome
-  const gatewayLigado = config.gateway !== 'nenhum'
+  const titulo = pedido.tipo === 'assinatura' ? `Plano ${pedido.plano.nome}` : pedido.tipo === 'avaliacao' ? pedido.servico.nome : pedido.pagamento.descricao
+  const mercadoPago = config.gateway === 'mercadopago'
+
+  /** Leva ao Pix ou à página do Mercado Pago. Devolve false se deu erro. */
+  async function pagarAgora(pagamento: string) {
+    const { cobranca, erro } = await cobrar(pagamento, forma)
+    if (erro || !cobranca) {
+      setErro(`${erro ?? 'Não deu para gerar a cobrança.'} O pedido ficou salvo: dá para pagar depois em Planos → Meus pagamentos.`)
+      return false
+    }
+    if (cobranca.pix_copia_cola) setFim({ tipo: 'pix', pagamento, cobranca })
+    else if (cobranca.link) window.location.href = cobranca.link
+    return true
+  }
 
   async function confirmar() {
     if (!perfil) return
     setEnviando(true)
     setErro(null)
-    if (pedido.tipo === 'assinatura') {
+    if (pedido.tipo === 'pendente') {
+      await pagarAgora(pedido.pagamento.id)
+    } else if (pedido.tipo === 'assinatura') {
       const e = await escolherPlano(pedido.plano.id, pedido.ciclo, forma)
       if (e) setErro(e)
-      else setFeito(assinaturaAtual(await minhasAssinaturas(perfil.id)))
+      else {
+        const atual = assinaturaAtual(await minhasAssinaturas(perfil.id))
+        const pendente = mercadoPago && atual?.situacao === 'aguardando' ? await pagamentoDaAssinatura(atual.id) : null
+        if (!pendente || !(await pagarAgora(pendente.id))) setFim({ tipo: 'assinatura', assinatura: atual })
+      }
     } else {
-      const e = await comprarAvaliacao(pedido.servico.id, forma)
-      if (e) setErro(e)
-      else setFeito('avaliacao')
+      const { id, erro: e } = await comprarAvaliacao(pedido.servico.id, forma)
+      if (e || !id) setErro(e)
+      else if (!mercadoPago || !(await pagarAgora(id))) setFim({ tipo: 'pedido' })
     }
     setEnviando(false)
   }
 
-  if (feito !== null) return <Pronto feito={feito} titulo={titulo} gatewayLigado={gatewayLigado} onPronto={onPronto} />
+  if (fim?.tipo === 'pix') return <PagarPix titulo={titulo} valor={valor} pagamento={fim.pagamento} cobranca={fim.cobranca} onPronto={onPronto} />
+  if (fim) return <Pronto fim={fim} titulo={titulo} mercadoPago={mercadoPago} onPronto={onPronto} />
 
   return (
     <div className="tela">
@@ -82,7 +112,7 @@ export function Pagamento({ pedido, onVoltar, onPronto }: Props) {
 
       <h1>{gratis ? 'Confirmar plano' : 'Pagamento'}</h1>
 
-      {!gatewayLigado && !gratis && (
+      {!mercadoPago && !gratis && (
         <p className="mensagem aviso faixa">
           <Info size={16} /> Modo de teste: nenhum valor é cobrado ainda. O pedido fica registrado e o pagamento pelo app é ligado em breve.
         </p>
@@ -104,7 +134,7 @@ export function Pagamento({ pedido, onVoltar, onPronto }: Props) {
         )}
       </section>
 
-      {!gratis && (
+      {!gratis && !comTeste && (
         <section className="cartao">
           <h2>Como você quer pagar?</h2>
           <div className="opcoes">
@@ -127,24 +157,81 @@ export function Pagamento({ pedido, onVoltar, onPronto }: Props) {
       </button>
 
       <p className="aviso-legal">
-        <ShieldCheck size={14} /> O FormaCerta não guarda o número do seu cartão. Dúvidas: {SUPORTE}
+        <ShieldCheck size={14} /> {mercadoPago ? 'Pagamento processado pelo Mercado Pago.' : ''} O FormaCerta não guarda o número do seu cartão. Dúvidas: {SUPORTE}
       </p>
     </div>
   )
 }
 
-function Pronto({ feito, titulo, gatewayLigado, onPronto }: { feito: Assinatura | 'avaliacao' | null; titulo: string; gatewayLigado: boolean; onPronto: () => void }) {
+/** QR Code e copia e cola. Confere sozinho a cada 5 segundos se o Pix caiu. */
+function PagarPix({ titulo, valor, pagamento, cobranca, onPronto }: { titulo: string; valor: number; pagamento: string; cobranca: Cobranca; onPronto: () => void }) {
+  const [pago, setPago] = useState(false)
+  const [copiado, setCopiado] = useState(false)
+
+  useEffect(() => {
+    if (pago) return
+    const vez = setInterval(async () => {
+      if ((await lerPagamento(pagamento))?.situacao === 'pago') setPago(true)
+    }, 5000)
+    return () => clearInterval(vez)
+  }, [pagamento, pago])
+
+  async function copiar() {
+    try {
+      await navigator.clipboard.writeText(cobranca.pix_copia_cola ?? '')
+      setCopiado(true)
+    } catch {
+      /* o texto continua na tela para copiar à mão */
+    }
+  }
+
+  if (pago)
+    return (
+      <div className="tela">
+        <section className="cartao destaque centro pronto">
+          <CircleCheck size={56} className="verde" />
+          <h1>Pagamento confirmado</h1>
+          <p className="dica">{titulo} já está valendo. Obrigado!</p>
+          <button className="botao grande" onClick={onPronto}>
+            Ver meus planos
+          </button>
+        </section>
+      </div>
+    )
+
+  return (
+    <div className="tela">
+      <h1>Pague com Pix</h1>
+      <section className="cartao centro pix">
+        <span className="dica-sec">{titulo}</span>
+        <strong className="valor-pix">{emReais(valor)}</strong>
+        {cobranca.pix_qr && <img className="qr-pix" src={`data:image/png;base64,${cobranca.pix_qr}`} alt="QR Code do Pix" />}
+        <p className="dica-sec">Abra o app do seu banco, escolha Pix e leia o QR Code, ou copie o código abaixo.</p>
+        <textarea className="copia-cola" readOnly rows={3} value={cobranca.pix_copia_cola ?? ''} onFocus={(e) => e.target.select()} />
+        <button className="botao" onClick={copiar}>
+          <Copy size={18} /> {copiado ? 'Código copiado' : 'Copiar código Pix'}
+        </button>
+        <p className="carregando">Esperando o pagamento… a tela muda sozinha quando o Pix cair.</p>
+      </section>
+      <button className="botao-sec" onClick={onPronto}>
+        Pagar depois
+      </button>
+    </div>
+  )
+}
+
+function Pronto({ fim, titulo, mercadoPago, onPronto }: { fim: Exclude<Fim, { tipo: 'pix' }>; titulo: string; mercadoPago: boolean; onPronto: () => void }) {
   let texto: string
-  if (feito === 'avaliacao')
-    texto = gatewayLigado
-      ? 'Assim que o pagamento for confirmado, o seu personal recebe o aviso para marcar a avaliação.'
+  const a = fim.tipo === 'assinatura' ? fim.assinatura : null
+  if (fim.tipo === 'pedido')
+    texto = mercadoPago
+      ? 'Pedido registrado. Assim que o pagamento for confirmado, ele aparece para o seu personal.'
       : 'Pedido registrado. O pagamento pelo app ainda vai ser ligado: combine com o seu personal e ele marca a avaliação.'
-  else if (feito?.situacao === 'teste')
-    texto = `Seu teste grátis começou e vai até ${new Date(feito.valido_ate!).toLocaleDateString('pt-BR')}. Aproveite tudo do plano.`
-  else if (feito?.situacao === 'ativa') texto = 'Pronto, o plano já está valendo.'
+  else if (a?.situacao === 'teste') texto = `Seu teste grátis começou e vai até ${new Date(a.valido_ate!).toLocaleDateString('pt-BR')}. Aproveite tudo do plano.`
+  else if (a?.situacao === 'ativa') texto = 'Pronto, o plano já está valendo.'
   else
-    texto = gatewayLigado
-      ? 'Assim que o pagamento for confirmado, o plano começa a valer.'
+    texto = mercadoPago
+      ? 'Pedido registrado. Assim que o pagamento for confirmado, o plano começa a valer.'
       : 'Pedido registrado. O pagamento pelo app ainda vai ser ligado; o administrador confirma o seu plano.'
 
   return (

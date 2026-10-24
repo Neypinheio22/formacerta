@@ -36,6 +36,13 @@ export function AdminPlanos({ perfis }: { perfis: Perfil[] }) {
     lerConfig().then(setConfig)
   }, [])
 
+  async function mudarGateway(gateway: ConfigCobranca['gateway']) {
+    if (gateway === 'mercadopago' && !confirm('Ligar o pagamento pelo Mercado Pago? Confira antes se o token MP_ACCESS_TOKEN já está nos segredos do Supabase.')) return
+    const e = await salvarConfig({ gateway })
+    setErro(e)
+    if (!e) setConfig({ ...config, gateway })
+  }
+
   async function gravarConfig() {
     const e = await salvarConfig({ comissao_pct: config.comissao_pct, dias_gratis: config.dias_gratis })
     setErro(e)
@@ -46,12 +53,20 @@ export function AdminPlanos({ perfis }: { perfis: Perfil[] }) {
     <>
       <QuemVe config={config} perfis={perfis} onMudar={(planos_para) => setConfig({ ...config, planos_para })} />
 
-      <section className="cartao">
+      <section className="cartao formulario">
         <h2>Pagamento pelo app</h2>
+        <div className="escolha">
+          <button className={config.gateway === 'nenhum' ? 'ativo' : ''} onClick={() => mudarGateway('nenhum')}>
+            Manual
+          </button>
+          <button className={config.gateway === 'mercadopago' ? 'ativo' : ''} onClick={() => mudarGateway('mercadopago')}>
+            Mercado Pago
+          </button>
+        </div>
         <p className="dica-sec">
-          {config.gateway === 'nenhum'
-            ? 'Desligado. Os pedidos ficam registrados e você confirma à mão na aba Pagamentos. Para cobrar de verdade falta CNPJ e conta num gateway (Asaas, Mercado Pago ou Stripe).'
-            : `Ligado pelo ${config.gateway}.`}
+          {config.gateway === 'mercadopago'
+            ? 'Ligado: o app gera o Pix ou abre a página do Mercado Pago, e o plano libera sozinho quando o pagamento cai. Com o token de teste (TEST-) nenhum dinheiro de verdade passa.'
+            : 'Manual: os pedidos ficam registrados e você confirma à mão na aba Pagamentos. Antes de ligar o Mercado Pago, cole o token MP_ACCESS_TOKEN nos segredos do Supabase.'}
         </p>
       </section>
 
