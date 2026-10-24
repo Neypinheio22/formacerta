@@ -24,7 +24,7 @@ function carregarImagem(src: string): Promise<HTMLImageElement> {
   })
 }
 
-export function AdamsTeste({ onVoltar }: { onVoltar: () => void }) {
+export function AdamsTeste({ onVoltar, onRelatorio }: { onVoltar: () => void; onRelatorio: (r: RegistroAdams) => void }) {
   const [tela, setTela] = useState<Tela>({ nome: 'novo' })
   const [lista, setLista] = useState(() => carregar<RegistroAdams>(CHAVE_ADAMS))
   const recarregar = () => setLista(carregar<RegistroAdams>(CHAVE_ADAMS))
@@ -63,6 +63,7 @@ export function AdamsTeste({ onVoltar }: { onVoltar: () => void }) {
           registro={registro}
           doMesmo={doAvaliado(lista, registro.avaliado)}
           onAbrir={(id) => ir({ nome: 'detalhe', id })}
+          onRelatorio={() => onRelatorio(registro)}
           onMudou={recarregar}
           onApagado={() => {
             recarregar()
@@ -259,7 +260,7 @@ function ResultadoAdamsCartao({ angulo, classe, lado, fonte }: { angulo: number;
 }
 
 /** Foto com o contorno das costas, os dois pontos mais altos e a linha entre eles. */
-function FotoAdams({ image, resultado: r }: { image: string; resultado: ResultadoAdams }) {
+export function FotoAdams({ image, resultado: r }: { image: string; resultado: ResultadoAdams }) {
   const t = Math.max(r.largura, r.altura) / 160
   const { xEsq, yEsq, xDir, yDir, xMeio } = r.picos
   return (
@@ -308,7 +309,7 @@ function Historico({ lista, onAbrir }: { lista: RegistroAdams[]; onAbrir: (id: s
   )
 }
 
-function Detalhe(props: { registro: RegistroAdams; doMesmo: RegistroAdams[]; onAbrir: (id: string) => void; onMudou: () => void; onApagado: () => void }) {
+function Detalhe(props: { registro: RegistroAdams; doMesmo: RegistroAdams[]; onAbrir: (id: string) => void; onRelatorio: () => void; onMudou: () => void; onApagado: () => void }) {
   const { registro: r, doMesmo } = props
   const [obs, setObs] = useState(r.observacoes)
   const angulo = anguloAdams(r)!
@@ -365,6 +366,9 @@ function Detalhe(props: { registro: RegistroAdams; doMesmo: RegistroAdams[]; onA
           Salvar observações
         </button>
       </section>
+      <button className="botao" onClick={props.onRelatorio}>
+        Relatório para imprimir ou enviar
+      </button>
       <button
         className="botao-sec perigo"
         onClick={() => {

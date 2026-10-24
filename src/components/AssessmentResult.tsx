@@ -1,16 +1,9 @@
 import { planoCorretivo, recomendacao } from '../pose/recomendacoes'
-import { VIEWS, type Assessment, type Status } from '../pose/types'
+import { VIEWS, type Assessment } from '../pose/types'
+import { ROTULO_POSTURA as ROTULO, textoPontuacao as scoreText } from '../relatorio/conteudo'
 import { PosePhoto } from './PosePhoto'
 
-const ROTULO: Record<Status, string> = { ok: 'Bom', atencao: 'Atenção', alerta: 'Corrigir' }
-
-function scoreText(score: number) {
-  if (score >= 85) return 'Postura muito boa'
-  if (score >= 65) return 'Alguns pontos para ajustar'
-  return 'Vale focar na correção'
-}
-
-export function AssessmentResult({ assessment, onBack }: { assessment: Assessment; onBack: () => void }) {
+export function AssessmentResult({ assessment, onBack, onRelatorio }: { assessment: Assessment; onBack: () => void; onRelatorio: () => void }) {
   const problemas = assessment.views.flatMap((v) => v.findings).filter((f) => f.status !== 'ok')
   const plano = planoCorretivo(problemas)
   // Avaliações salvas antes das recomendações por músculo só têm a lista de exercícios.
@@ -101,9 +94,9 @@ export function AssessmentResult({ assessment, onBack }: { assessment: Assessmen
 
       <section className="cartao personal">
         <h2>Acompanhamento do personal</h2>
-        <p className="dica-sec">Em breve: enviar esta avaliação para o seu personal revisar e emitir o relatório, ou chamar um personal de plantão por vídeo.</p>
-        <button className="botao" disabled>
-          Enviar para o personal (em breve)
+        <p className="dica-sec">Gere o relatório com a logo e o registro do profissional para imprimir, salvar em PDF ou mandar no WhatsApp.</p>
+        <button className="botao" onClick={onRelatorio}>
+          Relatório para imprimir ou enviar
         </button>
       </section>
 
