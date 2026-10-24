@@ -1,3 +1,4 @@
+import { EnviarResultado } from '../conta/EnviarResultado'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { exercicioPorId, type Exercicio } from '../../movimento/exercicios'
 import type { Quadro, Repeticao, ResultadoExercicio } from '../../movimento/tipos'
@@ -228,6 +229,8 @@ export function ExercicioResultado({ resultado, onVoltar, onRefazer }: Props) {
       <button className="botao grande" onClick={onRefazer}>
         Fazer de novo
       </button>
+
+      {resultado.reps.length > 0 && <EnviarResultado tipo="exercicio" id={resultado.id} feitoEm={resultado.date} resultado={resultado} />}
 
       <p className="aviso-legal">
         A análise é automática e serve como orientação. Ela não substitui a avaliação de um profissional de educação física ou de saúde. Em caso de dor, pare e procure um

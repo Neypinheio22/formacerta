@@ -1,3 +1,4 @@
+import { EnviarResultado } from '../conta/EnviarResultado'
 import { useMemo, useState } from 'react'
 import type { Point } from '../../pose/types'
 import { apagar, atualizar, avaliados, carregar, doAvaliado, reduzirFoto, salvar } from '../../testes/historico'
@@ -318,6 +319,8 @@ function Detalhe(props: { registro: RegistroFlex; doMesmo: RegistroFlex[]; onAbr
           <FotoMedida foto={r.foto} />
         </section>
       )}
+
+      <EnviarResultado tipo="flexibilidade" id={r.id} feitoEm={r.date} resultado={r} avaliado={r.avaliado} />
 
       <section className="cartao formulario">
         <CampoObservacoes valor={obs} onChange={setObs} />

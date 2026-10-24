@@ -1,5 +1,6 @@
 import { planoCorretivo, recomendacao } from '../pose/recomendacoes'
 import { VIEWS, type Assessment, type Status } from '../pose/types'
+import { EnviarResultado } from './conta/EnviarResultado'
 import { PosePhoto } from './PosePhoto'
 
 const ROTULO: Record<Status, string> = { ok: 'Bom', atencao: 'Atenção', alerta: 'Corrigir' }
@@ -99,13 +100,7 @@ export function AssessmentResult({ assessment, onBack }: { assessment: Assessmen
         </section>
       ))}
 
-      <section className="cartao personal">
-        <h2>Acompanhamento do personal</h2>
-        <p className="dica-sec">Em breve: enviar esta avaliação para o seu personal revisar e emitir o relatório, ou chamar um personal de plantão por vídeo.</p>
-        <button className="botao" disabled>
-          Enviar para o personal (em breve)
-        </button>
-      </section>
+      <EnviarResultado tipo="postura" id={assessment.id} feitoEm={assessment.date} resultado={assessment} />
 
       <p className="aviso-legal">
         Esta avaliação é uma triagem e não é um diagnóstico médico. A análise é automática e serve como orientação. Ela não substitui a avaliação de um profissional de educação física ou de saúde. Em caso de dor, procure um profissional.

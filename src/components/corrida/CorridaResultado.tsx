@@ -1,3 +1,4 @@
+import { EnviarResultado } from '../conta/EnviarResultado'
 import { useEffect, useRef, useState } from 'react'
 import type { AchadoCorrida, QuadroCorrida, ResultadoCorrida, VistaCorrida } from '../../corrida/tipos'
 import type { Status } from '../../pose/types'
@@ -168,6 +169,8 @@ export function CorridaResultado({ resultado, onVoltar, onOutraVista }: Props) {
       <button className="botao-sec" onClick={() => onOutraVista(resultado.vista)}>
         Gravar de novo
       </button>
+
+      {!resultado.falha && <EnviarResultado tipo="corrida" id={resultado.id} feitoEm={resultado.date} resultado={resultado} altura={resultado.altura} />}
 
       <p className="aviso-legal">
         Os limites usados são valores de referência da literatura para corredores recreativos e podem ser ajustados pelo seu personal. A medida em 2D tem margem de erro de
