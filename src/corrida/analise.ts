@@ -100,7 +100,8 @@ export function tirarTendencia(v: number[], janela: number): number[] {
  */
 export function periodoDoPasso(x: number[], minLag: number, maxLag: number): number | null {
   const r: number[] = []
-  const ate = Math.min(maxLag + 1, Math.floor(x.length / 2))
+  // Olha até a passada completa (2 passos): de trás, a pelve às vezes marca mais a passada que o passo.
+  const ate = Math.min(2 * maxLag + 2, Math.floor(x.length / 2))
   for (let lag = 0; lag <= ate; lag++) {
     let s = 0
     let a = 0
@@ -116,22 +117,28 @@ export function periodoDoPasso(x: number[], minLag: number, maxLag: number): num
   for (let lag = Math.max(2, minLag); lag < ate; lag++) if (r[lag] >= r[lag - 1] && r[lag] >= r[lag + 1] && r[lag] > 0.2) picos.push(lag)
   if (picos.length === 0) return null
   const maior = Math.max(...picos.map((l) => r[l]))
-  // O primeiro pico forte é o passo; o seguinte (o dobro) é a passada completa.
-  const lag = picos.find((l) => r[l] >= 0.8 * maior)!
-  const a = r[lag - 1]
-  const b = r[lag]
-  const c = r[lag + 1]
-  const ajuste = a - 2 * b + c ? (0.5 * (a - c)) / (a - 2 * b + c) : 0
-  return lag + Math.max(-0.5, Math.min(0.5, ajuste))
+  const refinar = (lag: number) => {
+    const a = r[lag - 1]
+    const b = r[lag]
+    const c = r[lag + 1]
+    const ajuste = a - 2 * b + c ? (0.5 * (a - c)) / (a - 2 * b + c) : 0
+    return lag + Math.max(-0.5, Math.min(0.5, ajuste))
+  }
+  // O primeiro pico forte dentro da faixa de um passo é o passo.
+  const passo = picos.find((l) => l <= maxLag && r[l] >= 0.8 * maior)
+  if (passo != null) return refinar(passo)
+  // Senão o pico forte é a passada completa (uma perna pisa diferente da outra): o passo é a metade.
+  const passada = picos.find((l) => r[l] === maior)!
+  const metade = refinar(passada) / 2
+  return metade >= minLag ? metade : null
 }
 
 /** Momentos de apoio: a pelve no ponto mais baixo de cada passo (maior y na imagem). */
 export function momentosDeApoio(x: number[], periodo: number): number[] {
   const suave = x.map((_, i) => (x[Math.max(0, i - 1)] + x[i] + x[Math.min(x.length - 1, i + 1)]) / 3)
-  const raio = Math.max(1, Math.floor(periodo * 0.5))
+  const raio = Math.max(1, Math.floor(periodo * 0.4))
   const r: number[] = []
   for (let i = 0; i < suave.length; i++) {
-    if (suave[i] <= 0) continue
     let maior = true
     for (let j = Math.max(0, i - raio); j <= Math.min(suave.length - 1, i + raio) && maior; j++) if (suave[j] > suave[i] || (suave[j] === suave[i] && j < i)) maior = false
     if (maior) r.push(i)
@@ -173,10 +180,10 @@ function prepararBase(quadros: QuadroCorrida[], w: number, h: number, config: Co
   return { ler, quadros, tReal, apoios, periodo, cmPorPx, pelve }
 }
 
+/** Passos por minuto pela duração do passo (mais firme que contar os apoios, que pode perder algum). */
 function cadencia(b: Base): number {
-  const { apoios, tReal } = b
-  const dur = tReal[apoios.at(-1)!] - tReal[apoios[0]]
-  return dur > 0 ? (60 * (apoios.length - 1)) / dur : 60 / (b.periodo * (tReal[1] - tReal[0]))
+  const dt = (b.tReal.at(-1)! - b.tReal[0]) / (b.tReal.length - 1)
+  return 60 / (b.periodo * dt)
 }
 
 function achado(id: string, rec: RecomendacaoId | null, title: string, value: string, status: Status, detail: string, extra: Partial<AchadoCorrida> = {}): AchadoCorrida {
