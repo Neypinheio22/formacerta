@@ -1365,3 +1365,12 @@ ul.musculos.fortalecer li {
 .texto-longo h2 {
   margin: 18px 0 4px;
 }
+
+.suporte {
+  text-align: center;
+  margin: 18px 0 0;
+}
+
+.suporte .link {
+  word-break: break-all;
+}

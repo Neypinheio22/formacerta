@@ -3,6 +3,7 @@ import { ROTULO_PAPEL, sair, useConta } from '../../nuvem/conta'
 import { excluirMinhaConta, salvarMeuPerfil } from '../../nuvem/gestao'
 import { ROTULO_TIPO, apagarResultado, listarResultados, type ResultadoNuvem } from '../../nuvem/resultados'
 import { Privacidade } from './Privacidade'
+import { Suporte } from './Suporte'
 
 export function MinhaConta({ onVoltar }: { onVoltar: () => void }) {
   const { perfil, recarregar } = useConta()
@@ -107,6 +108,7 @@ export function MinhaConta({ onVoltar }: { onVoltar: () => void }) {
           Apagar minha conta e meus dados
         </button>
       )}
+      {perfil.papel !== 'admin' && <Suporte />}
     </div>
   )
 }
