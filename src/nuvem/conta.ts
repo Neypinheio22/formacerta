@@ -28,6 +28,9 @@ export const ContextoConta = createContext<Conta>({ sessao: null, perfil: null, 
 
 export const useConta = () => useContext(ContextoConta)
 
+/** E-mail do administrador, para suporte. */
+export const SUPORTE = 'ney.comercial@gmail.com'
+
 const CACHE = 'formacerta:perfil'
 
 /** Perfil guardado no aparelho, para o app abrir mesmo sem internet. */
@@ -60,7 +63,7 @@ export function erroAmigavel(e: { message?: string } | null | undefined): string
   if (/password should be at least|weak password/i.test(m)) return 'A senha precisa ter pelo menos 8 caracteres, com letras e números.'
   if (/rate limit|too many/i.test(m)) return 'Muitas tentativas seguidas. Espere alguns minutos e tente de novo.'
   if (/failed to fetch|network/i.test(m)) return 'Sem internet. Confira a conexão e tente de novo.'
-  return m || 'Não deu certo. Tente de novo.'
+  return `${m || 'Não deu certo.'} Se continuar, fale com o suporte: ${SUPORTE}`
 }
 
 export async function entrar(email: string, senha: string) {

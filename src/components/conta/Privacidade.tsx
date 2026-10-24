@@ -1,3 +1,5 @@
+import { SUPORTE } from '../../nuvem/conta'
+
 /** Rascunho da política de privacidade. Revisar com um advogado antes de abrir o app ao público. */
 export function Privacidade({ onVoltar }: { onVoltar: () => void }) {
   return (
@@ -45,7 +47,7 @@ export function Privacidade({ onVoltar }: { onVoltar: () => void }) {
         <h2>Seus direitos</h2>
         <p>
           Você pode ver, corrigir e apagar os seus dados a qualquer momento. Em "Minha conta" há o botão para apagar a conta e todos os resultados. Também
-          pode pedir ao administrador pelo e-mail ney.comercial@gmail.com.
+          pode pedir ao administrador pelo e-mail {SUPORTE}.
         </p>
 
         <h2>Triagem, não diagnóstico</h2>

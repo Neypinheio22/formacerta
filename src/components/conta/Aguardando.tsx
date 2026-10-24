@@ -1,5 +1,6 @@
 import { sair, useConta } from '../../nuvem/conta'
 import { Logo } from '../Logo'
+import { Suporte } from './Suporte'
 
 /** Conta criada, mas o administrador ainda não liberou (ou bloqueou). */
 export function Aguardando() {
@@ -28,6 +29,7 @@ export function Aguardando() {
           Sair
         </button>
       </section>
+      <Suporte assunto={bloqueado ? 'Acesso bloqueado no FormaCerta' : 'Liberação de acesso no FormaCerta'} />
     </div>
   )
 }

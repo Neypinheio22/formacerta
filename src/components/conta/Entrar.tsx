@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { cadastrar, entrar, esqueciSenha, senhaFraca } from '../../nuvem/conta'
 import { Logo } from '../Logo'
 import { Privacidade } from './Privacidade'
+import { Suporte } from './Suporte'
 
 type Modo = 'entrar' | 'cadastrar' | 'esqueci'
 
@@ -157,6 +158,8 @@ export function Entrar() {
           </button>
         )}
       </div>
+
+      <Suporte />
 
       <p className="rodape">
         Seu corpo em movimento <span className="verde">certo.</span>
