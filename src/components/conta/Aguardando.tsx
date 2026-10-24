@@ -1,3 +1,4 @@
+import { Hourglass, Lock } from 'lucide-react'
 import { sair, useConta } from '../../nuvem/conta'
 import { Logo } from '../Logo'
 import { Suporte } from './Suporte'
@@ -12,7 +13,9 @@ export function Aguardando() {
         <Logo size={30} />
       </header>
       <section className="cartao destaque">
-        <span className="etiqueta">{bloqueado ? 'Acesso bloqueado' : 'Quase lá'}</span>
+        <span className="etiqueta">
+          {bloqueado ? <Lock size={14} /> : <Hourglass size={14} />} {bloqueado ? 'Acesso bloqueado' : 'Quase lá'}
+        </span>
         <h1>{bloqueado ? 'Seu acesso está bloqueado' : 'Aguardando liberação'}</h1>
         <p className="dica">
           {bloqueado

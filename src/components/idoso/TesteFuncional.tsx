@@ -1,3 +1,4 @@
+import { Timer } from 'lucide-react'
 import { useState } from 'react'
 import { embutirYoutube, useCronometro } from '../../idoso/cronometro'
 import { classificar, linkVideo, ROTULO_GRUPO, grupoIdade, type DefTeste } from '../../idoso/testes'
@@ -165,7 +166,9 @@ export function TesteFuncional({ def, inicial, idade, sexo, onSalvar, onVoltar }
   return (
     <>
       <section className="cartao destaque">
-        <span className="etiqueta">{def.mede}</span>
+        <span className="etiqueta">
+          <Timer size={14} /> {def.mede}
+        </span>
         <h1>{def.nome}</h1>
         <p className="dica-sec">
           <b>Material:</b> {def.material}

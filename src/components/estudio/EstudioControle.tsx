@@ -1,3 +1,4 @@
+import { KeyRound } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { abrirSala, canalPar, ErroConexao, gerarCodigo, type Canal, type Sala } from '../../estudio/conexao'
 import { receptorDeVideo } from '../../estudio/gravador'
@@ -236,7 +237,9 @@ export function EstudioControle({ onSair, onSalvo }: Props) {
       {sala && (
         <>
           <section className="cartao destaque codigo-estudio">
-            <span className="etiqueta">Código do estúdio</span>
+            <span className="etiqueta">
+              <KeyRound size={14} /> Código do estúdio
+            </span>
             <strong className="codigo" data-testid="codigo">
               {sala.codigo}
             </strong>

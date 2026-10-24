@@ -1,3 +1,4 @@
+import { Ruler } from 'lucide-react'
 import { EnviarResultado } from '../conta/EnviarResultado'
 import { useMemo, useState } from 'react'
 import type { Point } from '../../pose/types'
@@ -98,7 +99,9 @@ function NovoFlex({ nomes, onSalvo }: { nomes: string[]; onSalvo: (r: RegistroFl
   return (
     <>
       <section className="cartao destaque">
-        <span className="etiqueta">Flexibilidade da cadeia posterior</span>
+        <span className="etiqueta">
+          <Ruler size={14} /> Flexibilidade da cadeia posterior
+        </span>
         <h1>Teste de Flexibilidade Digital</h1>
         <p className="dica-sec">
           Em pé, sem equipamento. A pessoa inclina o tronco com os joelhos esticados e o app vê, pela foto de lado, até onde as mãos chegam: joelho, canela,
