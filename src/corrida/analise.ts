@@ -99,6 +99,11 @@ export function tirarTendencia(v: number[], janela: number): number[] {
  * A pelve desce uma vez a cada passo (no apoio) e sobe no voo.
  */
 export function periodoDoPasso(x: number[], minLag: number, maxLag: number): number | null {
+  return ritmo(x, minLag, maxLag)?.periodo ?? null
+}
+
+/** Como periodoDoPasso, mas também diz o quanto o sinal se repete (0 a 1): serve para escolher o melhor sinal. */
+export function ritmo(x: number[], minLag: number, maxLag: number): { periodo: number; forca: number } | null {
   const r: number[] = []
   // Olha até a passada completa (2 passos): de trás, a pelve às vezes marca mais a passada que o passo.
   const ate = Math.min(2 * maxLag + 2, Math.floor(x.length / 2))
@@ -126,11 +131,16 @@ export function periodoDoPasso(x: number[], minLag: number, maxLag: number): num
   }
   // O primeiro pico forte dentro da faixa de um passo é o passo.
   const passo = picos.find((l) => l <= maxLag && r[l] >= 0.8 * maior)
-  if (passo != null) return refinar(passo)
+  if (passo != null) return { periodo: refinar(passo), forca: r[passo] }
   // Senão o pico forte é a passada completa (uma perna pisa diferente da outra): o passo é a metade.
   const passada = picos.find((l) => r[l] === maior)!
   const metade = refinar(passada) / 2
-  return metade >= minLag ? metade : null
+  // Só é passada se na metade o sinal se parece mais consigo mesmo do que a um
+  // quarto e a três quartos dela (um passo, mesmo fraco). Se na metade ele está
+  // invertido, o pico é um passo mais lento (outra velocidade de câmera lenta).
+  const em = (l: number) => r[Math.round(l)] ?? 0
+  if (metade < minLag || em(metade) <= em(metade / 2) || em(metade) <= em(metade * 1.5)) return null
+  return { periodo: metade, forca: maior }
 }
 
 /** Momentos de apoio: a pelve no ponto mais baixo de cada passo (maior y na imagem). */
@@ -155,29 +165,106 @@ type Base = {
   periodo: number
   cmPorPx: number
   pelve: number[]
+  aviso?: string
+  /** Câmera lenta usada nas contas (pode ser corrigida pela análise). */
+  fator: number
 }
 
-/** Parte comum às duas vistas: escala em cm e os passos pelo sobe e desce da pelve. */
+/**
+ * Tira quadros em que o detector pulou para outra pessoa (academia cheia,
+ * alguém passando atrás): o quadril sai de repente de onde estava nos quadros
+ * vizinhos. Movimento contínuo (correr de um lado para o outro) não é afetado.
+ */
+export function tirarSaltos(quadros: QuadroCorrida[], ler: Leitor, perna: number): QuadroCorrida[] {
+  const centros = quadros.map((q) => (q.lm ? ler.meio(q.lm, [PERNA_ESQ.quadril, PERNA_DIR.quadril]) : null))
+  return quadros.map((q, i) => {
+    const c = centros[i]
+    if (!c) return q
+    const viz = centros.slice(Math.max(0, i - 3), i + 4).filter((v): v is Px => v != null)
+    const mx = mediana(viz.map((v) => v.x))
+    const my = mediana(viz.map((v) => v.y))
+    return Math.hypot(c.x - mx, c.y - my) > 0.3 * perna ? { ...q, lm: null } : q
+  })
+}
+
+const suavizar = (x: number[]) => x.map((_, i) => (x[Math.max(0, i - 1)] + x[i] + x[Math.min(x.length - 1, i + 1)]) / 3)
+
+/** Sinais que se repetem a cada passo. Os pés são o mais firme; a pelve fica de reserva. */
+function sinaisDoPasso(quadros: QuadroCorrida[], ler: Leitor, perna: number, vista: ConfigCorrida['vista']) {
+  const serie = (f: (lm: Point[]) => number) => preencher(quadros.map((q) => (q.lm ? f(q.lm) : null)))
+  const pelve = serie((lm) => ler.meio(lm, [PERNA_ESQ.quadril, PERNA_DIR.quadril]).y)
+  // De lado, um pé passa pelo outro no meio de cada apoio: a distância entre eles fica mínima.
+  // De trás, no meio do apoio um pé está no chão e o outro no alto: a diferença de altura fica máxima.
+  // Os dois sinais não mudam se o detector trocar a perna esquerda pela direita.
+  const pes =
+    vista === 'lado'
+      ? serie((lm) => -Math.abs(ler.p(lm, PERNA_ESQ.tornozelo).x - ler.p(lm, PERNA_DIR.tornozelo).x) / perna)
+      : serie((lm) => Math.abs(ler.p(lm, PERNA_ESQ.tornozelo).y - ler.p(lm, PERNA_DIR.tornozelo).y) / perna)
+  return { pelve, pes }
+}
+
+/** Velocidades de câmera lenta que tentamos se a escolhida não fizer sentido. */
+const FATORES = [1, 2, 4, 8]
+
+/** Parte comum às duas vistas: limpa os quadros, acha a escala em cm e os passos. */
 function prepararBase(quadros: QuadroCorrida[], w: number, h: number, config: ConfigCorrida): Base | string {
   const ler = new Leitor(w, h)
   const comPessoa = quadros.filter((q) => q.lm).length
-  if (quadros.length < 10 || comPessoa < quadros.length * 0.6) return 'O corpo não apareceu inteiro na maior parte do vídeo. Enquadre da cabeça aos pés e grave de novo.'
+  if (quadros.length < 10 || comPessoa < quadros.length * 0.5) return 'O corpo não apareceu inteiro na maior parte do vídeo. Enquadre da cabeça aos pés e grave de novo.'
 
   const pernas = quadros.flatMap((q) =>
     q.lm ? [PERNA_ESQ, PERNA_DIR].map((p) => Math.hypot(ler.p(q.lm!, p.quadril).x - ler.p(q.lm!, p.tornozelo).x, ler.p(q.lm!, p.quadril).y - ler.p(q.lm!, p.tornozelo).y)) : [],
   )
-  const perna = percentil(pernas, 0.9)
-  const cmPorPx = (config.altura * PERNA_SOBRE_ALTURA) / (perna || 1)
+  const perna = percentil(pernas, 0.9) || 1
+  const cmPorPx = (config.altura * PERNA_SOBRE_ALTURA) / perna
+  quadros = tirarSaltos(quadros, ler, perna)
 
-  const tReal = quadros.map((q) => q.t / config.fator)
-  const dt = mediana(tReal.slice(1).map((t, i) => t - tReal[i])) || 1 / 30
-  const pelveBruta = preencher(quadros.map((q) => (q.lm ? ler.meio(q.lm, [PERNA_ESQ.quadril, PERNA_DIR.quadril]).y : null)))
-  const pelve = tirarTendencia(pelveBruta, Math.round(0.8 / dt))
-  const periodo = periodoDoPasso(pelve, Math.ceil(PASSO_MIN / dt), Math.floor(PASSO_MAX / dt))
-  if (periodo == null) return 'Não encontramos o ritmo da corrida. Grave pelo menos 10 segundos correndo, sem cortar o corpo.'
-  const apoios = momentosDeApoio(pelve, periodo).filter((i) => quadros[i].lm)
+  const dtVideo = mediana(quadros.slice(1).map((q, i) => q.t - quadros[i].t)) || 1 / 30
+  const { pelve: pelveBruta, pes: pesBruto } = sinaisDoPasso(quadros, ler, perna, config.vista)
+
+  // Tenta primeiro a câmera lenta escolhida; se o ritmo não aparecer, tenta as outras.
+  type Achado = { fator: number; periodo: number; forca: number; sinal: number[] }
+  const tentar = (fator: number): Achado | null => {
+    const dt = dtVideo / fator
+    const janela = Math.round(0.8 / dt)
+    const min = Math.ceil(PASSO_MIN / dt)
+    const max = Math.floor(PASSO_MAX / dt)
+    let melhor: Achado | null = null
+    for (const bruto of [pesBruto, pelveBruta]) {
+      const sinal = suavizar(tirarTendencia(bruto, janela))
+      const r = ritmo(sinal, min, max)
+      // Os pés valem um pouco mais que a pelve, que treme com a câmera.
+      const forca = r ? r.forca * (bruto === pesBruto ? 1.1 : 1) : 0
+      if (r && forca > (melhor?.forca ?? 0)) melhor = { fator, periodo: r.periodo, forca, sinal }
+    }
+    return melhor
+  }
+  const escolhido = tentar(config.fator)
+  let usado = escolhido && escolhido.forca >= 0.3 ? escolhido : null
+  if (!usado) {
+    const outros = FATORES.filter((f) => f !== config.fator)
+      .map(tentar)
+      .filter((a): a is Achado => a != null && a.forca >= 0.4)
+    const melhor = Math.max(0, ...outros.map((a) => a.forca))
+    // Na câmera lenta dobrada, a passada inteira parece um passo: na dúvida, fica a menor câmera lenta.
+    usado = outros.find((a) => a.forca >= 0.75 * melhor) ?? (escolhido && escolhido.forca >= 0.2 ? escolhido : null)
+  }
+  if (!usado) return 'Não encontramos o ritmo da corrida. Grave de 10 a 20 segundos correndo, de lado ou de trás, com o corpo inteiro (inclusive os pés) no quadro e o celular parado.'
+
+  const fator = usado.fator
+  const tReal = quadros.map((q) => q.t / fator)
+  const dt = dtVideo / fator
+  // Janela longa para não achatar o sobe e desce de cada passo.
+  const pelve = tirarTendencia(pelveBruta, Math.round(1.6 / dt))
+  const apoios = momentosDeApoio(usado.sinal, usado.periodo).filter((i) => quadros[i].lm)
   if (apoios.length < MIN_PASSOS) return 'Vídeo curto demais: precisamos de pelo menos 4 passos inteiros. Grave de 10 a 20 segundos.'
-  return { ler, quadros, tReal, apoios, periodo, cmPorPx, pelve }
+  const aviso =
+    fator !== config.fator
+      ? fator === 1
+        ? 'O vídeo parece estar em velocidade normal, não em câmera lenta. Calculamos assim.'
+        : `O vídeo parece estar em câmera lenta (${fator}x). Calculamos o tempo assim.`
+      : undefined
+  return { ler, quadros, tReal, apoios, periodo: usado.periodo, cmPorPx, pelve, aviso, fator }
 }
 
 /** Passos por minuto pela duração do passo (mais firme que contar os apoios, que pode perder algum). */
@@ -310,7 +397,7 @@ export function analisarLado(b: Base): AchadoCorrida[] {
   const amplitudes: number[] = []
   for (let k = 1; k < apoios.length; k++) {
     const trecho = b.pelve.slice(apoios[k - 1], apoios[k] + 1)
-    amplitudes.push((b.pelve[apoios[k]] - Math.min(...trecho)) * b.cmPorPx)
+    amplitudes.push((Math.max(...trecho) - Math.min(...trecho)) * b.cmPorPx)
   }
   const osc = mediana(amplitudes)
 
@@ -482,7 +569,15 @@ export function analisarTras(b: Base): AchadoCorrida[] {
           : `O pé ${lateral.lado} pisa quase em cima da linha do meio do corpo. Abra um pouco a passada.`,
       { momento: lateral.momento },
     ),
-    achadoOscilacao(mediana(apoios.slice(1).map((m, k) => (b.pelve[m] - Math.min(...b.pelve.slice(apoios[k], m + 1))) * b.cmPorPx)), quadros[apoios[0]].t),
+    achadoOscilacao(
+      mediana(
+        apoios.slice(1).map((m, k) => {
+          const trecho = b.pelve.slice(apoios[k], m + 1)
+          return (Math.max(...trecho) - Math.min(...trecho)) * b.cmPorPx
+        }),
+      ),
+      quadros[apoios[0]].t,
+    ),
   ]
 }
 
@@ -491,5 +586,5 @@ export function analisarCorrida(quadros: QuadroCorrida[], largura: number, altur
   const comum = { ...config, id: crypto.randomUUID(), date: new Date().toISOString(), duracao: quadros.at(-1)?.t ?? 0, largura, alturaVideo, quadros, video }
   if (typeof base === 'string') return { ...comum, apoios: [], passos: 0, achados: [], score: 0, falha: base }
   const achados = config.vista === 'lado' ? analisarLado(base) : analisarTras(base)
-  return { ...comum, apoios: base.apoios.map((i) => quadros[i].t), passos: base.apoios.length, achados, score: computeScore(achados) }
+  return { ...comum, fator: base.fator, apoios: base.apoios.map((i) => quadros[i].t), passos: base.apoios.length, achados, score: computeScore(achados), aviso: base.aviso }
 }
