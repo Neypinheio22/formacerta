@@ -1,4 +1,4 @@
-// Histórico dos testes do personal (Wells, Adams). Fica no aparelho, como as
+// Histórico dos testes do personal (flexibilidade, Adams). Fica no aparelho, como as
 // avaliações de postura, até o painel do personal ter servidor.
 
 import type { Point } from '../pose/types'

@@ -7,6 +7,7 @@ const CORPO = '#d9e4ec'
 const ROUPA = '#36f294'
 const CHAO = '#2a4a5e'
 const DESTAQUE = '#fb8d1a'
+const PERNA = '#4f7d99'
 
 function Membro({ d, largura = 12, cor = CORPO }: { d: string; largura?: number; cor?: string }) {
   return <path d={d} stroke={cor} strokeWidth={largura} strokeLinecap="round" strokeLinejoin="round" fill="none" />
@@ -18,19 +19,6 @@ function Quadro({ children }: { children: React.ReactNode }) {
       <line x1="10" y1="150" x2="290" y2="150" stroke={CHAO} strokeWidth="3" strokeLinecap="round" />
       {children}
     </svg>
-  )
-}
-
-/** Banco com a régua em cima; a marca dos pés fica na face do banco. */
-function Banco() {
-  return (
-    <g>
-      <rect x="226" y="104" width="62" height="46" rx="5" fill="#0d3247" stroke="#3d6680" strokeWidth="2" />
-      <rect x="196" y="98" width="92" height="7" rx="2" fill="#9fb3c2" />
-      {Array.from({ length: 10 }, (_, i) => (
-        <line key={i} x1={200 + i * 9} y1="98" x2={200 + i * 9} y2={i % 5 === 0 ? 92 : 95} stroke="#9fb3c2" strokeWidth="1.5" />
-      ))}
-    </g>
   )
 }
 
@@ -52,50 +40,86 @@ function Ponta() {
   )
 }
 
-const WELLS: Passo[] = [
+/** Pessoa de lado, virada para a direita: quadril, ombro e ponta das mãos. */
+function DeLado({ quadril, ombro, cabeca, mao, joelho }: { quadril: [number, number]; ombro: [number, number]; cabeca: [number, number]; mao: [number, number]; joelho?: [number, number] }) {
+  const [qx, qy] = quadril
+  const [jx, jy] = joelho ?? [(qx + 152) / 2, (qy + 146) / 2]
+  return (
+    <g>
+      <Membro d={`M${qx} ${qy} L${jx} ${jy} L152 144`} largura={14} cor={PERNA} />
+      <Membro d="M150 147 L170 147" largura={7} />
+      <Membro d={`M${qx} ${qy} L${ombro[0]} ${ombro[1]}`} largura={22} cor={ROUPA} />
+      <circle cx={cabeca[0]} cy={cabeca[1]} r="12" fill={CORPO} />
+      <Membro d={`M${ombro[0]} ${ombro[1]} L${mao[0]} ${mao[1]}`} largura={8} />
+    </g>
+  )
+}
+
+const FLEX: Passo[] = [
   {
     titulo: '1. Posição inicial',
-    texto: 'Sentado, descalço, com a sola dos pés encostada no banco. Joelhos esticados e uma mão sobre a outra.',
+    texto: 'Em pé, de lado para o celular. Pés afastados na largura do quadril, joelhos esticados e braços soltos.',
     desenho: (
       <Quadro>
-        <Banco />
-        <Membro d="M72 138 L222 138" largura={16} cor={ROUPA} />
-        <Membro d="M224 140 L226 116" largura={9} />
-        <Membro d="M72 134 L84 76" largura={22} cor={ROUPA} />
-        <circle cx="90" cy="56" r="13" fill={CORPO} />
-        <Membro d="M84 80 L150 92" largura={8} />
+        <DeLado quadril={[150, 92]} ombro={[150, 48]} cabeca={[152, 28]} mao={[154, 96]} />
       </Quadro>
     ),
   },
   {
-    titulo: '2. Alcance máximo',
-    texto: 'Incline o tronco devagar e deslize as mãos sobre a régua o mais longe possível. Segure 2 segundos e leia a marca.',
+    titulo: '2. Execução',
+    texto: 'Incline o tronco à frente devagar, sem dobrar os joelhos. Os braços descem soltos em direção ao chão.',
     desenho: (
       <Quadro>
         <Ponta />
-        <Banco />
-        <Membro d="M72 138 L222 138" largura={16} cor={ROUPA} />
-        <Membro d="M224 140 L226 116" largura={9} />
-        <Membro d="M72 134 L148 98" largura={22} cor={ROUPA} />
-        <circle cx="166" cy="100" r="13" fill={CORPO} />
-        <Membro d="M146 100 L238 95" largura={8} />
-        <Seta d="M200 80 L250 80" />
+        <DeLado quadril={[146, 90]} ombro={[180, 62]} cabeca={[196, 50]} mao={[188, 108]} />
+        <Seta d="M166 30 Q206 30 214 66" />
+      </Quadro>
+    ),
+  },
+  {
+    titulo: '3. Posição final',
+    texto: 'Vá até o limite confortável, sem balançar nem forçar. Segure e tire a foto de lado, com os pés aparecendo.',
+    desenho: (
+      <Quadro>
+        <DeLado quadril={[140, 88]} ombro={[178, 112]} cabeca={[184, 130]} mao={[176, 146]} />
+        <rect x="24" y="80" width="18" height="32" rx="3" fill="none" stroke={ROUPA} strokeWidth="2.5" />
+        <line x1="46" y1="96" x2="122" y2="96" stroke={ROUPA} strokeWidth="1.5" strokeDasharray="4 4" />
+      </Quadro>
+    ),
+  },
+  {
+    titulo: '4. Onde as mãos chegam',
+    texto: 'O app compara a ponta dos dedos com o joelho, a canela, o tornozelo e o chão e classifica sozinho.',
+    desenho: (
+      <Quadro>
+        <Membro d="M96 18 L98 74 L98 140" largura={16} cor={PERNA} />
+        <Membro d="M96 147 L120 147" largura={7} />
+        {[
+          { y: 42, t: 'Muito limitada', c: '#ff5a5f' },
+          { y: 74, t: 'Limitada', c: DESTAQUE },
+          { y: 107, t: 'Moderada', c: '#f5c518' },
+          { y: 138, t: 'Boa', c: ROUPA },
+          { y: 162, t: 'Excelente', c: ROUPA },
+        ].map((n) => (
+          <g key={n.t}>
+            <line x1="110" y1={n.y} x2="140" y2={n.y} stroke={n.c} strokeWidth="2" strokeDasharray="3 3" />
+            <circle cx="110" cy={n.y} r="3.5" fill={n.c} />
+            <text x="146" y={n.y + 4} fill={n.c} fontSize="12" fontWeight="700">
+              {n.t}
+            </text>
+          </g>
+        ))}
       </Quadro>
     ),
   },
   {
     titulo: 'Não vale: joelho dobrado',
-    texto: 'Se o joelho dobrar, a medida não vale. Faça 3 tentativas com os joelhos esticados e anote a melhor.',
+    texto: 'Se os joelhos dobrarem, a medida não vale. O app avisa: repita com as pernas esticadas.',
     errado: true,
     desenho: (
       <Quadro>
-        <Banco />
-        <Membro d="M72 138 L150 112 L222 138" largura={16} cor={ROUPA} />
-        <Membro d="M224 140 L226 116" largura={9} />
-        <Membro d="M72 134 L140 96" largura={22} cor={ROUPA} />
-        <circle cx="158" cy="94" r="13" fill={CORPO} />
-        <Membro d="M138 98 L230 95" largura={8} />
-        <circle cx="150" cy="104" r="17" fill="none" stroke="#ff5a5f" strokeWidth="3" />
+        <DeLado quadril={[116, 70]} joelho={[160, 110]} ombro={[176, 98]} cabeca={[190, 112]} mao={[180, 142]} />
+        <circle cx="160" cy="112" r="17" fill="none" stroke="#ff5a5f" strokeWidth="3" />
       </Quadro>
     ),
   },
@@ -173,6 +197,6 @@ function ComoFazer({ passos, titulo }: { passos: Passo[]; titulo: string }) {
   )
 }
 
-export const ComoFazerWells = () => <ComoFazer titulo="Como fazer o teste" passos={WELLS} />
+export const ComoFazerFlex = () => <ComoFazer titulo="Como fazer o teste" passos={FLEX} />
 
 export const ComoFazerAdams = () => <ComoFazer titulo="Como fazer o teste" passos={ADAMS} />

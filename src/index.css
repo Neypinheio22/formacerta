@@ -1189,3 +1189,19 @@ ul.musculos.fortalecer li {
   white-space: nowrap;
   z-index: 2;
 }
+
+/* Teste de flexibilidade em pé */
+.escolha.niveis {
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.escolha.niveis button {
+  flex: 1 1 auto;
+  padding: 8px 12px;
+  font-size: 14px;
+}
+
+.resultado-teste .valor-grande.texto {
+  font-size: 26px;
+}

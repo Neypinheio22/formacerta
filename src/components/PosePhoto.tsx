@@ -1,10 +1,10 @@
 import { CONEXOES, PONTOS } from '../pose/draw'
 import type { Point } from '../pose/types'
 
-type Props = { image: string; width: number; height: number; landmarks: Point[] | null }
+type Props = { image: string; width: number; height: number; landmarks: Point[] | null; children?: React.ReactNode }
 
 /** Foto com o esqueleto desenhado por cima, em SVG para ficar nítido em qualquer tamanho. */
-export function PosePhoto({ image, width, height, landmarks }: Props) {
+export function PosePhoto({ image, width, height, landmarks, children }: Props) {
   const r = Math.max(width, height) / 110
   const ok = (p: Point) => (p.visibility ?? 1) >= 0.5
   return (
@@ -20,6 +20,7 @@ export function PosePhoto({ image, width, height, landmarks }: Props) {
           ))}
         </g>
       )}
+      {children}
     </svg>
   )
 }
