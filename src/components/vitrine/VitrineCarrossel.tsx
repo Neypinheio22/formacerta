@@ -1,3 +1,4 @@
+import { Images } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { listarVitrine, type FotoVitrine } from '../../nuvem/vitrine'
 import { CartaoFoto } from './CartaoFoto'
@@ -34,7 +35,9 @@ export function VitrineCarrossel({ onAbrir }: { onAbrir: () => void }) {
 
   return (
     <section className="cartao destaque">
-      <span className="etiqueta">Vitrine dos alunos</span>
+      <span className="etiqueta">
+        <Images size={14} /> Vitrine dos alunos
+      </span>
       <h2>Quem está evoluindo com o FormaCerta</h2>
       {fotos.length === 0 ? (
         <p className="dica-sec">A vitrine ainda está vazia. Mande a primeira foto de evolução ou de treino com o app.</p>

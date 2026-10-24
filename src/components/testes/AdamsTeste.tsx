@@ -1,3 +1,4 @@
+import { ScanSearch } from 'lucide-react'
 import { EnviarResultado } from '../conta/EnviarResultado'
 import { useMemo, useState } from 'react'
 import { detectarComMascara, loadDetectorComMascara, loadSegmentador, segmentar, type Mascara } from '../../pose/detector'
@@ -138,7 +139,9 @@ function NovoAdams({ nomes, onSalvo }: { nomes: string[]; onSalvo: (r: RegistroA
   return (
     <>
       <section className="cartao destaque">
-        <span className="etiqueta">Triagem de escoliose</span>
+        <span className="etiqueta">
+          <ScanSearch size={14} /> Triagem de escoliose
+        </span>
         <h1>Teste de Adams Digital</h1>
         <p className="dica-sec">
           A pessoa fica em pé, pés juntos, e inclina o tronco para frente até as costas ficarem quase na horizontal, com os braços soltos e as palmas unidas. O

@@ -1,3 +1,4 @@
+import { HeartPulse } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { bergDe, imcDe } from '../../idoso/analise'
 import { MAXIMO_BERG } from '../../idoso/berg'
@@ -267,7 +268,9 @@ function Inicio({ lista, rascunho, onNova, onContinuar, onDescartar, onAbrir, on
   return (
     <>
       <section className="cartao destaque">
-        <span className="etiqueta">Terceira idade</span>
+        <span className="etiqueta">
+          <HeartPulse size={14} /> Terceira idade
+        </span>
         <h1>Avaliação funcional do idoso</h1>
         <p className="dica-sec">
           Anamnese, antropometria com IMC automático, Escala de Equilíbrio de Berg e a bateria de testes funcionais (levantar e sentar, flexão de cotovelo, marcha

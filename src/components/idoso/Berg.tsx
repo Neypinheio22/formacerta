@@ -1,3 +1,4 @@
+import { Scale } from 'lucide-react'
 import { useState } from 'react'
 import { FAIXAS_BERG, ITENS_BERG, MAXIMO_BERG, classificarBerg, totalBerg } from '../../idoso/berg'
 import { useCronometro } from '../../idoso/cronometro'
@@ -32,7 +33,9 @@ export function Berg({ notas: iniciais, observacao: obsInicial, onSalvar, onVolt
   return (
     <>
       <section className="cartao destaque">
-        <span className="etiqueta">Equilíbrio</span>
+        <span className="etiqueta">
+          <Scale size={14} /> Equilíbrio
+        </span>
         <h1>Escala de Equilíbrio de Berg</h1>
         <p className="dica-sec">14 tarefas do dia a dia. Dê a nota de 0 a 4 de cada uma: a soma sai sozinha. Material: cronômetro, régua, 2 cadeiras (com e sem braços), um degrau ou banquinho e um chinelo.</p>
         <VideoExplicativo id="berg" nome="Escala de Berg" busca={BUSCA} />

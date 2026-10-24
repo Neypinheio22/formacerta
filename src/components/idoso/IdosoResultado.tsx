@@ -1,3 +1,4 @@
+import { ClipboardCheck } from 'lucide-react'
 import { useState } from 'react'
 import {
   METRICAS,
@@ -52,7 +53,9 @@ export function IdosoResultado({ a, doMesmo, onAbrir, onEditar, onReavaliar, onA
   return (
     <>
       <section className="cartao destaque resultado-final">
-        <span className="etiqueta">Resultado final · {dataCurta(a.date)}</span>
+        <span className="etiqueta">
+          <ClipboardCheck size={14} /> Resultado final · {dataCurta(a.date)}
+        </span>
         <h1>Avaliação funcional — {a.avaliado}</h1>
         <p className="dica-sec">
           {[a.anamnese.idade !== null && `${a.anamnese.idade} anos`, a.anamnese.sexo, a.antropometria.estatura && `${numero(a.antropometria.estatura, 0)} cm`, a.antropometria.peso && `${numero(a.antropometria.peso)} kg`]
