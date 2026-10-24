@@ -1,6 +1,6 @@
 import type { Perfil } from '../nuvem/conta'
 import type { Assessment } from '../pose/types'
-import { Activity, ArrowRight, Clapperboard, Footprints, HeartPulse, PlayCircle, Ruler, Sparkles, Video } from 'lucide-react'
+import { Activity, ArrowRight, Clapperboard, Crown, Footprints, HeartPulse, PlayCircle, Ruler, Sparkles, Video } from 'lucide-react'
 import { FundoHex } from './FundoHex'
 import { Logo } from './Logo'
 import { VitrineCarrossel } from './vitrine/VitrineCarrossel'
@@ -20,13 +20,14 @@ type Props = {
   onAlunos: () => void
   onConta: () => void
   onVitrine: () => void
+  onPlanos: () => void
 }
 
 const EM_BREVE = [
   { titulo: 'Teste de mobilidade', texto: 'Agachamento, tornozelo, elevação dos braços e equilíbrio.' },
 ]
 
-export function Home({ history, onStart, onOpen, onEstudio, onExercicio, onCorrida, onFlexibilidade, onAdams, onIdoso, perfil, onAdmin, onAlunos, onConta, onVitrine }: Props) {
+export function Home({ history, onStart, onOpen, onEstudio, onExercicio, onCorrida, onFlexibilidade, onAdams, onIdoso, perfil, onAdmin, onAlunos, onConta, onVitrine, onPlanos }: Props) {
   return (
     <div className="tela">
       <FundoHex brilho />
@@ -36,16 +37,21 @@ export function Home({ history, onStart, onOpen, onEstudio, onExercicio, onCorri
           <button className="link" onClick={onConta}>
             {perfil.nome ? perfil.nome.split(' ')[0] : perfil.email} · Minha conta
           </button>
-          {perfil.papel === 'admin' && (
-            <button className="botao-sec" onClick={onAdmin}>
-              Administração
+          <span className="barra-botoes">
+            <button className="botao-sec" onClick={onPlanos}>
+              <Crown size={14} /> Planos
             </button>
-          )}
-          {perfil.papel === 'profissional' && (
-            <button className="botao-sec" onClick={onAlunos}>
-              Meus alunos
-            </button>
-          )}
+            {perfil.papel === 'admin' && (
+              <button className="botao-sec" onClick={onAdmin}>
+                Administração
+              </button>
+            )}
+            {perfil.papel === 'profissional' && (
+              <button className="botao-sec" onClick={onAlunos}>
+                Meus alunos
+              </button>
+            )}
+          </span>
         </div>
       )}
 

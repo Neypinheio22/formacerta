@@ -5,7 +5,7 @@ import { ROTULO_TIPO, apagarResultado, listarResultados, type ResultadoNuvem } f
 import { Privacidade } from './Privacidade'
 import { Suporte } from './Suporte'
 
-export function MinhaConta({ onVoltar }: { onVoltar: () => void }) {
+export function MinhaConta({ onVoltar, onPlanos }: { onVoltar: () => void; onPlanos: () => void }) {
   const { perfil, recarregar } = useConta()
   const [nome, setNome] = useState(perfil?.nome ?? '')
   const [registro, setRegistro] = useState(perfil?.registro ?? '')
@@ -97,6 +97,11 @@ export function MinhaConta({ onVoltar }: { onVoltar: () => void }) {
         </section>
       )}
 
+      {perfil.papel !== 'admin' && (
+        <button className="botao-sec" onClick={onPlanos}>
+          Meu plano e pagamentos
+        </button>
+      )}
       <button className="botao-sec" onClick={() => setVerPrivacidade(true)}>
         Política de privacidade
       </button>

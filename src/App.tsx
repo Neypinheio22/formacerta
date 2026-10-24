@@ -17,6 +17,8 @@ import { MinhaConta } from './components/conta/MinhaConta'
 import { Portao } from './components/conta/Portao'
 import { Home } from './components/Home'
 import { Vitrine } from './components/vitrine/Vitrine'
+import { Pagamento, type Pedido } from './components/planos/Pagamento'
+import { Planos } from './components/planos/Planos'
 import { PostureAssessment } from './components/PostureAssessment'
 import type { ConfigCorrida, ResultadoCorrida, VistaCorrida } from './corrida/tipos'
 import type { ResultadoExercicio } from './movimento/tipos'
@@ -49,6 +51,8 @@ type Screen =
   | { name: 'alunos' }
   | { name: 'conta' }
   | { name: 'vitrine' }
+  | { name: 'planos' }
+  | { name: 'pagamento'; pedido: Pedido }
 
 // Link enviado pelo celular de controle: ...?estudio=123456 abre direto como câmera.
 function telaInicial(): Screen {
@@ -164,7 +168,11 @@ function Telas({ inicial }: { inicial: Screen }) {
 
   if (screen.name === 'vitrine') return <Vitrine onVoltar={() => go({ name: 'inicio' })} />
 
-  if (screen.name === 'conta') return <MinhaConta onVoltar={() => go({ name: 'inicio' })} />
+  if (screen.name === 'conta') return <MinhaConta onVoltar={() => go({ name: 'inicio' })} onPlanos={() => go({ name: 'planos' })} />
+
+  if (screen.name === 'planos') return <Planos onVoltar={() => go({ name: 'inicio' })} onPagar={(pedido) => go({ name: 'pagamento', pedido })} />
+
+  if (screen.name === 'pagamento') return <Pagamento pedido={screen.pedido} onVoltar={() => go({ name: 'planos' })} onPronto={() => go({ name: 'planos' })} />
 
   return (
     <Home
@@ -182,6 +190,7 @@ function Telas({ inicial }: { inicial: Screen }) {
       onAlunos={() => go({ name: 'alunos' })}
       onConta={() => go({ name: 'conta' })}
       onVitrine={() => go({ name: 'vitrine' })}
+      onPlanos={() => go({ name: 'planos' })}
     />
   )
 }

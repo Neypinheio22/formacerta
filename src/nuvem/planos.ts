@@ -1,0 +1,270 @@
+import { supabase } from './cliente'
+import { erroAmigavel, type Papel } from './conta'
+
+export type Publico = 'aluno' | 'profissional'
+export type Ciclo = 'mensal' | 'anual'
+export type Forma = 'pix' | 'cartao' | 'boleto'
+export type SituacaoAssinatura = 'teste' | 'aguardando' | 'ativa' | 'cancelada'
+export type SituacaoPagamento = 'pendente' | 'pago' | 'cancelado'
+
+export type Plano = {
+  id: string
+  publico: Publico
+  nome: string
+  descricao: string
+  preco_mensal: number
+  preco_anual: number
+  /** Vazio = alunos ilimitados. */
+  limite_alunos: number | null
+  profissionais: number
+  recursos: string[]
+  destaque: boolean
+  ativo: boolean
+  ordem: number
+}
+
+export type ConfigCobranca = {
+  comissao_pct: number
+  dias_gratis: number
+  gateway: 'nenhum' | 'asaas' | 'mercadopago' | 'stripe'
+}
+
+export type Assinatura = {
+  id: string
+  usuario_id: string
+  plano_id: string
+  ciclo: Ciclo
+  situacao: SituacaoAssinatura
+  valor: number
+  valido_ate: string | null
+  criado_em: string
+}
+
+export type Servico = {
+  id: string
+  profissional_id: string
+  nome: string
+  descricao: string
+  preco: number
+  ativo: boolean
+}
+
+export type Pagamento = {
+  id: string
+  pagador_id: string
+  recebedor_id: string | null
+  tipo: 'assinatura' | 'avaliacao'
+  descricao: string
+  valor: number
+  comissao: number
+  forma: Forma
+  situacao: SituacaoPagamento
+  criado_em: string
+  pago_em: string | null
+}
+
+export const ROTULO_FORMA: Record<Forma, string> = { pix: 'Pix', cartao: 'Cartão de crédito', boleto: 'Boleto' }
+export const ROTULO_ASSINATURA: Record<SituacaoAssinatura, string> = {
+  teste: 'Teste grátis',
+  aguardando: 'Aguardando pagamento',
+  ativa: 'Ativa',
+  cancelada: 'Cancelada',
+}
+export const ROTULO_PAGAMENTO: Record<SituacaoPagamento, string> = { pendente: 'Pendente', pago: 'Pago', cancelado: 'Cancelado' }
+
+// Os mesmos planos do banco, para a tela abrir antes de o banco responder (ou sem internet).
+export const PLANOS_PADRAO: Plano[] = [
+  {
+    id: 'aluno-gratis',
+    publico: 'aluno',
+    nome: 'Grátis',
+    descricao: 'Para conhecer o app.',
+    preco_mensal: 0,
+    preco_anual: 0,
+    limite_alunos: null,
+    profissionais: 1,
+    recursos: ['Avaliação de postura com IA', 'Histórico no seu celular', 'Testes de flexibilidade e coluna'],
+    destaque: false,
+    ativo: true,
+    ordem: 1,
+  },
+  {
+    id: 'aluno-pro',
+    publico: 'aluno',
+    nome: 'Aluno Pro',
+    descricao: 'Tudo liberado para treinar certo.',
+    preco_mensal: 24.9,
+    preco_anual: 249,
+    limite_alunos: null,
+    profissionais: 1,
+    recursos: ['Todos os testes: corrida, exercício em vídeo, idoso', 'Resultados guardados na nuvem', 'Evolução em gráficos', 'Relatório em PDF', 'Seu personal acompanha de longe'],
+    destaque: true,
+    ativo: true,
+    ordem: 2,
+  },
+  {
+    id: 'personal-gratis',
+    publico: 'profissional',
+    nome: 'Grátis',
+    descricao: 'Para testar com os primeiros alunos.',
+    preco_mensal: 0,
+    preco_anual: 0,
+    limite_alunos: 2,
+    profissionais: 1,
+    recursos: ['Até 2 alunos', 'Avaliação de postura e testes', 'Histórico dos alunos'],
+    destaque: false,
+    ativo: true,
+    ordem: 1,
+  },
+  {
+    id: 'personal-essencial',
+    publico: 'profissional',
+    nome: 'Essencial',
+    descricao: 'Para quem está começando a atender.',
+    preco_mensal: 49.9,
+    preco_anual: 499,
+    limite_alunos: 15,
+    profissionais: 1,
+    recursos: ['Até 15 alunos', 'Todos os testes e avaliações', 'Relatório com a sua logo e CREF', 'Venda de avaliações pelo app'],
+    destaque: false,
+    ativo: true,
+    ordem: 2,
+  },
+  {
+    id: 'personal-pro',
+    publico: 'profissional',
+    nome: 'Pro',
+    descricao: 'O mais escolhido: sem limite de alunos.',
+    preco_mensal: 89.9,
+    preco_anual: 899,
+    limite_alunos: null,
+    profissionais: 1,
+    recursos: ['Alunos ilimitados', 'Tudo do Essencial', 'Modo estúdio com vários celulares', 'Vídeos de referência para os alunos', 'Suporte prioritário'],
+    destaque: true,
+    ativo: true,
+    ordem: 3,
+  },
+  {
+    id: 'personal-estudio',
+    publico: 'profissional',
+    nome: 'Estúdio',
+    descricao: 'Para estúdios e equipes.',
+    preco_mensal: 249,
+    preco_anual: 2490,
+    limite_alunos: null,
+    profissionais: 5,
+    recursos: ['Até 5 profissionais', 'Alunos ilimitados', 'Tudo do Pro', 'Painel da equipe'],
+    destaque: false,
+    ativo: true,
+    ordem: 4,
+  },
+]
+
+export const CONFIG_PADRAO: ConfigCobranca = { comissao_pct: 10, dias_gratis: 30, gateway: 'nenhum' }
+
+/** Público dos planos que a pessoa vê. O administrador vê os do personal. */
+export const publicoDe = (papel: Papel): Publico => (papel === 'aluno' ? 'aluno' : 'profissional')
+
+const real = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })
+export const emReais = (v: number) => real.format(v).replace(/ /g, ' ')
+
+export const precoDo = (p: Plano, ciclo: Ciclo) => (ciclo === 'anual' ? p.preco_anual : p.preco_mensal)
+
+/** Quanto sai por mês no plano anual. */
+export const mensalNoAnual = (p: Plano) => Math.round((p.preco_anual / 12) * 100) / 100
+
+/** Quanto economiza no ano pagando anual em vez de mensal. */
+export const economiaAnual = (p: Plano) => Math.max(0, Math.round((p.preco_mensal * 12 - p.preco_anual) * 100) / 100)
+
+/** Divisão de uma avaliação vendida pelo personal: a parte do FormaCerta e o que fica com ele. */
+export function dividir(valor: number, comissaoPct: number) {
+  const comissao = Math.round(valor * comissaoPct) / 100
+  return { comissao, liquido: Math.round((valor - comissao) * 100) / 100 }
+}
+
+/** A assinatura que vale agora (a mais nova que não foi cancelada). */
+export const assinaturaAtual = (lista: Assinatura[]) => lista.find((a) => a.situacao !== 'cancelada') ?? null
+
+/** "1.234,5" ou "49.90" vira número. */
+export function lerReais(texto: string): number | null {
+  const limpo = texto.replace(/[^\d,.]/g, '')
+  if (!limpo) return null
+  const normal = limpo.includes(',') ? limpo.replace(/\./g, '').replace(',', '.') : limpo
+  const n = Number(normal)
+  return Number.isFinite(n) ? Math.round(n * 100) / 100 : null
+}
+
+const numeros = <T extends Record<string, unknown>>(linha: T, campos: (keyof T)[]) => {
+  const r = { ...linha }
+  for (const c of campos) if (r[c] !== null && r[c] !== undefined) (r as Record<keyof T, unknown>)[c] = Number(r[c])
+  return r
+}
+
+export async function listarPlanos(): Promise<{ planos: Plano[]; erro: string | null }> {
+  const { data, error } = await supabase.from('planos').select('*').order('ordem')
+  if (error || !data?.length) return { planos: PLANOS_PADRAO, erro: error ? erroAmigavel(error) : null }
+  return { planos: data.map((p) => numeros(p as Plano, ['preco_mensal', 'preco_anual'])), erro: null }
+}
+
+export async function lerConfig(): Promise<ConfigCobranca> {
+  const { data } = await supabase.from('config_cobranca').select('comissao_pct, dias_gratis, gateway').maybeSingle()
+  return data ? numeros(data as ConfigCobranca, ['comissao_pct', 'dias_gratis']) : CONFIG_PADRAO
+}
+
+export async function minhasAssinaturas(meuId: string): Promise<Assinatura[]> {
+  const { data } = await supabase.from('assinaturas').select('*').eq('usuario_id', meuId).order('criado_em', { ascending: false })
+  return (data ?? []).map((a) => numeros(a as Assinatura, ['valor']))
+}
+
+export async function escolherPlano(plano: string, ciclo: Ciclo, forma: Forma) {
+  const { error } = await supabase.rpc('escolher_plano', { plano, ciclo, forma })
+  return error ? erroAmigavel(error) : null
+}
+
+export async function cancelarAssinatura() {
+  const { error } = await supabase.rpc('cancelar_assinatura')
+  return error ? erroAmigavel(error) : null
+}
+
+/** Personal: as avaliações que ele vende. Aluno: as do personal dele (pelas regras do banco). */
+export async function listarServicos(): Promise<Servico[]> {
+  const { data } = await supabase.from('servicos').select('*').order('criado_em')
+  return (data ?? []).map((s) => numeros(s as Servico, ['preco']))
+}
+
+export async function salvarServico(s: { id?: string; profissional_id: string; nome: string; descricao: string; preco: number; ativo: boolean }) {
+  const { error } = s.id ? await supabase.from('servicos').update(s).eq('id', s.id) : await supabase.from('servicos').insert(s)
+  return error ? erroAmigavel(error) : null
+}
+
+export async function apagarServico(id: string) {
+  const { error } = await supabase.from('servicos').delete().eq('id', id)
+  return error ? erroAmigavel(error) : null
+}
+
+export async function comprarAvaliacao(servico: string, forma: Forma) {
+  const { error } = await supabase.rpc('comprar_avaliacao', { servico, forma })
+  return error ? erroAmigavel(error) : null
+}
+
+export async function listarPagamentos(): Promise<Pagamento[]> {
+  const { data } = await supabase.from('pagamentos').select('*').order('criado_em', { ascending: false }).limit(200)
+  return (data ?? []).map((p) => numeros(p as Pagamento, ['valor', 'comissao']))
+}
+
+// Administrador.
+export async function salvarPlano(p: Plano) {
+  const { id, ...mudancas } = p
+  const { error } = await supabase.from('planos').update(mudancas).eq('id', id)
+  return error ? erroAmigavel(error) : null
+}
+
+export async function salvarConfig(c: Pick<ConfigCobranca, 'comissao_pct' | 'dias_gratis'>) {
+  const { error } = await supabase.from('config_cobranca').update({ ...c, atualizado_em: new Date().toISOString() }).eq('id', true)
+  return error ? erroAmigavel(error) : null
+}
+
+export async function definirPagamento(id: string, nova: SituacaoPagamento) {
+  const { error } = await supabase.rpc('admin_definir_pagamento', { pagamento: id, nova })
+  return error ? erroAmigavel(error) : null
+}
