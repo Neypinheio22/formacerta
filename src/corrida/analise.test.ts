@@ -159,6 +159,27 @@ function montar(pt: Record<number, { x: number; y: number }>, rnd: () => number,
   return lm
 }
 
+/**
+ * Deixa o vídeo simulado parecido com um de verdade: detector tremendo,
+ * celular na mão balançando, quadros sem pessoa e quadros em que o detector
+ * pegou outra pessoa da academia.
+ */
+function comoVideoReal(quadros: QuadroCorrida[], semente = 11): QuadroCorrida[] {
+  const rnd = aleatorio(semente)
+  return quadros.map((q, i) => {
+    if (!q.lm) return q
+    const sorteio = (rnd() + 1) / 2
+    if (sorteio < 0.08) return { ...q, lm: null }
+    if (sorteio < 0.13) {
+      // Outra pessoa, em outro canto da imagem.
+      const dx = 0.3 + rnd() * 0.1
+      return { ...q, lm: q.lm.map((p) => ({ ...p, x: p.x + dx, y: p.y + 0.05 })) }
+    }
+    const balanco = (25 * Math.sin(i / 20) + 10 * Math.sin(i / 7.3)) / H
+    return { ...q, lm: q.lm.map((p) => ({ ...p, x: p.x + (rnd() * 5) / W, y: p.y + balanco + (rnd() * 5) / H })) }
+  })
+}
+
 const LADO: ConfigCorrida = { vista: 'lado', local: 'esteira', fator: 1, altura: ALTURA }
 const TRAS: ConfigCorrida = { ...LADO, vista: 'tras' }
 const achado = (r: ReturnType<typeof analisarCorrida>, id: string) => r.achados.find((a) => a.id === id)!
@@ -219,6 +240,32 @@ describe('corrida de lado', () => {
   it('avisa quando o corpo não aparece', () => {
     const q = correrDeLado({ cadencia: 170 }).map((x, i) => (i % 3 ? { ...x, lm: null } : x))
     expect(analisarCorrida(q, W, H, LADO).falha).toMatch(/corpo/)
+  })
+})
+
+describe('vídeo de verdade (simulado)', () => {
+  it('de lado, com celular na mão, tremor e outra pessoa passando', () => {
+    const r = analisarCorrida(comoVideoReal(correrDeLado({ cadencia: 168, frente: 25 })), W, H, LADO)
+    expect(r.falha).toBeUndefined()
+    expect(Math.abs(Number.parseInt(achado(r, 'cadencia').value) - 168)).toBeLessThanOrEqual(4)
+    expect(achado(r, 'passada').status).not.toBe('ok')
+  })
+
+  it('de trás, com celular na mão, tremor e outra pessoa passando', () => {
+    const r = analisarCorrida(comoVideoReal(correrDeTras({ cadencia: 176, valgoDir: 20 })), W, H, TRAS)
+    expect(r.falha).toBeUndefined()
+    expect(Math.abs(Number.parseInt(achado(r, 'cadencia').value) - 176)).toBeLessThanOrEqual(4)
+    expect(achado(r, 'joelho-dentro').lado).toBe('direito')
+  })
+
+  it('percebe câmera lenta quando a pessoa esqueceu de marcar', () => {
+    // Gravado a 120 qps e tocado a 30: o vídeo fica 4 vezes mais longo, mas foi marcado como normal.
+    const q = correrDeLado({ cadencia: 172, fps: 120, segundos: 5 }).map((x) => ({ ...x, t: x.t * 4 }))
+    const r = analisarCorrida(q, W, H, LADO)
+    expect(r.falha).toBeUndefined()
+    expect(r.fator).toBe(4)
+    expect(r.aviso).toMatch(/câmera lenta/)
+    expect(Math.abs(Number.parseInt(achado(r, 'cadencia').value) - 172)).toBeLessThanOrEqual(4)
   })
 })
 

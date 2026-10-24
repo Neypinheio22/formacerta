@@ -41,5 +41,7 @@ export type ResultadoCorrida = ConfigCorrida & {
   score: number
   /** Motivo quando não deu para avaliar (corpo fora do quadro, vídeo curto...). */
   falha?: string
+  /** Ajuste feito pela análise que a pessoa deve saber (ex.: era câmera lenta). */
+  aviso?: string
   video?: Blob
 }

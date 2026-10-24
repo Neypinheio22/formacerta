@@ -103,6 +103,8 @@ export function CorridaResultado({ resultado, onVoltar, onOutraVista }: Props) {
         </section>
       )}
 
+      {resultado.aviso && <p className="dica-sec">{resultado.aviso}</p>}
+
       <p className="aviso-triagem">
         <strong>Triagem, não diagnóstico.</strong> A análise aponta o que vale observar na técnica. Ela não substitui a avaliação de um profissional de educação física,
         fisioterapeuta ou médico. Em caso de dor, pare e procure um profissional.
