@@ -1,5 +1,7 @@
 import { Ruler } from 'lucide-react'
+import { textoFlex } from '../../compartilhar/whatsapp'
 import { EnviarResultado } from '../conta/EnviarResultado'
+import { EnviarWhatsApp } from '../conta/EnviarWhatsApp'
 import { useMemo, useState } from 'react'
 import type { Point } from '../../pose/types'
 import { apagar, atualizar, avaliados, carregar, doAvaliado, reduzirFoto, salvar } from '../../testes/historico'
@@ -286,6 +288,8 @@ function Detalhe(props: { registro: RegistroFlex; doMesmo: RegistroFlex[]; onAbr
       <section className="cartao">
         <ResultadoFlex nivel={r.nivel} joelhosOk={r.joelhosOk} joelho={r.joelho} />
       </section>
+
+      <EnviarWhatsApp texto={textoFlex({ ...r, observacoes: obs })} avaliado={r.avaliado} />
 
       <section className="cartao">
         <h2>Evolução da flexibilidade</h2>

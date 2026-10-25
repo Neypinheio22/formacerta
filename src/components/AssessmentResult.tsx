@@ -1,6 +1,8 @@
 import { planoCorretivo, recomendacao } from '../pose/recomendacoes'
 import { VIEWS, type Assessment, type Status } from '../pose/types'
+import { textoPostura } from '../compartilhar/whatsapp'
 import { EnviarResultado } from './conta/EnviarResultado'
+import { EnviarWhatsApp } from './conta/EnviarWhatsApp'
 import { PosePhoto } from './PosePhoto'
 
 const ROTULO: Record<Status, string> = { ok: 'Bom', atencao: 'Atenção', alerta: 'Corrigir' }
@@ -38,6 +40,8 @@ export function AssessmentResult({ assessment, onBack }: { assessment: Assessmen
           </p>
         </div>
       </section>
+
+      <EnviarWhatsApp texto={textoPostura(assessment)} />
 
       {problemas.length > 0 && (
         <section className="cartao">

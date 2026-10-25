@@ -1985,3 +1985,25 @@ ul.musculos.fortalecer li {
 .carrossel .foto-unica .foto-vazia {
   aspect-ratio: 1 / 1;
 }
+
+/* Enviar pelo WhatsApp */
+.enviar-whatsapp h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.botao.botao-whatsapp {
+  background: linear-gradient(135deg, #25d366 0%, #1ebe5a 100%);
+  color: #ffffff;
+  text-decoration: none;
+  box-shadow:
+    0 4px 20px rgba(37, 211, 102, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.botao.botao-whatsapp.desativado {
+  opacity: 0.45;
+  box-shadow: none;
+  cursor: not-allowed;
+}

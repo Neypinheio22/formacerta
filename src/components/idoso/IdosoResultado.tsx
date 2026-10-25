@@ -14,6 +14,7 @@ import { TESTES } from '../../idoso/testes'
 import { CIRCUNFERENCIAS, type AvaliacaoIdoso } from '../../idoso/tipos'
 import { dataCurta, numero } from '../../testes/formato'
 import { EnviarResultado } from '../conta/EnviarResultado'
+import { EnviarWhatsApp } from '../conta/EnviarWhatsApp'
 import { AvisoTriagem, GraficoEvolucao } from '../testes/comum'
 
 type Props = {
@@ -36,19 +37,7 @@ export function IdosoResultado({ a, doMesmo, onAbrir, onEditar, onReavaliar, onA
   const comparacao = base ? comparar(base, a) : []
   const ate = doMesmo.filter((x) => x.date <= a.date)
   const pontos = pontosDeAtencao(a)
-  const [copiado, setCopiado] = useState(false)
   const rcq = relacaoCinturaQuadril(a)
-
-  async function compartilhar() {
-    const texto = textoCompartilhar(a, base)
-    try {
-      if (navigator.share) return await navigator.share({ title: `Avaliação funcional — ${a.avaliado}`, text: texto })
-    } catch {
-      return
-    }
-    await navigator.clipboard?.writeText(texto)
-    setCopiado(true)
-  }
 
   return (
     <>
@@ -75,15 +64,13 @@ export function IdosoResultado({ a, doMesmo, onAbrir, onEditar, onReavaliar, onA
           ))}
         </ul>
         <div className="acoes">
-          <button className="botao-sec" onClick={compartilhar}>
-            Compartilhar
-          </button>
           <button className="botao-sec" onClick={onEditar}>
             Editar
           </button>
         </div>
-        {copiado && <p className="mensagem ok">Texto copiado. Cole no WhatsApp.</p>}
       </section>
+
+      <EnviarWhatsApp texto={textoCompartilhar(a, base)} avaliado={a.avaliado} />
 
       <section className="cartao">
         <h2>📈 Evolução</h2>

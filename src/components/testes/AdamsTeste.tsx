@@ -1,5 +1,7 @@
 import { ScanSearch } from 'lucide-react'
+import { textoAdams } from '../../compartilhar/whatsapp'
 import { EnviarResultado } from '../conta/EnviarResultado'
+import { EnviarWhatsApp } from '../conta/EnviarWhatsApp'
 import { useMemo, useState } from 'react'
 import { detectarComMascara, loadDetectorComMascara, loadSegmentador, segmentar, type Mascara } from '../../pose/detector'
 import { LM, type Point } from '../../pose/types'
@@ -327,6 +329,7 @@ function Detalhe(props: { registro: RegistroAdams; doMesmo: RegistroAdams[]; onA
       <section className="cartao">
         <ResultadoAdamsCartao angulo={angulo} classe={classificarAdams(angulo)} lado={r.lado} fonte={r.escoliometro !== null ? 'pelo escoliômetro' : 'pela foto'} />
       </section>
+      <EnviarWhatsApp texto={textoAdams({ ...r, observacoes: obs })} avaliado={r.avaliado} />
       {r.foto && (
         <section className="cartao">
           <h2>Foto na flexão do tronco</h2>

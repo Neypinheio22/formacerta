@@ -65,7 +65,10 @@ export function EnviarResultado({ tipo, id, feitoEm, resultado, avaliado = '', a
   if (enviado)
     return (
       <section className="cartao">
-        <p className="mensagem ok">Resultado enviado para o banco do FormaCerta.</p>
+        <p className="mensagem ok">
+          Resultado guardado no banco do FormaCerta{ehAluno ? '' : ', no histórico do aluno'}. Isso não manda mensagem para ninguém: para mandar para a pessoa, use o
+          botão “Enviar pelo WhatsApp”.
+        </p>
       </section>
     )
 
@@ -97,17 +100,17 @@ export function EnviarResultado({ tipo, id, feitoEm, resultado, avaliado = '', a
         <h2>Guardar no banco do FormaCerta</h2>
         <p className="dica-sec">
           Envia só os números deste resultado, sem foto e sem vídeo, para {ehAluno ? 'o seu personal acompanhar' : 'acompanhar a evolução do aluno'} e
-          melhorar as análises do app.
+          melhorar as análises do app. Não manda mensagem para a pessoa: para isso, use o botão “Enviar pelo WhatsApp”.
         </p>
         <button className="botao-sec" onClick={() => setAberto(true)}>
-          Enviar resultado
+          Guardar no app
         </button>
       </section>
     )
 
   return (
     <section className="cartao destaque formulario">
-      <h2>Enviar resultado</h2>
+      <h2>Guardar no banco do FormaCerta</h2>
 
       {!ehAluno && (
         <label className="campo">
@@ -162,7 +165,7 @@ export function EnviarResultado({ tipo, id, feitoEm, resultado, avaliado = '', a
       {erro && <p className="mensagem erro">{erro}</p>}
 
       <button className="botao" disabled={!aceito || enviando || (!ehAluno && !alunoId && apelido.trim() === '')} onClick={enviar}>
-        {enviando ? 'Enviando…' : 'Enviar'}
+        {enviando ? 'Guardando…' : 'Guardar'}
       </button>
       <button className="botao-sec" onClick={() => setAberto(false)}>
         Agora não
