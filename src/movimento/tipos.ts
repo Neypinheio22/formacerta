@@ -1,6 +1,21 @@
 import type { Finding, Point, Status } from '../pose/types'
 
-export type ExercicioId = 'agachamento-lateral' | 'agachamento-frente' | 'flexao-lateral'
+export type ExercicioId =
+  | 'agachamento-lateral'
+  | 'agachamento-frente'
+  | 'flexao-lateral'
+  | 'afundo-lateral'
+  | 'ponte-lateral'
+  | 'remada-curvada'
+  | 'encolhimento-frente'
+  | 'desenvolvimento-frente'
+  | 'elevacao-lateral-frente'
+  | 'rosca-direta'
+  | 'triceps-frances'
+  | 'mergulho-banco'
+  | 'abdominal-supra'
+  | 'elevacao-pernas'
+  | 'polichinelo'
 
 /** Pontos do corpo num quadro: na imagem (0 a 1) e em 3D (metros, centro no quadril). */
 export type Pose = { lm: Point[]; mundo: Point[] | null; w: number; h: number }
@@ -14,7 +29,10 @@ export type Quadro = { t: number; lm: Point[] | null; medidas: Medidas | null }
 /** Fase do movimento, para mostrar ao vivo. */
 export type Fase = 'aguardando' | 'em-cima' | 'descendo' | 'subindo'
 
-/** Início, ponto mais baixo e fim de uma repetição, em segundos. */
+/**
+ * Início, ponto mais baixo e fim de uma repetição, em segundos. Nos exercícios
+ * em que o ângulo sobe (`sobe`), `fundo` e `anguloMin` são o ponto mais alto.
+ */
 export type RepBruta = { inicio: number; fundo: number; fim: number; anguloMin: number }
 
 /** `fala` é a correção curta dita em voz alta logo depois da repetição. */

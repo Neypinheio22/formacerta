@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { montarResultado } from '../../movimento/analise'
-import { ContadorReps } from '../../movimento/contador'
-import { exercicioPorId } from '../../movimento/exercicios'
+import { contadorDe, exercicioPorId } from '../../movimento/exercicios'
 import type { ResultadoExercicio } from '../../movimento/tipos'
 import { analisarVideo, liberarVideo } from '../../movimento/video'
 import { loadDetector } from '../../pose/detector'
@@ -34,7 +33,7 @@ export function ExercicioArquivo({ exercicio, arquivo, onCancel, onDone }: Props
   useEffect(() => {
     if (!iniciado) return
     let cancelado = false
-    const contador = new ContadorReps(ex.cima, ex.baixo)
+    const contador = contadorDe(ex)
     let n = 0
     ;(async () => {
       try {

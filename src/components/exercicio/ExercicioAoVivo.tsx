@@ -2,8 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import type { PoseLandmarker } from '@mediapipe/tasks-vision'
 import { gravar, manterTelaAcesa } from '../../estudio/gravador'
 import { avaliarRep, montarResultado } from '../../movimento/analise'
-import { ContadorReps } from '../../movimento/contador'
-import { exercicioPorId } from '../../movimento/exercicios'
+import type { ContadorReps } from '../../movimento/contador'
+import { contadorDe, exercicioPorId } from '../../movimento/exercicios'
 import type { Fase, Quadro, Repeticao, ResultadoExercicio } from '../../movimento/tipos'
 import { analisarQuadro } from '../../movimento/video'
 import { loadDetector } from '../../pose/detector'
@@ -23,6 +23,8 @@ const NUMEROS = ['zero', 'um', 'dois', 'três', 'quatro', 'cinco', 'seis', 'sete
 
 export function ExercicioAoVivo({ exercicio, alvo, onCancel, onDone }: Props) {
   const ex = exercicioPorId(exercicio)
+  const nomeFase: Record<Fase, string> = { ...NOME_FASE, descendo: ex.fases?.[0] ?? NOME_FASE.descendo, subindo: ex.fases?.[1] ?? NOME_FASE.subindo }
+  const u = ex.unidade ?? '°'
   const videoRef = useRef<HTMLVideoElement>(null)
   const overlayRef = useRef<HTMLCanvasElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
@@ -142,7 +144,7 @@ export function ExercicioAoVivo({ exercicio, alvo, onCancel, onDone }: Props) {
       } catch {
         /* navegador sem gravação: analisa mesmo assim */
       }
-      sessao.current = { inicio: Date.now(), quadros: [], contador: new ContadorReps(ex.cima, ex.baixo), reps: 0, parar }
+      sessao.current = { inicio: Date.now(), quadros: [], contador: contadorDe(ex), reps: 0, parar }
       setEstado('gravando')
       speak('Vai')
       return
@@ -197,7 +199,7 @@ export function ExercicioAoVivo({ exercicio, alvo, onCancel, onDone }: Props) {
                 <video ref={videoRef} playsInline muted className={espelhar ? 'espelho' : ''} />
                 <canvas ref={overlayRef} className={espelhar ? 'espelho' : ''} />
                 <span className={`pill ${corpoOk ? 'pill-ok' : 'pill-aviso'}`}>
-                  {!corpoOk ? 'Afaste-se até aparecer o corpo inteiro' : gravando ? `${NOME_FASE[fase]} · ${ex.articulacao} ${angulo}°` : `${ex.articulacao} ${angulo}°`}
+                  {!corpoOk ? 'Afaste-se até aparecer o corpo inteiro' : gravando ? `${nomeFase[fase]} · ${ex.articulacao} ${angulo}${u}` : `${ex.articulacao} ${angulo}${u}`}
                 </span>
                 {estado === 'contagem' && <span className="contagem">{countdown}</span>}
                 {(gravando || estado === 'finalizando') && (
