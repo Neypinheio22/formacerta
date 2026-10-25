@@ -22,6 +22,7 @@ type Props = {
   /** Avaliações da mesma pessoa, da mais nova para a mais antiga. */
   doMesmo: AvaliacaoIdoso[]
   onAbrir: (id: string) => void
+  onRelatorio: () => void
   onEditar: () => void
   onReavaliar: () => void
   onApagar: () => void
@@ -29,7 +30,7 @@ type Props = {
 
 const SINAL: Record<string, string> = { ok: '✓', atencao: '!', alerta: '!!' }
 
-export function IdosoResultado({ a, doMesmo, onAbrir, onEditar, onReavaliar, onApagar }: Props) {
+export function IdosoResultado({ a, doMesmo, onAbrir, onRelatorio, onEditar, onReavaliar, onApagar }: Props) {
   const linhas = resumo(a)
   const anteriores = doMesmo.filter((x) => x.date < a.date)
   const [baseId, setBaseId] = useState(() => anteriores[anteriores.length - 1]?.id ?? '')
@@ -70,7 +71,7 @@ export function IdosoResultado({ a, doMesmo, onAbrir, onEditar, onReavaliar, onA
         </div>
       </section>
 
-      <EnviarWhatsApp texto={textoCompartilhar(a, base)} avaliado={a.avaliado} />
+      <EnviarWhatsApp texto={textoCompartilhar(a, base)} avaliado={a.avaliado} onPdf={onRelatorio} />
 
       <section className="cartao">
         <h2>📈 Evolução</h2>

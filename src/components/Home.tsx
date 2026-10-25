@@ -20,13 +20,15 @@ type Props = {
   onAlunos: () => void
   onConta: () => void
   onVitrine: () => void
+  onRelatorio: () => void
+  onPerfil: () => void
 }
 
 const EM_BREVE = [
   { titulo: 'Teste de mobilidade', texto: 'Agachamento, tornozelo, elevação dos braços e equilíbrio.' },
 ]
 
-export function Home({ history, onStart, onOpen, onEstudio, onExercicio, onCorrida, onFlexibilidade, onAdams, onIdoso, perfil, onAdmin, onAlunos, onConta, onVitrine }: Props) {
+export function Home({ history, onStart, onOpen, onEstudio, onExercicio, onCorrida, onFlexibilidade, onAdams, onIdoso, perfil, onAdmin, onAlunos, onConta, onVitrine, onRelatorio, onPerfil }: Props) {
   return (
     <div className="tela">
       <FundoHex brilho />
@@ -134,6 +136,20 @@ export function Home({ history, onStart, onOpen, onEstudio, onExercicio, onCorri
           </button>
         </div>
         <p className="dica-sec">São testes de triagem: não substituem o diagnóstico médico.</p>
+      </section>
+
+      <section className="cartao destaque">
+        <span className="etiqueta">Para o personal</span>
+        <h2>Relatório dos testes</h2>
+        <p className="dica-sec">Junte os testes do avaliado num relatório com a sua logo, nome e CREF. Imprima, salve em PDF ou mande no WhatsApp.</p>
+        <div className="acoes">
+          <button className="botao" onClick={onRelatorio}>
+            Fazer relatório
+          </button>
+          <button className="botao-sec" onClick={onPerfil}>
+            Meu perfil e logo
+          </button>
+        </div>
       </section>
 
       {history.length > 0 && (
