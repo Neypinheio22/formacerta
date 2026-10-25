@@ -77,7 +77,7 @@ export function Home({ history, onStart, onOpen, onEstudio, onExercicio, onCorri
         </span>
         <h2>Exercício em movimento</h2>
         <p className="dica-sec">
-          Grave ou envie um vídeo do agachamento ou da flexão. O app lê o movimento quadro a quadro, conta as repetições e mostra o que corrigir em cada uma.
+          Grave ou envie um vídeo de 15 exercícios: pernas, costas, trapézio, ombro, bíceps, tríceps, abdominal e corpo inteiro. O app lê o movimento quadro a quadro, conta as repetições e mostra o que corrigir em cada uma.
         </p>
         <button className="botao" onClick={onExercicio}>
           <PlayCircle size={18} strokeWidth={2.5} /> Analisar exercício

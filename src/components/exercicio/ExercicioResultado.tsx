@@ -158,7 +158,7 @@ export function ExercicioResultado({ resultado, onVoltar, onRefazer }: Props) {
         )}
         <Grafico ex={ex} resultado={resultado} tempo={tempo} onIr={(t) => irPara(t)} />
         <p className="dica-sec">
-          Linha verde: ângulo do {ex.articulacao.toLowerCase()} em cada instante. Cada faixa é uma repetição; toque nela para ver no vídeo.
+          Linha verde: {ex.unidade ? 'medida' : 'ângulo'} do {ex.articulacao.toLowerCase()} em cada instante. Cada faixa é uma repetição; toque nela para ver no vídeo.
         </p>
       </section>
 
@@ -171,7 +171,8 @@ export function ExercicioResultado({ resultado, onVoltar, onRefazer }: Props) {
                 <button className={aberta === r.n ? 'ativo' : ''} onClick={() => verRep(r)}>
                   <strong>Rep {r.n}</strong>
                   <span className="achado-detalhe">
-                    {ex.articulacao} {Math.round(r.anguloMin)}° no fundo · {(r.fim - r.inicio).toFixed(1).replace('.', ',')} s
+                    {ex.articulacao} {Math.round(r.anguloMin)}
+                    {ex.unidade ?? '°'} {ex.pico ?? 'no fundo'} · {(r.fim - r.inicio).toFixed(1).replace('.', ',')} s
                   </span>
                   <span className={`chip chip-${r.status}`}>{ROTULO[r.status]}</span>
                 </button>
@@ -252,8 +253,10 @@ function Grafico({ ex, resultado, tempo, onIr }: { ex: Exercicio; resultado: Res
   const { quadros, reps } = resultado
   const duracao = Math.max(resultado.duracao, 0.1)
   const angulos = quadros.flatMap((q) => (q.medidas ? [q.medidas.angulo] : []))
-  const minA = Math.max(0, Math.floor(Math.min(ex.meta - 15, ...angulos) / 10) * 10)
-  const maxA = 185
+  const extremos = ex.meta === undefined ? angulos : [...angulos, ex.meta]
+  const minA = extremos.length ? Math.max(0, Math.floor((Math.min(...extremos) - 10) / 10) * 10) : 0
+  const maxA = extremos.length ? Math.ceil((Math.max(...extremos) + 5) / 10) * 10 : 180
+  const u = ex.unidade ?? '°'
   const x = (t: number) => ESQ + (t / duracao) * (LARG - ESQ - 4)
   const y = (a: number) => 6 + ((maxA - a) / (maxA - minA)) * (ALT - BASE - 6)
 
@@ -285,12 +288,18 @@ function Grafico({ ex, resultado, tempo, onIr }: { ex: Exercicio; resultado: Res
           </text>
         </g>
       ))}
-      <line x1={ESQ} x2={LARG - 4} y1={y(ex.meta)} y2={y(ex.meta)} stroke="var(--texto-sec)" strokeDasharray="3 3" strokeWidth={0.8} />
-      <text x={ESQ - 4} y={y(ex.meta) + 3} textAnchor="end" fill="var(--texto-sec)" fontSize={8}>
-        {ex.meta}°
-      </text>
-      <text x={ESQ - 4} y={y(180) + 3} textAnchor="end" fill="var(--texto-sec)" fontSize={8}>
-        180°
+      {ex.meta !== undefined && (
+        <>
+          <line x1={ESQ} x2={LARG - 4} y1={y(ex.meta)} y2={y(ex.meta)} stroke="var(--texto-sec)" strokeDasharray="3 3" strokeWidth={0.8} />
+          <text x={ESQ - 4} y={y(ex.meta) + 3} textAnchor="end" fill="var(--texto-sec)" fontSize={8}>
+            {ex.meta}
+            {u}
+          </text>
+        </>
+      )}
+      <text x={ESQ - 4} y={y(maxA) + 8} textAnchor="end" fill="var(--texto-sec)" fontSize={8}>
+        {maxA}
+        {u}
       </text>
       <path d={d} fill="none" stroke="var(--verde)" strokeWidth={1.6} strokeLinejoin="round" />
       <line x1={x(tempo)} x2={x(tempo)} y1={2} y2={ALT - BASE + 2} stroke="var(--texto)" strokeWidth={1} />
