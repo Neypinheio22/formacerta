@@ -14,6 +14,7 @@ import { TESTES } from '../../idoso/testes'
 import { CIRCUNFERENCIAS, type AvaliacaoIdoso } from '../../idoso/tipos'
 import { dataCurta, numero } from '../../testes/formato'
 import { EnviarResultado } from '../conta/EnviarResultado'
+import { EnviarWhatsApp } from '../conta/EnviarWhatsApp'
 import { AvisoTriagem, GraficoEvolucao } from '../testes/comum'
 
 type Props = {
@@ -21,6 +22,7 @@ type Props = {
   /** Avaliações da mesma pessoa, da mais nova para a mais antiga. */
   doMesmo: AvaliacaoIdoso[]
   onAbrir: (id: string) => void
+  onRelatorio: () => void
   onEditar: () => void
   onReavaliar: () => void
   onApagar: () => void
@@ -28,7 +30,7 @@ type Props = {
 
 const SINAL: Record<string, string> = { ok: '✓', atencao: '!', alerta: '!!' }
 
-export function IdosoResultado({ a, doMesmo, onAbrir, onEditar, onReavaliar, onApagar }: Props) {
+export function IdosoResultado({ a, doMesmo, onAbrir, onRelatorio, onEditar, onReavaliar, onApagar }: Props) {
   const linhas = resumo(a)
   const anteriores = doMesmo.filter((x) => x.date < a.date)
   const [baseId, setBaseId] = useState(() => anteriores[anteriores.length - 1]?.id ?? '')
@@ -36,19 +38,7 @@ export function IdosoResultado({ a, doMesmo, onAbrir, onEditar, onReavaliar, onA
   const comparacao = base ? comparar(base, a) : []
   const ate = doMesmo.filter((x) => x.date <= a.date)
   const pontos = pontosDeAtencao(a)
-  const [copiado, setCopiado] = useState(false)
   const rcq = relacaoCinturaQuadril(a)
-
-  async function compartilhar() {
-    const texto = textoCompartilhar(a, base)
-    try {
-      if (navigator.share) return await navigator.share({ title: `Avaliação funcional — ${a.avaliado}`, text: texto })
-    } catch {
-      return
-    }
-    await navigator.clipboard?.writeText(texto)
-    setCopiado(true)
-  }
 
   return (
     <>
@@ -75,15 +65,13 @@ export function IdosoResultado({ a, doMesmo, onAbrir, onEditar, onReavaliar, onA
           ))}
         </ul>
         <div className="acoes">
-          <button className="botao-sec" onClick={compartilhar}>
-            Compartilhar
-          </button>
           <button className="botao-sec" onClick={onEditar}>
             Editar
           </button>
         </div>
-        {copiado && <p className="mensagem ok">Texto copiado. Cole no WhatsApp.</p>}
       </section>
+
+      <EnviarWhatsApp texto={textoCompartilhar(a, base)} avaliado={a.avaliado} onPdf={onRelatorio} />
 
       <section className="cartao">
         <h2>📈 Evolução</h2>

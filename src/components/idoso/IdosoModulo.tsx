@@ -39,7 +39,7 @@ function gravarRascunho(a: AvaliacaoIdoso | null) {
 }
 
 /** Avaliação funcional do idoso: anamnese, antropometria, testes, Berg e resultado. */
-export function IdosoModulo({ onVoltar }: { onVoltar: () => void }) {
+export function IdosoModulo({ onVoltar, onRelatorio }: { onVoltar: () => void; onRelatorio: (a: AvaliacaoIdoso) => void }) {
   const [tela, setTela] = useState<Tela>({ nome: 'inicio' })
   const [lista, setLista] = useState(() => carregar<AvaliacaoIdoso>(CHAVE_IDOSO))
   const [rascunho, setRascunhoEstado] = useState(lerRascunho)
@@ -86,6 +86,7 @@ export function IdosoModulo({ onVoltar }: { onVoltar: () => void }) {
           a={a}
           doMesmo={doAvaliado(lista, a.avaliado)}
           onAbrir={(id) => ir({ nome: 'resultado', id })}
+          onRelatorio={() => onRelatorio(a)}
           onEditar={() => comecar(structuredClone(a))}
           onReavaliar={() => comecar(novaAvaliacao(a))}
           onApagar={() => {

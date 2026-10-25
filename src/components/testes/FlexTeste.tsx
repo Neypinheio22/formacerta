@@ -1,5 +1,7 @@
 import { Ruler } from 'lucide-react'
+import { textoFlex } from '../../compartilhar/whatsapp'
 import { EnviarResultado } from '../conta/EnviarResultado'
+import { EnviarWhatsApp } from '../conta/EnviarWhatsApp'
 import { useMemo, useState } from 'react'
 import type { Point } from '../../pose/types'
 import { apagar, atualizar, avaliados, carregar, doAvaliado, reduzirFoto, salvar } from '../../testes/historico'
@@ -13,7 +15,7 @@ type Tela = { nome: 'novo' } | { nome: 'historico' } | { nome: 'detalhe'; id: st
 
 type Foto = { image: string; width: number; height: number; landmarks: Point[] }
 
-export function FlexTeste({ onVoltar }: { onVoltar: () => void }) {
+export function FlexTeste({ onVoltar, onRelatorio }: { onVoltar: () => void; onRelatorio: (r: RegistroFlex) => void }) {
   const [tela, setTela] = useState<Tela>({ nome: 'novo' })
   const [lista, setLista] = useState(() => carregar<RegistroFlex>(CHAVE_FLEX))
   const recarregar = () => setLista(carregar<RegistroFlex>(CHAVE_FLEX))
@@ -53,6 +55,7 @@ export function FlexTeste({ onVoltar }: { onVoltar: () => void }) {
           registro={registro}
           doMesmo={doAvaliado(lista, registro.avaliado)}
           onAbrir={(id) => ir({ nome: 'detalhe', id })}
+          onRelatorio={() => onRelatorio(registro)}
           onMudou={recarregar}
           onApagado={() => {
             recarregar()
@@ -185,7 +188,7 @@ function NovoFlex({ nomes, onSalvo }: { nomes: string[]; onSalvo: (r: RegistroFl
 }
 
 /** Foto com o esqueleto e as linhas do joelho, da canela, do tornozelo e do chão. */
-function FotoMedida({ foto }: { foto: Foto }) {
+export function FotoMedida({ foto }: { foto: Foto }) {
   const a = alturasFlex(foto.landmarks)
   const { width: w, height: h } = foto
   const t = Math.max(w, h) / 26
@@ -269,7 +272,7 @@ function Historico({ lista, onAbrir }: { lista: RegistroFlex[]; onAbrir: (id: st
 
 const ordemNivel = (n: NivelFlex) => NIVEIS.findIndex((x) => x.nivel === n) + 1
 
-function Detalhe(props: { registro: RegistroFlex; doMesmo: RegistroFlex[]; onAbrir: (id: string) => void; onMudou: () => void; onApagado: () => void }) {
+function Detalhe(props: { registro: RegistroFlex; doMesmo: RegistroFlex[]; onAbrir: (id: string) => void; onRelatorio: () => void; onMudou: () => void; onApagado: () => void }) {
   const { registro: r, doMesmo } = props
   const [obs, setObs] = useState(r.observacoes)
   const primeiro = doMesmo[doMesmo.length - 1]
@@ -286,6 +289,8 @@ function Detalhe(props: { registro: RegistroFlex; doMesmo: RegistroFlex[]; onAbr
       <section className="cartao">
         <ResultadoFlex nivel={r.nivel} joelhosOk={r.joelhosOk} joelho={r.joelho} />
       </section>
+
+      <EnviarWhatsApp texto={textoFlex({ ...r, observacoes: obs })} avaliado={r.avaliado} onPdf={props.onRelatorio} />
 
       <section className="cartao">
         <h2>Evolução da flexibilidade</h2>
@@ -339,6 +344,9 @@ function Detalhe(props: { registro: RegistroFlex; doMesmo: RegistroFlex[]; onAbr
         </button>
       </section>
 
+      <button className="botao" onClick={props.onRelatorio}>
+        Relatório para imprimir ou enviar
+      </button>
       <button
         className="botao-sec perigo"
         onClick={() => {

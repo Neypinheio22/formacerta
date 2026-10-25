@@ -18,6 +18,8 @@ import { Portao } from './components/conta/Portao'
 import { Home } from './components/Home'
 import { Vitrine } from './components/vitrine/Vitrine'
 import { PostureAssessment } from './components/PostureAssessment'
+import { PerfilProfissional } from './components/relatorio/PerfilProfissional'
+import { Relatorio } from './components/relatorio/Relatorio'
 import type { ConfigCorrida, ResultadoCorrida, VistaCorrida } from './corrida/tipos'
 import type { ResultadoExercicio } from './movimento/tipos'
 import { AdamsTeste } from './components/testes/AdamsTeste'
@@ -49,6 +51,8 @@ type Screen =
   | { name: 'alunos' }
   | { name: 'conta' }
   | { name: 'vitrine' }
+  | { name: 'perfil'; voltar: Screen }
+  | { name: 'relatorio'; avaliado?: string; marcados?: string[]; voltar: Screen }
 
 // Link enviado pelo celular de controle: ...?estudio=123456 abre direto como câmera.
 function telaInicial(): Screen {
@@ -93,7 +97,13 @@ function Telas({ inicial }: { inicial: Screen }) {
   }
 
   if (screen.name === 'resultado') {
-    return <AssessmentResult assessment={screen.assessment} onBack={() => go({ name: 'inicio' })} />
+    return (
+      <AssessmentResult
+        assessment={screen.assessment}
+        onBack={() => go({ name: 'inicio' })}
+        onRelatorio={() => go({ name: 'relatorio', marcados: [screen.assessment.id], voltar: screen })}
+      />
+    )
   }
 
   if (screen.name === 'estudio') {
@@ -152,11 +162,27 @@ function Telas({ inicial }: { inicial: Screen }) {
   if (screen.name === 'corrida-resultado') {
     return <CorridaResultado resultado={screen.resultado} onVoltar={() => go({ name: 'inicio' })} onOutraVista={(vista) => go({ name: 'corrida', vista })} />
   }
-  if (screen.name === 'flexibilidade') return <FlexTeste onVoltar={() => go({ name: 'inicio' })} />
+  if (screen.name === 'flexibilidade')
+    return <FlexTeste onVoltar={() => go({ name: 'inicio' })} onRelatorio={(r) => go({ name: 'relatorio', avaliado: r.avaliado, marcados: [r.id], voltar: screen })} />
 
-  if (screen.name === 'adams') return <AdamsTeste onVoltar={() => go({ name: 'inicio' })} />
+  if (screen.name === 'adams')
+    return <AdamsTeste onVoltar={() => go({ name: 'inicio' })} onRelatorio={(r) => go({ name: 'relatorio', avaliado: r.avaliado, marcados: [r.id], voltar: screen })} />
 
-  if (screen.name === 'idoso') return <IdosoModulo onVoltar={() => go({ name: 'inicio' })} />
+  if (screen.name === 'perfil') return <PerfilProfissional textoVoltar="Voltar" onVoltar={() => go(screen.voltar)} />
+
+  if (screen.name === 'relatorio')
+    return (
+      <Relatorio
+        key={screen.marcados?.join()}
+        avaliadoInicial={screen.avaliado}
+        marcados={screen.marcados}
+        textoVoltar="Voltar"
+        onVoltar={() => go(screen.voltar)}
+        onPerfil={() => go({ name: 'perfil', voltar: screen })}
+      />
+    )
+
+  if (screen.name === 'idoso') return <IdosoModulo onVoltar={() => go({ name: 'inicio' })} onRelatorio={(a) => go({ name: 'relatorio', avaliado: a.avaliado, marcados: [a.id], voltar: screen })} />
 
   if (screen.name === 'admin') return <Admin onVoltar={() => go({ name: 'inicio' })} />
 
@@ -182,6 +208,8 @@ function Telas({ inicial }: { inicial: Screen }) {
       onAlunos={() => go({ name: 'alunos' })}
       onConta={() => go({ name: 'conta' })}
       onVitrine={() => go({ name: 'vitrine' })}
+      onRelatorio={() => go({ name: 'relatorio', voltar: screen })}
+      onPerfil={() => go({ name: 'perfil', voltar: screen })}
     />
   )
 }
