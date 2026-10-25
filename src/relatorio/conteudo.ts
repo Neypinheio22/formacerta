@@ -3,7 +3,7 @@
 
 import { comparar, pontosDeAtencao, resumo as resumoIdoso } from '../idoso/analise'
 import type { AvaliacaoIdoso } from '../idoso/tipos'
-import { planoCorretivo } from '../pose/recomendacoes'
+import { planoCorretivo, recomendacao } from '../pose/recomendacoes'
 import { VIEWS, type Assessment, type Status } from '../pose/types'
 import { anguloAdams, classificarAdams, type RegistroAdams } from '../testes/adams'
 import { infoNivel, type RegistroFlex } from '../testes/flexibilidade'
@@ -71,7 +71,17 @@ export function secao(item: ItemRelatorio, mesmoAvaliado: ItemRelatorio[] = []):
     const problemas = achados.map((x) => x.f).filter((f) => f.status !== 'ok')
     const plano = planoCorretivo(problemas)
     const antigos = [...new Set(problemas.filter((f) => !f.correcao).flatMap((f) => f.exercises))]
+    // Para cada ponto a corrigir: o que foi visto, em qual foto, e os músculos daquele ponto.
+    const porPonto = achados
+      .filter(({ f }) => f.status !== 'ok')
+      .map(({ v, f }) => {
+        const rec = recomendacao(f)
+        const vista = VIEWS.find((x) => x.id === v.view)?.label ?? v.view
+        const musculos = rec ? ` Alongar: ${rec.alongar.join(', ')}. Fortalecer: ${rec.fortalecer.join(', ')}.` : ''
+        return `${rec?.alteracao ?? f.title} (${vista}, ${f.value}, ${ROTULO_POSTURA[f.status]}): ${f.detail}${musculos}`
+      })
     const listas = [
+      { titulo: 'Correções a fazer, ponto por ponto', itens: porPonto },
       { titulo: 'Alongar', itens: plano.alongar },
       { titulo: 'Fortalecer', itens: plano.fortalecer },
       { titulo: 'Exercícios', itens: [...plano.exercicios.map((e) => `${e.nome} (${e.dose})`), ...antigos] },
@@ -80,13 +90,23 @@ export function secao(item: ItemRelatorio, mesmoAvaliado: ItemRelatorio[] = []):
       ...base,
       linhas: [
         { rotulo: 'Pontuação', valor: `${a.score} de 100 · ${textoPontuacao(a.score)}` },
+        { rotulo: 'Fotos analisadas', valor: a.views.map((v) => VIEWS.find((x) => x.id === v.view)?.label ?? v.view).join(', ') },
+        {
+          rotulo: 'Pontos para melhorar',
+          valor: problemas.length === 0 ? 'nenhum' : String(problemas.length),
+          status: problemas.length === 0 ? 'ok' : problemas.some((f) => f.status === 'alerta') ? 'alerta' : 'atencao',
+        },
         ...achados.map(({ v, f }) => ({
           rotulo: `${VIEWS.find((x) => x.id === v.view)?.label ?? v.view}: ${f.title}`,
           valor: `${f.value} · ${ROTULO_POSTURA[f.status]}`,
           status: f.status,
         })),
       ],
-      textos: problemas.length === 0 ? ['Nenhum desvio importante encontrado nas fotos.'] : [],
+      textos: [
+        problemas.length === 0
+          ? 'Nenhum desvio importante encontrado nas fotos.'
+          : 'Ângulos medidos pelo app sobre as fotos (linhas verdes). Faça os exercícios 3 a 4 vezes por semana e repita a avaliação em 30 dias.',
+      ],
       listas,
       observacoes: '',
       aviso: AVISO,

@@ -2,7 +2,8 @@ import { FileText, MessageCircle } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { linkWhatsApp, telefoneGuardado } from '../../compartilhar/whatsapp'
 import { secao, nomeArquivo, nomeTeste, resumo, type ItemRelatorio, type Secao } from '../../relatorio/conteudo'
-import { baixarPdf, compartilharPdf, gerarPdf, svgParaImagem, type Imagem } from '../../relatorio/pdf'
+import { useConta } from '../../nuvem/conta'
+import { baixarPdf, compartilharPdf, gerarPdf, svgParaImagem, type Imagem, type ModoRelatorio } from '../../relatorio/pdf'
 import { carregarProfissional, contato, perfilPreenchido } from '../../relatorio/profissional'
 import { loadAssessments } from '../../storage'
 import { CHAVE_IDOSO, type AvaliacaoIdoso } from '../../idoso/tipos'
@@ -11,6 +12,7 @@ import { CHAVE_FLEX, type RegistroFlex } from '../../testes/flexibilidade'
 import { dataCurta } from '../../testes/formato'
 import { avaliados, carregar } from '../../testes/historico'
 import { Logo } from '../Logo'
+import { VIEWS } from '../../pose/types'
 import { PosePhoto } from '../PosePhoto'
 import { FotoAdams } from '../testes/AdamsTeste'
 import { FotoMedida } from '../testes/FlexTeste'
@@ -43,6 +45,12 @@ function carregarTodos(): ItemRelatorio[] {
 export function Relatorio({ avaliadoInicial = '', marcados: marcadosIniciais = [], textoVoltar = 'Início', onVoltar, onPerfil }: Props) {
   const [todos] = useState(carregarTodos)
   const [profissional] = useState(carregarProfissional)
+  const { perfil } = useConta()
+  // O aluno só manda o relatório dele, sem dados de profissional.
+  const ehAluno = perfil?.papel === 'aluno'
+  const [modoEscolhido, setModo] = useState<ModoRelatorio>(ehAluno ? 'aluno' : 'personal')
+  const modo: ModoRelatorio = ehAluno ? 'aluno' : modoEscolhido
+  const doPersonal = modo === 'personal'
   const [avaliado, setAvaliado] = useState(avaliadoInicial)
   const [marcados, setMarcados] = useState(() => new Set(marcadosIniciais))
   const [conclusao, setConclusao] = useState('')
@@ -88,12 +96,15 @@ export function Relatorio({ avaliadoInicial = '', marcados: marcadosIniciais = [
           let fotos = fotosProntas.current.get(s.id)
           if (!fotos) {
             const svgs = [...(folha.current?.querySelectorAll<SVGSVGElement>(`[data-secao="${s.id}"] .folha-fotos svg`) ?? [])]
-            fotos = (await Promise.all(svgs.map((svg) => svgParaImagem(svg).catch(() => null)))).filter((f): f is Imagem => f !== null)
+            const legenda = (svg: SVGSVGElement) => svg.closest<HTMLElement>('[data-legenda]')?.dataset.legenda
+            fotos = (await Promise.all(svgs.map((svg) => svgParaImagem(svg).then((f): Imagem => ({ ...f, legenda: legenda(svg) }), () => null)))).filter(
+              (f): f is Imagem => f !== null,
+            )
             fotosProntas.current.set(s.id, fotos)
           }
           comFotos.push({ ...s, fotos })
         }
-        const blob = await gerarPdf({ profissional, avaliado: nomeAvaliado, data, conclusao, secoes: comFotos })
+        const blob = await gerarPdf({ modo, profissional, avaliado: nomeAvaliado, data, conclusao, secoes: comFotos })
         if (!cancelado) setPdf({ blob, nome: nomeArquivo(nomeAvaliado) })
       } catch {
         if (!cancelado) setAviso('Não conseguimos montar o PDF. Use o botão Imprimir e escolha "Salvar como PDF".')
@@ -104,9 +115,11 @@ export function Relatorio({ avaliadoInicial = '', marcados: marcadosIniciais = [
       cancelado = true
       clearTimeout(t)
     }
-  }, [secoes, profissional, nomeAvaliado, data, conclusao])
+  }, [secoes, modo, profissional, nomeAvaliado, data, conclusao])
 
-  const textoEnvio = `Olá${nomeAvaliado ? `, ${nomeAvaliado.split(' ')[0]}` : ''}! Segue o seu relatório de avaliação FormaCerta${profissional.nome ? `, por ${profissional.nome}` : ''}.`
+  const textoEnvio = doPersonal
+    ? `Olá${nomeAvaliado ? `, ${nomeAvaliado.split(' ')[0]}` : ''}! Segue o seu relatório de avaliação FormaCerta${profissional.nome ? `, por ${profissional.nome}` : ''}.`
+    : `Olá! Segue o meu relatório de avaliação do FormaCerta${nomeAvaliado ? ` (${nomeAvaliado})` : ''}, com as fotos e os resultados, para você analisar.`
 
   async function enviar() {
     if (!pdf) return
@@ -123,18 +136,36 @@ export function Relatorio({ avaliadoInicial = '', marcados: marcadosIniciais = [
         <button className="voltar" onClick={onVoltar}>
           ← {textoVoltar}
         </button>
-        <button className="voltar" onClick={onPerfil}>
-          Meu perfil
-        </button>
+        {doPersonal && (
+          <button className="voltar" onClick={onPerfil}>
+            Meu perfil
+          </button>
+        )}
       </header>
 
       <section className="cartao destaque">
         <span className="etiqueta">Imprimir ou enviar</span>
         <h1>Relatório dos testes</h1>
-        <p className="dica-sec">Escolha os testes do avaliado. O relatório sai com a sua logo, seu nome e o número de registro, pronto para imprimir, salvar em PDF ou mandar no WhatsApp.</p>
+        <p className="dica-sec">
+          {doPersonal
+            ? 'Escolha os testes do avaliado. O relatório sai com a sua logo, seu nome e o número de registro, pronto para imprimir, salvar em PDF ou mandar no WhatsApp.'
+            : 'Escolha os testes. O relatório sai só com os dados do aluno, as fotos e os resultados, para mandar a um profissional qualificado analisar.'}
+        </p>
+        {!ehAluno && (
+          <div className="escolha-modo" role="radiogroup" aria-label="Quem está enviando">
+            <button role="radio" aria-checked={doPersonal} className={doPersonal ? 'ativo' : ''} onClick={() => setModo('personal')}>
+              <strong>Enviar como personal</strong>
+              <span>Com a sua logo, nome e CREF</span>
+            </button>
+            <button role="radio" aria-checked={!doPersonal} className={!doPersonal ? 'ativo' : ''} onClick={() => setModo('aluno')}>
+              <strong>Enviar como aluno</strong>
+              <span>Só os dados do aluno</span>
+            </button>
+          </div>
+        )}
       </section>
 
-      {!perfilPreenchido(profissional) && (
+      {doPersonal && !perfilPreenchido(profissional) && (
         <section className="cartao aviso-perfil">
           <p>Seu nome e o número de registro (CREF) ainda não estão no perfil. Eles saem no topo e na assinatura do relatório.</p>
           <button className="botao-sec" onClick={onPerfil}>
@@ -166,8 +197,13 @@ export function Relatorio({ avaliadoInicial = '', marcados: marcadosIniciais = [
           </ul>
         </div>
         <label className="campo">
-          Conclusão e conduta (opcional)
-          <textarea value={conclusao} onChange={(e) => setConclusao(e.target.value)} rows={4} placeholder="Ex.: priorizar mobilidade de quadril e fortalecimento de glúteos; reavaliar em 30 dias." />
+          {doPersonal ? 'Conclusão e conduta (opcional)' : 'Observações do aluno (opcional)'}
+          <textarea
+            value={conclusao}
+            onChange={(e) => setConclusao(e.target.value)}
+            rows={4}
+            placeholder={doPersonal ? 'Ex.: priorizar mobilidade de quadril e fortalecimento de glúteos; reavaliar em 30 dias.' : 'Ex.: sinto dor no ombro direito ao levantar o braço.'}
+          />
         </label>
       </section>
 
@@ -200,16 +236,18 @@ export function Relatorio({ avaliadoInicial = '', marcados: marcadosIniciais = [
               <Logo size={20} />
               <span>Treine certo. Evolua sempre.</span>
             </div>
-            <header className="folha-topo">
-              {profissional.logo && <img src={profissional.logo.image} alt="" />}
-              <div>
-                <strong className="folha-nome">{profissional.nome || 'Seu nome'}</strong>
-                {profissional.profissao && <span>{profissional.profissao}</span>}
-                <span className="folha-registro">{profissional.registro || 'Número de registro (CREF)'}</span>
-                {contato(profissional) && <span>{contato(profissional)}</span>}
-              </div>
-            </header>
-            <h1>Relatório de avaliação</h1>
+            {doPersonal && (
+              <header className="folha-topo">
+                {profissional.logo && <img src={profissional.logo.image} alt="" />}
+                <div>
+                  <strong className="folha-nome">{profissional.nome || 'Seu nome'}</strong>
+                  {profissional.profissao && <span>{profissional.profissao}</span>}
+                  <span className="folha-registro">{profissional.registro || 'Número de registro (CREF)'}</span>
+                  {contato(profissional) && <span>{contato(profissional)}</span>}
+                </div>
+              </header>
+            )}
+            <h1>{doPersonal ? 'Relatório de avaliação' : 'Relatório do aluno'}</h1>
             <p className="folha-avaliado">
               <span>Avaliado: {nomeAvaliado || '—'}</span>
               <span>Data: {dataCurta(data)}</span>
@@ -249,7 +287,7 @@ export function Relatorio({ avaliadoInicial = '', marcados: marcadosIniciais = [
                 </div>
                 {s.observacoes && (
                   <>
-                    <h3>Observações do profissional</h3>
+                    <h3>{doPersonal ? 'Observações do profissional' : 'Observações'}</h3>
                     <p>{s.observacoes}</p>
                   </>
                 )}
@@ -259,15 +297,18 @@ export function Relatorio({ avaliadoInicial = '', marcados: marcadosIniciais = [
 
             {conclusao.trim() && (
               <section className="folha-secao">
-                <h2>Conclusão e conduta</h2>
+                <h2>{doPersonal ? 'Conclusão e conduta' : 'Observações do aluno'}</h2>
                 <p>{conclusao}</p>
               </section>
             )}
 
+            {!doPersonal && (
+              <p className="folha-aviso">Relatório gerado pelo próprio aluno no FormaCerta, para ser analisado por um profissional qualificado (educação física, fisioterapia ou medicina).</p>
+            )}
             <div className="folha-assinatura">
               <span />
-              <strong>{profissional.nome || 'Seu nome'}</strong>
-              {profissional.registro && <small>{profissional.registro}</small>}
+              <strong>{doPersonal ? profissional.nome || 'Seu nome' : 'Profissional responsável e registro'}</strong>
+              {doPersonal && profissional.registro && <small>{profissional.registro}</small>}
             </div>
             <p className="folha-rodape">Relatório feito com o FormaCerta · triagem, não diagnóstico médico</p>
           </div>
@@ -278,7 +319,16 @@ export function Relatorio({ avaliadoInicial = '', marcados: marcadosIniciais = [
 }
 
 function FotosDoTeste({ item }: { item: ItemRelatorio }) {
-  if (item.tipo === 'postura') return item.registro.views.map((v) => <PosePhoto key={v.view} image={v.image} width={v.width} height={v.height} landmarks={v.landmarks} />)
+  if (item.tipo === 'postura')
+    return item.registro.views.map((v) => {
+      const legenda = VIEWS.find((x) => x.id === v.view)?.label ?? v.view
+      return (
+        <figure key={v.view} data-legenda={legenda}>
+          <PosePhoto image={v.image} width={v.width} height={v.height} landmarks={v.landmarks} />
+          <figcaption>{legenda}</figcaption>
+        </figure>
+      )
+    })
   if (item.tipo === 'flexibilidade') return item.registro.foto ? <FotoMedida foto={item.registro.foto} /> : null
   if (item.tipo === 'idoso') return null
   return item.registro.foto ? <FotoAdams image={item.registro.foto.image} resultado={item.registro.foto.resultado} /> : null

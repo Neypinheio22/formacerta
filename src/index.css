@@ -2277,6 +2277,54 @@ ul.musculos.fortalecer li {
   border-radius: 4px;
 }
 
+.folha-fotos.fotos-postura {
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.folha-fotos figure {
+  margin: 0;
+}
+
+.folha-fotos figcaption {
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #64707a;
+  margin-top: 2px;
+}
+
+/* Quem envia o relatório: personal ou aluno */
+.escolha-modo {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.escolha-modo button {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: left;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(159, 179, 194, 0.25);
+  background: rgba(2, 11, 22, 0.55);
+  color: var(--texto);
+  cursor: pointer;
+}
+
+.escolha-modo button span {
+  font-size: 0.8rem;
+  color: #9fb3c2;
+}
+
+.escolha-modo button.ativo {
+  border-color: var(--verde);
+  box-shadow: 0 0 0 1px var(--verde) inset;
+}
+
 .folha-aviso,
 .folha-rodape {
   font-size: 0.72rem;

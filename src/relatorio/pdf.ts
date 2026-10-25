@@ -5,9 +5,13 @@ import { dataCurta } from '../testes/formato'
 import type { Secao } from './conteudo'
 import { contato, type Profissional } from './profissional'
 
-export type Imagem = { image: string; width: number; height: number }
+export type Imagem = { image: string; width: number; height: number; legenda?: string }
+
+/** Quem manda o relatório: o personal (com logo, nome e CREF) ou o próprio aluno (só os dados dele). */
+export type ModoRelatorio = 'personal' | 'aluno'
 
 export type DadosRelatorio = {
+  modo: ModoRelatorio
   profissional: Profissional
   avaliado: string
   data: string
@@ -50,6 +54,7 @@ function limparDados(d: DadosRelatorio): DadosRelatorio {
     secoes: d.secoes.map((s) => ({
       ...s,
       titulo: textoPdf(s.titulo),
+      fotos: s.fotos.map((f) => ({ ...f, legenda: f.legenda && textoPdf(f.legenda) })),
       linhas: s.linhas.map((l) => ({ ...l, rotulo: textoPdf(l.rotulo), valor: textoPdf(l.valor) })),
       textos: s.textos.map(textoPdf),
       listas: s.listas.map((l) => ({ titulo: textoPdf(l.titulo), itens: l.itens.map(textoPdf) })),
@@ -94,44 +99,54 @@ export async function gerarPdf(dados: DadosRelatorio): Promise<Blob> {
   faixaMarca(doc)
   y = ALTURA_FAIXA + 8
 
-  // Cabeçalho: logo e dados do profissional.
   const p = d.profissional
-  let xTexto = M
-  let altCabecalho = 0
-  if (p.logo) {
-    const escala = Math.min(40 / p.logo.width, 22 / p.logo.height)
-    const w = p.logo.width * escala
-    const h = p.logo.height * escala
-    doc.addImage(p.logo.image, formato(p.logo.image), M, y, w, h)
-    xTexto = M + w + 6
-    altCabecalho = h
+  const doPersonal = d.modo === 'personal'
+
+  // Cabeçalho: logo e dados do profissional (só no relatório do personal).
+  if (doPersonal) {
+    let xTexto = M
+    let altCabecalho = 0
+    if (p.logo) {
+      const escala = Math.min(40 / p.logo.width, 22 / p.logo.height)
+      const w = p.logo.width * escala
+      const h = p.logo.height * escala
+      doc.addImage(p.logo.image, formato(p.logo.image), M, y, w, h)
+      xTexto = M + w + 6
+      altCabecalho = h
+    }
+    let yTexto = y
+    const linhaCabecalho = (texto: string, tamanho: number, estilo: 'normal' | 'bold', c: Cor) => {
+      if (!texto.trim()) return
+      fonte(tamanho, estilo)
+      cor(c)
+      doc.text(texto, xTexto, yTexto + altLinha() * 0.75, { maxWidth: A4.w - M - xTexto })
+      yTexto += altLinha()
+    }
+    linhaCabecalho(p.nome || 'Profissional', 14, 'bold', TEXTO)
+    linhaCabecalho(p.profissao, 10, 'normal', CINZA)
+    linhaCabecalho(p.registro, 10, 'bold', TEXTO)
+    linhaCabecalho(contato(p), 9, 'normal', CINZA)
+    y += Math.max(altCabecalho, yTexto - y) + 4
+    doc.setDrawColor(VERDE[0], VERDE[1], VERDE[2])
+    doc.setLineWidth(0.8)
+    doc.line(M, y, A4.w - M, y)
+    y += 8
   }
-  let yTexto = y
-  const linhaCabecalho = (texto: string, tamanho: number, estilo: 'normal' | 'bold', c: Cor) => {
-    if (!texto.trim()) return
-    fonte(tamanho, estilo)
-    cor(c)
-    doc.text(texto, xTexto, yTexto + altLinha() * 0.75, { maxWidth: A4.w - M - xTexto })
-    yTexto += altLinha()
-  }
-  linhaCabecalho(p.nome || 'Profissional', 14, 'bold', TEXTO)
-  linhaCabecalho(p.profissao, 10, 'normal', CINZA)
-  linhaCabecalho(p.registro, 10, 'bold', TEXTO)
-  linhaCabecalho(contato(p), 9, 'normal', CINZA)
-  y += Math.max(altCabecalho, yTexto - y) + 4
-  doc.setDrawColor(VERDE[0], VERDE[1], VERDE[2])
-  doc.setLineWidth(0.8)
-  doc.line(M, y, A4.w - M, y)
-  y += 8
 
   fonte(16, 'bold')
   cor(TEXTO)
-  doc.text('Relatório de avaliação', M, y)
+  doc.text(doPersonal ? 'Relatório de avaliação' : 'Relatório do aluno', M, y)
   y += 7
   fonte(11)
   doc.text(`Avaliado: ${d.avaliado || '—'}`, M, y)
   doc.text(`Data: ${dataCurta(d.data)}`, A4.w - M, y, { align: 'right' })
   y += 8
+  if (!doPersonal) {
+    fonte(9.5, 'italic')
+    cor(CINZA)
+    paragrafo('Relatório gerado pelo próprio aluno no FormaCerta, para ser analisado por um profissional qualificado (educação física, fisioterapia ou medicina).')
+    y += 4
+  }
 
   for (const s of d.secoes) {
     garantir(30)
@@ -189,18 +204,29 @@ export async function gerarPdf(dados: DadosRelatorio): Promise<Blob> {
 
     if (s.fotos.length) {
       y += 3
-      const n = s.fotos.length
-      const gap = 4
-      const w = n === 1 ? 70 : (LARGURA - gap * (n - 1)) / n
-      const h = Math.max(...s.fotos.map((f) => Math.min(95, (w * f.height) / f.width)))
-      garantir(h)
-      s.fotos.forEach((f, i) => {
-        const escala = Math.min(w / f.width, h / f.height)
-        const fw = f.width * escala
-        const fh = f.height * escala
-        doc.addImage(f.image, formato(f.image), M + i * (w + gap) + (w - fw) / 2, y, fw, fh)
-      })
-      y += h + 3
+      // Duas fotos por linha, grandes o bastante para o profissional ver os ângulos.
+      const porLinha = s.fotos.length === 1 ? 1 : 2
+      const gap = 6
+      const w = porLinha === 1 ? 90 : (LARGURA - gap) / 2
+      for (let i = 0; i < s.fotos.length; i += porLinha) {
+        const linha = s.fotos.slice(i, i + porLinha)
+        const h = Math.max(...linha.map((f) => Math.min(120, (w * f.height) / f.width)))
+        const comLegenda = linha.some((f) => f.legenda)
+        garantir(h + (comLegenda ? 6 : 0))
+        linha.forEach((f, j) => {
+          const escala = Math.min(w / f.width, h / f.height)
+          const fw = f.width * escala
+          const fh = f.height * escala
+          const x = M + j * (w + gap)
+          doc.addImage(f.image, formato(f.image), x + (w - fw) / 2, y, fw, fh)
+          if (f.legenda) {
+            fonte(9, 'bold')
+            cor(CINZA)
+            doc.text(f.legenda, x + w / 2, y + h + 4, { align: 'center' })
+          }
+        })
+        y += h + (comLegenda ? 8 : 4)
+      }
     }
 
     if (s.observacoes.trim()) {
@@ -208,7 +234,7 @@ export async function gerarPdf(dados: DadosRelatorio): Promise<Blob> {
       garantir(12)
       fonte(10, 'bold')
       cor(TEXTO)
-      paragrafo('Observações do profissional')
+      paragrafo(doPersonal ? 'Observações do profissional' : 'Observações')
       fonte(10)
       paragrafo(s.observacoes)
     }
@@ -224,14 +250,30 @@ export async function gerarPdf(dados: DadosRelatorio): Promise<Blob> {
     garantir(16)
     fonte(12, 'bold')
     cor(TEXTO)
-    paragrafo('Conclusão e conduta')
+    paragrafo(doPersonal ? 'Conclusão e conduta' : 'Observações do aluno')
     y += 1
     fonte(10)
     paragrafo(d.conclusao)
     y += 6
   }
 
-  // Assinatura do profissional.
+  // Assinatura do profissional, ou espaço para o profissional que vai analisar o relatório do aluno.
+  if (!doPersonal) {
+    garantir(40)
+    y += 4
+    fonte(10, 'bold')
+    cor(TEXTO)
+    paragrafo('Análise do profissional')
+    fonte(9)
+    cor(CINZA)
+    paragrafo('Espaço para o profissional que receber este relatório anotar a conduta e assinar.')
+    doc.setDrawColor(CINZA[0], CINZA[1], CINZA[2])
+    doc.setLineWidth(0.2)
+    for (let i = 0; i < 3; i++) {
+      y += 8
+      doc.line(M, y, A4.w - M, y)
+    }
+  }
   garantir(28)
   y += 14
   doc.setDrawColor(CINZA[0], CINZA[1], CINZA[2])
@@ -240,8 +282,8 @@ export async function gerarPdf(dados: DadosRelatorio): Promise<Blob> {
   y += 5
   fonte(10, 'bold')
   cor(TEXTO)
-  doc.text(p.nome || 'Profissional', A4.w / 2, y, { align: 'center' })
-  if (p.registro.trim()) {
+  doc.text(doPersonal ? p.nome || 'Profissional' : 'Profissional responsável e registro', A4.w / 2, y, { align: 'center' })
+  if (doPersonal && p.registro.trim()) {
     y += 5
     fonte(9)
     cor(CINZA)
