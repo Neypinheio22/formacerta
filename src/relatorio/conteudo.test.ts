@@ -1,3 +1,4 @@
+import type { Assessment, Finding } from '../pose/types'
 import { textoPdf } from './pdf'
 import { novaAvaliacao, type AvaliacaoIdoso } from '../idoso/tipos'
 import { describe, expect, it } from 'vitest'
@@ -37,6 +38,16 @@ describe('conteúdo do relatório', () => {
     expect(s.linhas[0]).toMatchObject({ valor: '7,0° · Assimetria importante', status: 'alerta' })
     expect(s.linhas.map((l) => l.rotulo)).toContain('Medida da foto')
     expect(s.linhas.find((l) => l.rotulo.startsWith('Lado'))?.valor).toBe('direito')
+  })
+
+  it('postura traz as correções ponto por ponto, com a foto e os músculos', () => {
+    const ombro: Finding = { id: 'ombros', title: 'Ombros', value: '4,0°', status: 'alerta', detail: 'Ombros: lado direito mais alto.', exercises: [], correcao: 'ombroElevado', lado: 'direito' }
+    const a: Assessment = { id: 'p', date: '2026-10-20T10:00:00Z', score: 70, views: [{ view: 'frente', image: '', width: 1, height: 1, landmarks: [], findings: [ombro] }] }
+    const s = secao({ tipo: 'postura', registro: a })
+    expect(s.linhas.find((l) => l.rotulo === 'Pontos para melhorar')).toMatchObject({ valor: '1', status: 'alerta' })
+    const porPonto = s.listas.find((l) => l.titulo.startsWith('Correções'))!
+    expect(porPonto.itens[0]).toContain('Ombro elevado (Frente, 4,0°, Corrigir)')
+    expect(porPonto.itens[0]).toContain('Alongar: Trapézio superior')
   })
 
   it('avaliação do idoso entra com as medidas e a evolução', () => {
