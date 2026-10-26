@@ -1,7 +1,7 @@
 import { supabase } from './cliente'
 import { erroAmigavel } from './conta'
 
-export type TipoResultado = 'postura' | 'corrida' | 'exercicio' | 'flexibilidade' | 'adams' | 'idoso' | 'medidas'
+export type TipoResultado = 'postura' | 'corrida' | 'exercicio' | 'flexibilidade' | 'adams' | 'idoso' | 'medidas' | 'estrategia'
 
 export const ROTULO_TIPO: Record<TipoResultado, string> = {
   postura: 'Avaliação de postura',
@@ -11,6 +11,7 @@ export const ROTULO_TIPO: Record<TipoResultado, string> = {
   adams: 'Teste de Adams',
   idoso: 'Avaliação funcional do idoso',
   medidas: 'Medidas do corpo',
+  estrategia: 'Estratégia do professor',
 }
 
 // Fotos, vídeos e os pontos do corpo quadro a quadro ficam só no celular.
@@ -55,7 +56,8 @@ export async function enviarResultado(e: Envio) {
     apelido: e.apelido.trim().slice(0, 60),
     tipo: e.tipo,
     feito_em: e.feitoEm,
-    dados: resumir(e.resultado),
+    // A estratégia do professor é texto longo e não tem foto: vai inteira.
+    dados: e.tipo === 'estrategia' ? e.resultado : resumir(e.resultado),
     idade: e.idade,
     sexo: e.sexo,
     altura_cm: e.alturaCm,

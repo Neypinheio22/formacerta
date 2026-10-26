@@ -80,16 +80,16 @@ export function Home({ history, onStart, onOpen, onEstudio, onExercicio, onCorri
       {perfil && (
         <section className="cartao destaque analise-ia">
           <span className="etiqueta">
-            <Brain size={14} /> Novo · plano de ação
+            <Brain size={14} /> Novo · inteligência
           </span>
-          <h2>Análise do Personal IA</h2>
+          <h2>Central de Inteligência</h2>
           <p className="fluxo-ia">Aluno faz o teste sozinho + app gera o resultado + personal IA analisa</p>
           <p className="dica-sec">
-            Cada teste vira 🟢 Adequado, 🟡 Precisa melhorar ou 🔴 Atenção, com os pontos de atenção, os exercícios recomendados e a data da reavaliação. A análise junta postura,
-            flexibilidade, corrida e os outros testes guardados na ficha num plano de treino só.
+            Escolha o aluno e veja postura, mobilidade, corrida, flexibilidade e coluna em 🟢 Adequado, 🟡 Precisa melhorar ou 🔴 Atenção, com os exercícios ligados aos
+            achados. O app coleta, organiza e sugere; o professor revisa a análise e define a estratégia.
           </p>
           <button className="botao" onClick={perfil.papel === 'aluno' ? onEvolucao : onAlunos}>
-            {perfil.papel === 'aluno' ? 'Ver minha análise' : 'Ver a análise dos alunos'}
+            {perfil.papel === 'aluno' ? 'Ver minha análise' : 'Abrir a central dos alunos'}
           </button>
         </section>
       )}

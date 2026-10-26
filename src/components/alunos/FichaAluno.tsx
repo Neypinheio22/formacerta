@@ -7,7 +7,7 @@ import { NovoAluno } from '../conta/NovoAluno'
 import { FichaForm } from './FichaForm'
 import { MedidasForm } from './MedidasForm'
 import { PainelEvolucao } from './PainelEvolucao'
-import { AnalisePersonal } from '../plano/AnalisePersonal'
+import { CentralInteligencia } from '../plano/CentralInteligencia'
 
 type Props = {
   /** Null quando o aluno entrou sozinho no app e ainda não tem ficha de um profissional. */
@@ -174,14 +174,14 @@ export function FichaAluno({ ficha, meuId, podeEditar, nome, textoVoltar, onVolt
         <>
           <div className="seletor-comparar abas-ficha" role="tablist">
             <button role="tab" aria-selected={aba === 'analise'} className={aba === 'analise' ? 'ativo' : ''} onClick={() => setAba('analise')}>
-              🧠 Personal IA
+              🧠 Central IA
             </button>
             <button role="tab" aria-selected={aba === 'evolucao'} className={aba === 'evolucao' ? 'ativo' : ''} onClick={() => setAba('evolucao')}>
               📈 Evolução
             </button>
           </div>
           {aba === 'analise' ? (
-            <AnalisePersonal resultados={resultados} nome={dados?.nome ?? nome} />
+            <CentralInteligencia resultados={resultados} nome={dados?.nome ?? nome} ficha={dados} podeEditar={podeEditar} onSalvo={carregar} />
           ) : (
             <PainelEvolucao resultados={resultados} contexto={contexto} nome={dados?.nome ?? nome} />
           )}

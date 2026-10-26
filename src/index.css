@@ -2783,3 +2783,102 @@ ul.musculos.fortalecer li {
   flex-direction: column;
   gap: 2px;
 }
+
+/* Central de Inteligência: um cartão por área */
+.mensagem.aviso {
+  background: rgba(250, 204, 21, 0.12);
+  color: var(--amarelo);
+}
+
+.areas-central {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.area-cartao {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 12px;
+  border: 1px solid var(--borda);
+  border-top: 4px solid var(--borda);
+  border-radius: 16px;
+  background: var(--vidro);
+}
+
+.area-cartao p {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+
+.area-ok {
+  border-top-color: var(--verde);
+}
+
+.area-atencao {
+  border-top-color: var(--amarelo);
+}
+
+.area-alerta {
+  border-top-color: var(--vermelho);
+}
+
+.area-vazia p {
+  color: var(--texto-sec);
+}
+
+.area-nome {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--texto-sec);
+}
+
+.area-ajuste {
+  font-size: 0.7rem;
+  color: var(--texto-sec);
+}
+
+.estrategia h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.revisar {
+  border-left: 4px solid var(--verde);
+}
+
+.revisar-area {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--borda);
+  font-size: 0.9rem;
+}
+
+.niveis-botoes {
+  display: flex;
+  gap: 6px;
+}
+
+.niveis-botoes button {
+  width: 40px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid var(--borda);
+  background: none;
+  font-size: 1.05rem;
+  opacity: 0.45;
+}
+
+.niveis-botoes button.ativo {
+  opacity: 1;
+  border-color: currentColor;
+}
