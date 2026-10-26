@@ -36,7 +36,7 @@ alter table public.resultados add constraint resultados_tipo_check
   check (tipo in ('postura', 'corrida', 'exercicio', 'flexibilidade', 'adams', 'idoso', 'medidas'));
 
 -- Profissional (ou administrador) liberado.
-create function public.eh_profissional() returns boolean
+create function public.eh_profissional_ou_admin() returns boolean
 language sql stable security definer set search_path = '' as $$
   select exists (
     select 1 from public.perfis
@@ -50,7 +50,7 @@ language sql stable security definer set search_path = '' as $$
   select public.eh_admin() or exists (
     select 1 from public.fichas f
     where f.id = ficha
-      and ((f.profissional_id = (select auth.uid()) and public.eh_profissional()) or f.aluno_id = (select auth.uid()))
+      and ((f.profissional_id = (select auth.uid()) and public.eh_profissional_ou_admin()) or f.aluno_id = (select auth.uid()))
   )
 $$;
 
@@ -62,14 +62,14 @@ using (profissional_id = (select auth.uid()) or aluno_id = (select auth.uid()) o
 create policy "criar fichas" on public.fichas for insert to authenticated
 with check (
   profissional_id = (select auth.uid())
-  and public.eh_profissional()
+  and public.eh_profissional_ou_admin()
   and (aluno_id is null or public.meu_aluno(aluno_id) or public.eh_admin())
 );
 
 create policy "editar fichas" on public.fichas for update to authenticated
 using (profissional_id = (select auth.uid()) or public.eh_admin())
 with check (
-  (profissional_id = (select auth.uid()) and public.eh_profissional() and (aluno_id is null or public.meu_aluno(aluno_id)))
+  (profissional_id = (select auth.uid()) and public.eh_profissional_ou_admin() and (aluno_id is null or public.meu_aluno(aluno_id)))
   or public.eh_admin()
 );
 
