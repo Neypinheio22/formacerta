@@ -1,27 +1,49 @@
+import { LineChart, UserPlus } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { senhaFraca, type Perfil } from '../../nuvem/conta'
-import { cadastrarAluno, listarPerfis } from '../../nuvem/gestao'
-import { ROTULO_TIPO, listarResultados, type ResultadoNuvem } from '../../nuvem/resultados'
+import { criarFicha, fichaVazia, listarFichas, type Ficha } from '../../nuvem/fichas'
+import { listarResultados, type ResultadoNuvem } from '../../nuvem/resultados'
+import { dataCurta } from '../../testes/formato'
+import { FichaAluno } from '../alunos/FichaAluno'
+import { FichaForm } from '../alunos/FichaForm'
 
-/** Tela do profissional: os seus alunos e o cadastro de novos. */
+/** Tela do profissional: a ficha de cada aluno, com a evolução de todas as avaliações. */
 export function MeusAlunos({ onVoltar, meuId }: { onVoltar: () => void; meuId: string }) {
-  const [alunos, setAlunos] = useState<Perfil[]>([])
+  const [fichas, setFichas] = useState<Ficha[] | null>(null)
   const [resultados, setResultados] = useState<ResultadoNuvem[]>([])
   const [erro, setErro] = useState<string | null>(null)
-  const [novo, setNovo] = useState(false)
-  const [aberto, setAberto] = useState<string | null>(null)
+  const [nova, setNova] = useState(false)
+  const [aberta, setAberta] = useState<Ficha | null>(null)
+  const [busca, setBusca] = useState('')
 
   async function carregar() {
-    const [p, r] = await Promise.all([listarPerfis(), listarResultados()])
-    setAlunos(p.perfis.filter((x) => x.id !== meuId))
+    const [f, r] = await Promise.all([listarFichas(), listarResultados()])
+    setFichas(f.fichas)
     setResultados(r.lista)
-    setErro(p.erro ?? r.erro)
+    setErro(f.erro ?? r.erro)
   }
 
   useEffect(() => {
     carregar()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  if (aberta)
+    return (
+      <FichaAluno
+        ficha={aberta}
+        meuId={meuId}
+        podeEditar
+        nome={aberta.nome}
+        textoVoltar="Meus alunos"
+        onVoltar={() => {
+          setAberta(null)
+          window.scrollTo(0, 0)
+        }}
+        onMudou={carregar}
+      />
+    )
+
+  const termo = busca.trim().toLocaleLowerCase('pt-BR')
+  const lista = (fichas ?? []).filter((f) => !termo || f.nome.toLocaleLowerCase('pt-BR').includes(termo))
 
   return (
     <div className="tela">
@@ -31,101 +53,60 @@ export function MeusAlunos({ onVoltar, meuId }: { onVoltar: () => void; meuId: s
         </button>
       </header>
       <h1>Meus alunos</h1>
-      <p className="dica-sec">Os alunos que você cadastra já entram liberados e veem os próprios resultados.</p>
+      <p className="dica-sec">Cada aluno tem uma ficha com os dados pessoais e todas as avaliações guardadas. Toque no nome para ver os gráficos de evolução.</p>
 
       {erro && <p className="mensagem erro">{erro}</p>}
 
-      {novo ? (
-        <NovoAluno
-          onCancelar={() => setNovo(false)}
-          onCriado={() => {
-            setNovo(false)
-            carregar()
+      {nova ? (
+        <FichaForm
+          inicial={fichaVazia()}
+          titulo="Nova ficha de aluno"
+          textoSalvar="Criar ficha"
+          onCancelar={() => setNova(false)}
+          onSalvar={async (dados) => {
+            const r = await criarFicha(meuId, dados)
+            if (r.ficha) {
+              setNova(false)
+              setFichas((x) => [...(x ?? []), r.ficha!].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')))
+              setAberta(r.ficha)
+            }
+            return r.erro
           }}
         />
       ) : (
-        <button className="botao grande" onClick={() => setNovo(true)}>
-          Cadastrar aluno
+        <button className="botao grande" onClick={() => setNova(true)}>
+          <UserPlus size={20} /> Nova ficha de aluno
         </button>
       )}
 
-      {alunos.length === 0 && !novo && <p className="dica-sec">Você ainda não cadastrou nenhum aluno.</p>}
-      {alunos.map((a) => {
-        const dele = resultados.filter((r) => r.aluno_id === a.id)
+      {fichas === null && !erro && <p className="carregando">Carregando alunos…</p>}
+      {fichas?.length === 0 && !nova && <p className="dica-sec">Você ainda não tem alunos. Crie a primeira ficha acima.</p>}
+      {(fichas?.length ?? 0) > 5 && (
+        <label className="campo">
+          Procurar aluno
+          <input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Nome" />
+        </label>
+      )}
+
+      {lista.map((f) => {
+        const dele = resultados.filter((r) => r.ficha_id === f.id)
+        const ultima = dele[0]
         return (
-          <section className="cartao pessoa" key={a.id}>
-            <button className="pessoa-topo sem-botao" onClick={() => setAberto(aberto === a.id ? null : a.id)}>
+          <button className="cartao pessoa sem-botao" key={f.id} onClick={() => setAberta(f)}>
+            <div className="pessoa-topo">
               <div>
-                <h3>{a.nome || a.email}</h3>
+                <h3>{f.nome}</h3>
                 <p className="dica-sec">
-                  {a.email} · {dele.length} resultado(s)
+                  {dele.length === 0 ? 'Nenhuma avaliação guardada' : `${dele.length} ${dele.length === 1 ? 'avaliação' : 'avaliações'} · última em ${dataCurta(ultima.feito_em)}`}
                 </p>
               </div>
-              {a.situacao !== 'liberado' && <span className="chip chip-alerta">Bloqueado</span>}
-            </button>
-            {aberto === a.id && (
-              <ul className="historico">
-                {dele.length === 0 && <li className="dica-sec">Nenhum resultado enviado ainda.</li>}
-                {dele.map((r) => (
-                  <li key={r.id}>
-                    <span className="linha">
-                      <span>{ROTULO_TIPO[r.tipo]}</span>
-                      <span className="nota">{new Date(r.feito_em).toLocaleDateString('pt-BR')}</span>
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
+              <span className="chip chip-ok">
+                <LineChart size={12} /> Evolução
+              </span>
+            </div>
+          </button>
         )
       })}
     </div>
-  )
-}
-
-function NovoAluno({ onCancelar, onCriado }: { onCancelar: () => void; onCriado: () => void }) {
-  const [nome, setNome] = useState('')
-  const [email, setEmail] = useState('')
-  const [senha, setSenha] = useState('')
-  const [erro, setErro] = useState<string | null>(null)
-  const [enviando, setEnviando] = useState(false)
-  const pronto = nome.trim() !== '' && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.trim()) && !senhaFraca(senha)
-
-  async function criar(e: React.FormEvent) {
-    e.preventDefault()
-    setEnviando(true)
-    const erro = await cadastrarAluno({ nome, email, senha })
-    setEnviando(false)
-    if (erro) setErro(erro)
-    else {
-      alert(`Conta criada. Passe para ${nome.trim().split(' ')[0]} o e-mail e a senha; dá para trocar a senha depois em "Esqueci a senha".`)
-      onCriado()
-    }
-  }
-
-  return (
-    <form className="cartao destaque formulario" onSubmit={criar}>
-      <h2>Novo aluno</h2>
-      <label className="campo">
-        Nome completo
-        <input value={nome} onChange={(e) => setNome(e.target.value)} maxLength={120} />
-      </label>
-      <label className="campo">
-        E-mail do aluno
-        <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} inputMode="email" />
-      </label>
-      <label className="campo">
-        Senha inicial
-        <input value={senha} onChange={(e) => setSenha(e.target.value)} autoComplete="off" />
-        <span className="dica-sec">Pelo menos 8 caracteres, com letras e números. O aluno pode trocar depois.</span>
-      </label>
-      {erro && <p className="mensagem erro">{erro}</p>}
-      <button className="botao" type="submit" disabled={!pronto || enviando}>
-        {enviando ? 'Criando…' : 'Criar conta do aluno'}
-      </button>
-      <button className="botao-sec" type="button" onClick={onCancelar}>
-        Cancelar
-      </button>
-    </form>
   )
 }
