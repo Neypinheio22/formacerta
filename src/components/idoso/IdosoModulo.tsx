@@ -2,7 +2,7 @@ import { HeartPulse } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { bergDe, imcDe } from '../../idoso/analise'
 import { MAXIMO_BERG } from '../../idoso/berg'
-import { TESTES, classificar, teste } from '../../idoso/testes'
+import { TESTES, VIDEO_EXEMPLOS, classificar, teste } from '../../idoso/testes'
 import { CHAVE_IDOSO, CHAVE_RASCUNHO_IDOSO, novaAvaliacao, type AvaliacaoIdoso, type IdTeste } from '../../idoso/tipos'
 import { apagar, avaliados, carregar, doAvaliado, salvar } from '../../testes/historico'
 import { dataCurta, numero } from '../../testes/formato'
@@ -10,7 +10,7 @@ import { AvisoTriagem } from '../testes/comum'
 import { Berg } from './Berg'
 import { FichaAnamnese, FichaAntropometria } from './Fichas'
 import { IdosoResultado } from './IdosoResultado'
-import { TesteFuncional } from './TesteFuncional'
+import { TesteFuncional, VideoExplicativo } from './TesteFuncional'
 
 type Tela =
   | { nome: 'inicio' }
@@ -208,6 +208,11 @@ export function IdosoModulo({ onVoltar, onRelatorio }: { onVoltar: () => void; o
         <>
           <h1>Testes de {rascunho.avaliado.split(' ')[0]}</h1>
           <p className="dica-sec">Faça os testes na ordem que quiser e pule os que não der. Cada um tem vídeo explicativo, cronômetro e contador.</p>
+          <section className="cartao">
+            <h2>Vídeo com exemplos dos testes</h2>
+            <p className="dica-sec">Mostre ao aluno como os testes são feitos antes de começar.</p>
+            <VideoExplicativo id="exemplos" nome="Exemplos dos testes" busca={VIDEO_EXEMPLOS} padrao={VIDEO_EXEMPLOS} />
+          </section>
           <section className="cartao">
             <div className="opcoes">
               <button className="opcao" onClick={() => ir({ nome: 'berg' })}>

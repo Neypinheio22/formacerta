@@ -208,10 +208,11 @@ export const TESTES: DefTeste[] = [
       masculino: polegadas([[-6.5, 0], [-7.5, -1], [-8, -1], [-9, -2], [-9.5, -2], [-9.5, -3], [-10.5, -4]]),
     },
     busca: 'teste alcançar atrás das costas idoso',
-    // Exemplo enviado pelo personal Romildo.
-    video: 'https://youtube.com/shorts/Z79kpHtdyhQ',
   },
 ]
+
+/** Vídeo do personal Romildo com exemplos de vários testes da bateria. */
+export const VIDEO_EXEMPLOS = 'https://youtube.com/shorts/Z79kpHtdyhQ'
 
 export const teste = (id: IdTeste) => TESTES.find((t) => t.id === id)!
 
