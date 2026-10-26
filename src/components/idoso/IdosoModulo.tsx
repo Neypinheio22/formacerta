@@ -196,7 +196,7 @@ export function IdosoModulo({ onVoltar, onRelatorio }: { onVoltar: () => void; o
 
       {tela.nome === 'antropometria' && (
         <>
-          <h1>Antropometria</h1>
+          <h1>Antropometria{rascunho.avaliado.trim() ? ` de ${rascunho.avaliado.trim()}` : ''}</h1>
           <FichaAntropometria valor={rascunho.antropometria} onChange={(antropometria) => mudar({ antropometria })} idade={idade} sexo={sexo} />
           <button className="botao grande" onClick={() => ir({ nome: 'testes' })}>
             Próximo: testes

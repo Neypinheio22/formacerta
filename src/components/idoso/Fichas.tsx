@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { calcularImc, classificarCintura, classificarImc, classificarRcq, panturrilhaBaixa } from '../../idoso/analise'
+import { calcularImc, classificarCintura, classificarImc, classificarRcq, menorPanturrilha, panturrilhaBaixa } from '../../idoso/analise'
 import { CIRCUNFERENCIAS, DISPOSITIVOS, type Anamnese, type Antropometria, type Dispositivo, type Sexo } from '../../idoso/tipos'
 import { lerNumero, numero } from '../../testes/formato'
 
@@ -132,7 +132,8 @@ export function FichaAnamnese(p: PropsAnamnese) {
 }
 
 export function FichaAntropometria({ valor, onChange, idade, sexo }: { valor: Antropometria; onChange: (a: Antropometria) => void; idade: number | null; sexo: Sexo | null }) {
-  const { cintura, quadril, panturrilha } = valor.circ
+  const { cintura, quadril } = valor.circ
+  const panturrilha = menorPanturrilha({ antropometria: valor })
   const cint = cintura ? classificarCintura(cintura, sexo) : null
   const rcq = cintura && quadril ? Math.round((cintura / quadril) * 100) / 100 : null
   const rcqC = rcq ? classificarRcq(rcq, sexo) : null
@@ -149,9 +150,9 @@ export function FichaAntropometria({ valor, onChange, idade, sexo }: { valor: An
 
       <section className="cartao formulario">
         <h2>Circunferências (perimetria)</h2>
-        <p className="dica-sec">Em centímetros, com fita métrica. Braço e coxa no lado dominante, no meio do segmento; panturrilha na parte mais larga.</p>
-        <div className="linha-campos">
-          {CIRCUNFERENCIAS.map((c) => (
+        <p className="dica-sec">Em centímetros, com fita métrica, dos dois lados. Braço e coxa no meio do segmento; antebraço e panturrilha na parte mais larga; abdômen na altura do umbigo; cintura na parte mais fina.</p>
+        <div className="linha-campos perimetria">
+          {CIRCUNFERENCIAS.filter((c) => !('antiga' in c) || valor.circ[c.id]).map((c) => (
             <CampoNumero
               key={c.id}
               rotulo={`${c.nome} (cm)`}
@@ -175,7 +176,7 @@ export function FichaAntropometria({ valor, onChange, idade, sexo }: { valor: An
             Relação cintura/quadril: <b>{numero(rcq, 2)}</b> {rcqC && <span className={`chip chip-${rcqC.status}`}>{rcqC.rotulo}</span>}
           </p>
         )}
-        {panturrilha && panturrilhaBaixa(panturrilha) && (
+        {panturrilha !== null && panturrilhaBaixa(panturrilha) && (
           <p className="dica-sec">
             <span className="chip chip-atencao">Panturrilha abaixo de 31 cm</span> pode indicar perda de massa muscular (sarcopenia).
           </p>

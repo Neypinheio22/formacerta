@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { calcularImc, classificarImc, comparar, pontosDeAtencao, resumo, textoCompartilhar } from './analise'
+import { calcularImc, classificarImc, comparar, menorPanturrilha, pontosDeAtencao, resumo, textoCompartilhar } from './analise'
 import { classificarBerg, totalBerg } from './berg'
 import { classificar, grupoIdade, teste } from './testes'
 import { novaAvaliacao, type AvaliacaoIdoso } from './tipos'
@@ -95,6 +95,17 @@ describe('resultado final', () => {
     expect(c.caminhada.diferenca).toBe(70)
     expect(c.cintura.melhorou).toBe(true)
     expect(c.peso.melhorou).toBeNull()
+  })
+
+  it('perimetria dos dois lados entra na evolução e a panturrilha mais fina dá o alerta', () => {
+    const a = { ...inicial, antropometria: { ...inicial.antropometria, circ: { bracoD: 30, bracoE: 29, panturrilhaE: 30, panturrilhaD: 33 } } }
+    const b = { ...reavaliacao, antropometria: { ...reavaliacao.antropometria, circ: { bracoD: 31, bracoE: 29.5, panturrilhaE: 32, panturrilhaD: 33 } } }
+    const c = Object.fromEntries(comparar(a, b).map((x) => [x.metrica.id, x]))
+    expect(c.bracoD.diferenca).toBe(1)
+    expect(c.panturrilhaE.diferenca).toBe(2)
+    expect(menorPanturrilha(a)).toBe(30)
+    const p = pontosDeAtencao(a).find((x) => x.area === 'capacidade')!
+    expect(p.pontos.some((x) => x.texto.startsWith('Panturrilha com 30 cm'))).toBe(true)
   })
 
   it('aponta os pontos de atenção por área', () => {

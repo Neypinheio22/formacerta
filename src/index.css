@@ -2407,3 +2407,8 @@ ul.musculos.fortalecer li {
   flex: 1;
   font-weight: 700;
 }
+
+/* Perimetria: rótulos de duas linhas não desalinham os campos */
+.linha-campos.perimetria > .campo {
+  justify-content: space-between;
+}
