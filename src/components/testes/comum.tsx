@@ -56,7 +56,7 @@ export function GraficoEvolucao({ pontos, unidade, referencias = [] }: { pontos:
   max += folga
   const x = (i: number) => M.e + (i * (W - M.e - M.d)) / (ordem.length - 1)
   const y = (v: number) => M.c + ((max - v) * (H - M.c - M.b)) / (max - min)
-  const cor: Record<Status, string> = { ok: 'var(--verde)', atencao: 'var(--laranja)', alerta: 'var(--vermelho)' }
+  const cor: Record<Status, string> = { ok: 'var(--verde)', atencao: 'var(--amarelo)', alerta: 'var(--vermelho)' }
   return (
     <svg className="grafico" viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Gráfico de evolução">
       {referencias.map((r) => (

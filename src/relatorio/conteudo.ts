@@ -10,6 +10,7 @@ import { VIEWS, type Assessment, type Status } from '../pose/types'
 import { anguloAdams, classificarAdams, type RegistroAdams } from '../testes/adams'
 import { infoNivel, type RegistroFlex } from '../testes/flexibilidade'
 import { dataCurta, numero } from '../testes/formato'
+import { NIVEL, ROTULO_NIVEL, planoAdams, planoFlex, planoIdoso, planoPostura, type PlanoTeste } from '../plano/plano'
 
 export type ItemRelatorio =
   | { tipo: 'postura'; registro: Assessment }
@@ -30,7 +31,7 @@ export type Secao = {
   aviso: string
 }
 
-export const ROTULO_POSTURA: Record<Status, string> = { ok: 'Bom', atencao: 'Atenção', alerta: 'Corrigir' }
+export const ROTULO_POSTURA: Record<Status, string> = ROTULO_NIVEL
 
 export function textoPontuacao(score: number) {
   if (score >= 85) return 'Postura muito boa'
@@ -64,7 +65,29 @@ function anteriores<T extends { id: string; date: string }>(r: T, mesmo: T[]) {
   return mesmo.filter((x) => x.id !== r.id && x.date < r.date).sort((a, b) => a.date.localeCompare(b.date))
 }
 
+function planoDoItem(item: ItemRelatorio): PlanoTeste | null {
+  if (item.tipo === 'postura') return planoPostura(item.registro)
+  if (item.tipo === 'flexibilidade') return planoFlex(item.registro)
+  if (item.tipo === 'adams') return planoAdams(item.registro)
+  return planoIdoso(item.registro)
+}
+
+/** Seção do teste com o plano de ação: classificação, conduta, exercícios e reavaliação. */
 export function secao(item: ItemRelatorio, mesmoAvaliado: ItemRelatorio[] = []): Secao {
+  const s = secaoDoTeste(item, mesmoAvaliado)
+  const p = planoDoItem(item)
+  if (!p) return s
+  // A postura já lista os exercícios ponto por ponto.
+  const exercicios = item.tipo === 'postura' || !p.exercicios.length ? [] : [{ titulo: p.status === 'ok' ? 'Para manter' : 'Exercícios recomendados', itens: p.exercicios.map((e) => (e.dose ? `${e.nome} (${e.dose})` : e.nome)) }]
+  return {
+    ...s,
+    linhas: [{ rotulo: 'Classificação', valor: NIVEL[p.status].rotulo, status: p.status }, ...s.linhas, { rotulo: 'Reavaliar em', valor: `${dataCurta(p.reavaliarEm)} (${p.reavaliarDias} dias)` }],
+    textos: [...(p.conduta ? [p.conduta] : []), ...s.textos],
+    listas: [...s.listas, ...exercicios],
+  }
+}
+
+function secaoDoTeste(item: ItemRelatorio, mesmoAvaliado: ItemRelatorio[]): Secao {
   const base = { id: item.registro.id, titulo: nomeTeste(item), data: item.registro.date, textos: [] as string[], listas: [] as Secao['listas'] }
 
   if (item.tipo === 'postura') {

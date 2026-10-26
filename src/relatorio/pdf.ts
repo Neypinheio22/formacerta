@@ -23,7 +23,7 @@ type Cor = [number, number, number]
 const VERDE: Cor = [18, 150, 90]
 const TEXTO: Cor = [20, 28, 36]
 const CINZA: Cor = [100, 112, 122]
-const COR_STATUS: Record<Status, Cor> = { ok: [18, 150, 90], atencao: [200, 110, 0], alerta: [210, 40, 40] }
+const COR_STATUS: Record<Status, Cor> = { ok: [18, 150, 90], atencao: [185, 140, 0], alerta: [210, 40, 40] }
 
 // Cores oficiais do FormaCerta.
 const MARCA: Cor = [54, 242, 148]

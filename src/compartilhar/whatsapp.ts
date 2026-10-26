@@ -3,6 +3,7 @@ import { infoNivel, type RegistroFlex } from '../testes/flexibilidade'
 import { dataCurta, numero } from '../testes/formato'
 import { planoCorretivo } from '../pose/recomendacoes'
 import { VIEWS, type Assessment } from '../pose/types'
+import { NIVEL, ROTULO_NIVEL, comEmoji, planoAdams, planoFlex, planoPostura, type PlanoTeste } from '../plano/plano'
 
 const RODAPE = 'Triagem feita no FormaCerta. Não substitui avaliação médica.'
 
@@ -49,16 +50,27 @@ export function guardarTelefone(nome: string, telefone: string) {
   }
 }
 
-const ROTULO = { ok: 'Bom', atencao: 'Atenção', alerta: 'Corrigir' } as const
+const ROTULO = ROTULO_NIVEL
+
+/** Classificação, exercícios e data de reavaliação no fim da mensagem. */
+function fimPlano(linhas: string[], p: PlanoTeste | null, exercicios = true) {
+  if (!p) return
+  if (exercicios && p.exercicios.length) {
+    linhas.push('', p.status === 'ok' ? 'PARA MANTER' : 'EXERCÍCIOS RECOMENDADOS')
+    for (const e of p.exercicios) linhas.push(`• ${e.nome}${e.dose ? ` — ${e.dose}` : ''}`)
+  }
+  if (p.conduta) linhas.push('', `⚠ ${p.conduta}`)
+  linhas.push('', `📅 Reavaliar em ${dataCurta(p.reavaliarEm)} (${p.reavaliarDias} dias)`)
+}
 
 export function textoPostura(a: Assessment, nome = ''): string {
-  const linhas = [`AVALIAÇÃO DE POSTURA${nome.trim() ? ` — ${nome.trim().toUpperCase()}` : ''}`, dataCurta(a.date), '', `Nota da postura: ${a.score}/100`]
+  const linhas = [`AVALIAÇÃO DE POSTURA${nome.trim() ? ` — ${nome.trim().toUpperCase()}` : ''}`, dataCurta(a.date), '', `Nota da postura: ${a.score}/100`, `Classificação: ${comEmoji(planoPostura(a).status)}`]
   const problemas = a.views.flatMap((v) => v.findings).filter((f) => f.status !== 'ok')
   for (const v of a.views) {
     const achados = v.findings.filter((f) => f.status !== 'ok')
     if (!achados.length) continue
     linhas.push('', VIEWS.find((x) => x.id === v.view)?.label.toUpperCase() ?? v.view)
-    for (const f of achados) linhas.push(`• ${f.title}: ${f.value} (${ROTULO[f.status]})`)
+    for (const f of achados) linhas.push(`• ${f.title}: ${f.value} (${NIVEL[f.status].emoji} ${ROTULO[f.status]})`)
   }
   if (!problemas.length) linhas.push('', 'Nenhum desvio importante encontrado.')
   const plano = planoCorretivo(problemas)
@@ -68,13 +80,15 @@ export function textoPostura(a: Assessment, nome = ''): string {
     linhas.push('', 'EXERCÍCIOS')
     for (const e of plano.exercicios) linhas.push(`• ${e.nome} — ${e.dose}`)
   }
+  fimPlano(linhas, planoPostura(a), false)
   linhas.push('', RODAPE)
   return linhas.join('\n')
 }
 
 export function textoFlex(r: RegistroFlex): string {
   const info = infoNivel(r.nivel)
-  const linhas = [`TESTE DE FLEXIBILIDADE — ${r.avaliado.toUpperCase()}`, dataCurta(r.date), '', `Nível: ${r.nivel}`, info.onde, '', info.dica]
+  const linhas = [`TESTE DE FLEXIBILIDADE — ${r.avaliado.toUpperCase()}`, dataCurta(r.date), '', `Nível: ${r.nivel}`, `Classificação: ${comEmoji(planoFlex(r).status)}`, info.onde, '', info.dica]
+  fimPlano(linhas, planoFlex(r))
   if (r.observacoes.trim()) linhas.push('', `Observações: ${r.observacoes.trim()}`)
   linhas.push('', RODAPE)
   return linhas.join('\n')
@@ -88,10 +102,11 @@ export function textoAdams(r: RegistroAdams): string {
     dataCurta(r.date),
     '',
     `Rotação do tronco: ${numero(angulo)}°${r.lado ? ` (lado ${r.lado} mais alto)` : ''}`,
-    classe.titulo,
+    `Classificação: ${comEmoji(classe.status)} (${classe.titulo.toLowerCase()})`,
     '',
     classe.texto,
   ]
+  fimPlano(linhas, planoAdams(r))
   if (r.observacoes.trim()) linhas.push('', `Observações: ${r.observacoes.trim()}`)
   linhas.push('', RODAPE)
   return linhas.join('\n')

@@ -1,12 +1,13 @@
 import { EnviarResultado } from '../conta/EnviarResultado'
+import { ROTULO_NIVEL, planoCorrida } from '../../plano/plano'
+import { PlanoAcao } from '../plano/PlanoAcao'
 import { useEffect, useRef, useState } from 'react'
 import type { AchadoCorrida, QuadroCorrida, ResultadoCorrida, VistaCorrida } from '../../corrida/tipos'
-import type { Status } from '../../pose/types'
 import { desenharCorredor, useUrlDoArquivo } from './desenho'
 
 type Props = { resultado: ResultadoCorrida; onVoltar: () => void; onOutraVista: (v: VistaCorrida) => void }
 
-const ROTULO: Record<Status, string> = { ok: 'Bom', atencao: 'Atenção', alerta: 'Corrigir' }
+const ROTULO = ROTULO_NIVEL
 const VELOCIDADES = [1, 0.5, 0.25]
 
 function scoreText(score: number) {
@@ -75,6 +76,7 @@ export function CorridaResultado({ resultado, onVoltar, onOutraVista }: Props) {
   const outra: VistaCorrida = resultado.vista === 'lado' ? 'tras' : 'lado'
   const data = new Date(resultado.date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })
   const corrigir = achados.filter((a) => a.status !== 'ok')
+  const plano = planoCorrida(resultado)
 
   return (
     <div className="tela">
@@ -155,6 +157,8 @@ export function CorridaResultado({ resultado, onVoltar, onOutraVista }: Props) {
           </ul>
         </section>
       )}
+
+      {plano && <PlanoAcao plano={plano} />}
 
       {!resultado.falha && corrigir.length === 0 && (
         <section className="cartao">

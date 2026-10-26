@@ -16,6 +16,8 @@ import { dataCurta, numero } from '../../testes/formato'
 import { EnviarResultado } from '../conta/EnviarResultado'
 import { EnviarWhatsApp } from '../conta/EnviarWhatsApp'
 import { AvisoTriagem, GraficoEvolucao } from '../testes/comum'
+import { PlanoAcao } from '../plano/PlanoAcao'
+import { NIVEL, planoIdoso } from '../../plano/plano'
 
 type Props = {
   a: AvaliacaoIdoso
@@ -28,8 +30,6 @@ type Props = {
   onApagar: () => void
 }
 
-const SINAL: Record<string, string> = { ok: '✓', atencao: '!', alerta: '!!' }
-
 export function IdosoResultado({ a, doMesmo, onAbrir, onRelatorio, onEditar, onReavaliar, onApagar }: Props) {
   const linhas = resumo(a)
   const anteriores = doMesmo.filter((x) => x.date < a.date)
@@ -39,6 +39,7 @@ export function IdosoResultado({ a, doMesmo, onAbrir, onRelatorio, onEditar, onR
   const ate = doMesmo.filter((x) => x.date <= a.date)
   const pontos = pontosDeAtencao(a)
   const rcq = relacaoCinturaQuadril(a)
+  const plano = planoIdoso(a)
 
   return (
     <>
@@ -70,6 +71,8 @@ export function IdosoResultado({ a, doMesmo, onAbrir, onRelatorio, onEditar, onR
           </button>
         </div>
       </section>
+
+      {plano && <PlanoAcao plano={plano} />}
 
       <EnviarWhatsApp texto={textoCompartilhar(a, base)} avaliado={a.avaliado} onPdf={onRelatorio} />
 
@@ -159,7 +162,7 @@ export function IdosoResultado({ a, doMesmo, onAbrir, onRelatorio, onEditar, onR
                 <b>{p.nome}</b>
                 {p.status ? (
                   <span className={`chip chip-${p.status}`}>
-                    {SINAL[p.status]} {p.status === 'ok' ? 'Sem alerta' : p.status === 'atencao' ? 'Atenção' : 'Prioridade'}
+                    {NIVEL[p.status].emoji} {NIVEL[p.status].rotulo}
                   </span>
                 ) : (
                   <span className="chip">Não avaliado</span>

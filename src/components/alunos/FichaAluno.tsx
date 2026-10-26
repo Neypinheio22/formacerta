@@ -7,6 +7,7 @@ import { NovoAluno } from '../conta/NovoAluno'
 import { FichaForm } from './FichaForm'
 import { MedidasForm } from './MedidasForm'
 import { PainelEvolucao } from './PainelEvolucao'
+import { CentralInteligencia } from '../plano/CentralInteligencia'
 
 type Props = {
   /** Null quando o aluno entrou sozinho no app e ainda não tem ficha de um profissional. */
@@ -29,6 +30,7 @@ export function FichaAluno({ ficha, meuId, podeEditar, nome, textoVoltar, onVolt
   const [resultados, setResultados] = useState<ResultadoNuvem[] | null>(null)
   const [erro, setErro] = useState<string | null>(null)
   const [modo, setModo] = useState<Modo>('ver')
+  const [aba, setAba] = useState<'analise' | 'evolucao'>('analise')
   const [dados, setDados] = useState(ficha)
 
   const carregar = useCallback(async () => {
@@ -170,7 +172,19 @@ export function FichaAluno({ ficha, meuId, podeEditar, nome, textoVoltar, onVolt
 
       {modo === 'ver' && resultados && (
         <>
-          <PainelEvolucao resultados={resultados} contexto={contexto} nome={dados?.nome ?? nome} />
+          <div className="seletor-comparar abas-ficha" role="tablist">
+            <button role="tab" aria-selected={aba === 'analise'} className={aba === 'analise' ? 'ativo' : ''} onClick={() => setAba('analise')}>
+              🧠 Central IA
+            </button>
+            <button role="tab" aria-selected={aba === 'evolucao'} className={aba === 'evolucao' ? 'ativo' : ''} onClick={() => setAba('evolucao')}>
+              📈 Evolução
+            </button>
+          </div>
+          {aba === 'analise' ? (
+            <CentralInteligencia resultados={resultados} nome={dados?.nome ?? nome} ficha={dados} podeEditar={podeEditar} onSalvo={carregar} />
+          ) : (
+            <PainelEvolucao resultados={resultados} contexto={contexto} nome={dados?.nome ?? nome} />
+          )}
 
           {resultados.length > 0 && (
             <section className="cartao">

@@ -26,7 +26,10 @@ describe('conteúdo do relatório', () => {
       { tipo: 'flexibilidade', registro: antigo },
       { tipo: 'flexibilidade', registro: novo },
     ])
-    expect(s.linhas[0]).toMatchObject({ rotulo: 'Nível', valor: 'Moderada', status: 'atencao' })
+    expect(s.linhas[0]).toMatchObject({ rotulo: 'Classificação', valor: 'Precisa melhorar', status: 'atencao' })
+    expect(s.linhas[1]).toMatchObject({ rotulo: 'Nível', valor: 'Moderada', status: 'atencao' })
+    expect(s.linhas[s.linhas.length - 1]).toMatchObject({ rotulo: 'Reavaliar em', valor: '19/11/2026 (30 dias)' })
+    expect(s.listas.find((l) => l.titulo === 'Exercícios recomendados')?.itens.length).toBeGreaterThan(0)
     expect(s.linhas.find((l) => l.rotulo === 'Ajuste')?.valor).toContain('Limitada')
     expect(s.linhas.find((l) => l.rotulo === 'Testes anteriores')?.valor).toBe('01/09/2026: Limitada')
     expect(s.observacoes).toBe('Melhorou.')
@@ -35,7 +38,9 @@ describe('conteúdo do relatório', () => {
   it('Adams usa o escoliômetro quando existe e mostra a medida da foto', () => {
     const r: RegistroAdams = { id: 'x', date: '2026-10-20T10:00:00Z', avaliado: 'João', observacoes: '', vista: 'costas', atr: 4.2, lado: 'direito', escoliometro: 7 }
     const s = secao({ tipo: 'adams', registro: r })
-    expect(s.linhas[0]).toMatchObject({ valor: '7,0° · Assimetria importante', status: 'alerta' })
+    expect(s.linhas[0]).toMatchObject({ rotulo: 'Classificação', valor: 'Atenção', status: 'alerta' })
+    expect(s.linhas[1]).toMatchObject({ valor: '7,0° · Assimetria importante', status: 'alerta' })
+    expect(s.textos[0]).toContain('ortopedista')
     expect(s.linhas.map((l) => l.rotulo)).toContain('Medida da foto')
     expect(s.linhas.find((l) => l.rotulo.startsWith('Lado'))?.valor).toBe('direito')
   })
@@ -46,7 +51,7 @@ describe('conteúdo do relatório', () => {
     const s = secao({ tipo: 'postura', registro: a })
     expect(s.linhas.find((l) => l.rotulo === 'Pontos para melhorar')).toMatchObject({ valor: '1', status: 'alerta' })
     const porPonto = s.listas.find((l) => l.titulo.startsWith('Correções'))!
-    expect(porPonto.itens[0]).toContain('Ombro elevado (Frente, 4,0°, Corrigir)')
+    expect(porPonto.itens[0]).toContain('Ombro elevado (Frente, 4,0°, Atenção)')
     expect(porPonto.itens[0]).toContain('Alongar: Trapézio superior')
   })
 
@@ -62,7 +67,7 @@ describe('conteúdo do relatório', () => {
     }
     const s = secao({ tipo: 'idoso', registro: segunda }, [{ tipo: 'idoso', registro: primeira }, { tipo: 'idoso', registro: segunda }])
     expect(s.titulo).toBe('Avaliação funcional do idoso')
-    expect(s.linhas[0]).toMatchObject({ rotulo: 'Avaliado', valor: '68 anos · feminino · 160 cm · 64,0 kg' })
+    expect(s.linhas[1]).toMatchObject({ rotulo: 'Avaliado', valor: '68 anos · feminino · 160 cm · 64,0 kg' })
     expect(s.linhas.find((l) => l.rotulo === 'IMC')?.valor).toBe('25,0 · Peso adequado')
     const lista = (titulo: string) => s.listas.find((l) => l.titulo === titulo)?.itens ?? []
     expect(lista('Evolução desde 01/09/2026')).toContain('Peso: 66,0 → 64,0 (-2,0)')
