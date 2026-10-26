@@ -188,6 +188,7 @@ export function IdosoResultado({ a, doMesmo, onAbrir, onRelatorio, onEditar, onR
                 </span>
               </div>
               {a.testes[t.id]!.observacao && <p className="achado-detalhe">{a.testes[t.id]!.observacao}</p>}
+              {a.testes[t.id]!.foto && <img className="foto-teste" src={a.testes[t.id]!.foto!.image} alt={`${t.nome}: paciente executando`} />}
             </li>
           ))}
           {a.berg.some((n) => n !== null) && (

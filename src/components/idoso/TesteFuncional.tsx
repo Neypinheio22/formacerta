@@ -1,9 +1,10 @@
-import { Timer } from 'lucide-react'
+import { Camera, Image as ImageIcon, Timer } from 'lucide-react'
 import { useState } from 'react'
 import { embutirYoutube, useCronometro } from '../../idoso/cronometro'
 import { classificar, linkVideo, ROTULO_GRUPO, grupoIdade, type DefTeste } from '../../idoso/testes'
-import type { ResultadoTeste, Sexo } from '../../idoso/tipos'
+import type { FotoTeste, ResultadoTeste, Sexo } from '../../idoso/tipos'
 import { lerNumero, numero } from '../../testes/formato'
+import { reduzirFoto } from '../../testes/historico'
 
 const VIDEOS = 'formacerta:videos-idoso'
 
@@ -26,11 +27,12 @@ function guardarVideo(id: string, url: string) {
   }
 }
 
-/** Vídeo explicativo: o do profissional, se ele cadastrou, ou uma busca no YouTube. */
-export function VideoExplicativo({ id, nome, busca }: { id: string; nome: string; busca: string }) {
+/** Vídeo explicativo: o do profissional, se ele cadastrou, o de exemplo do teste ou uma busca no YouTube. */
+export function VideoExplicativo({ id, nome, busca, padrao = '' }: { id: string; nome: string; busca: string; padrao?: string }) {
   const [url, setUrl] = useState(() => videosProprios()[id] ?? '')
   const [aberto, setAberto] = useState(false)
-  const embutido = url ? embutirYoutube(url) : null
+  const video = url || padrao
+  const embutido = video ? embutirYoutube(video) : null
 
   function trocar() {
     const novo = prompt(`Cole o link do seu vídeo de "${nome}" (YouTube, Instagram, Google Drive…). Deixe vazio para voltar ao padrão.`, url)
@@ -51,8 +53,8 @@ export function VideoExplicativo({ id, nome, busca }: { id: string; nome: string
           </button>
         )
       ) : (
-        <a className="botao-sec" href={url || busca} target="_blank" rel="noreferrer">
-          ▶ {url ? 'Ver vídeo explicativo' : 'Ver vídeos explicativos no YouTube'}
+        <a className="botao-sec" href={video || busca} target="_blank" rel="noreferrer">
+          ▶ {video ? 'Ver vídeo explicativo' : 'Ver vídeos explicativos no YouTube'}
         </a>
       )}
       <button className="link" onClick={trocar}>
@@ -72,10 +74,14 @@ export function Cronometro({ c, duracao }: { c: ReturnType<typeof useCronometro>
   const mostrar = duracao ? Math.max(0, duracao - c.passado) : c.passado
   return (
     <div className="cronometro">
-      <span className={`cronometro-tempo ${c.acabou ? 'fim' : ''}`}>{c.acabou ? 'Tempo!' : relogio(duracao ? Math.ceil(mostrar - 0.001) : mostrar, !duracao)}</span>
-      {duracao && <div className="barra">
+      <span className={`cronometro-tempo ${c.acabou ? 'fim' : ''}`}>
+        {c.acabou ? 'Tempo!' : relogio(duracao ? Math.ceil(mostrar - 0.001) : mostrar, !duracao)}
+      </span>
+      {duracao && (
+        <div className="barra">
           <span style={{ width: `${Math.min(100, (c.passado / duracao) * 100)}%` }} />
-        </div>}
+        </div>
+      )}
       <div className="acoes">
         {c.rodando ? (
           <button className="botao" onClick={c.pausar}>
@@ -129,6 +135,7 @@ type Props = {
 export function TesteFuncional({ def, inicial, idade, sexo, onSalvar, onVoltar }: Props) {
   const [texto, setTexto] = useState(inicial ? String(inicial.valor).replace('.', ',') : '')
   const [observacao, setObservacao] = useState(inicial?.observacao ?? '')
+  const [foto, setFoto] = useState(inicial?.foto)
   const [contagem, setContagem] = useState(0)
   const [percurso, setPercurso] = useState(() => {
     try {
@@ -173,7 +180,7 @@ export function TesteFuncional({ def, inicial, idade, sexo, onSalvar, onVoltar }
         <p className="dica-sec">
           <b>Material:</b> {def.material}
         </p>
-        <VideoExplicativo id={def.id} nome={def.nome} busca={linkVideo(def)} />
+        <VideoExplicativo id={def.id} nome={def.nome} busca={linkVideo(def)} padrao={def.video} />
       </section>
 
       <section className="cartao">
@@ -185,59 +192,57 @@ export function TesteFuncional({ def, inicial, idade, sexo, onSalvar, onVoltar }
         </ol>
       </section>
 
-      <section className="cartao">
-        <h2>{def.modo === 'cronometro' ? 'Cronômetro' : `Cronômetro de ${def.duracao! >= 60 ? `${def.duracao! / 60} min` : `${def.duracao} s`}`}</h2>
-        <Cronometro c={c} duracao={def.modo === 'cronometro' ? undefined : def.duracao} />
-        {def.modo === 'cronometro' && !c.rodando && c.passado > 0 && (
-          <button className="botao-sec" onClick={guardarTentativa} style={{ marginTop: 10 }}>
-            Guardar {numero(c.passado)} s como {tentativas.length + 1}ª tentativa
-          </button>
-        )}
-        {def.modo === 'cronometro' && c.rodando && (
-          <button className="contador-mais" onClick={c.pausar}>
-            <strong>Sentou</strong>
-            <span>toque quando a pessoa sentar</span>
-          </button>
-        )}
-        {tentativas.length > 0 && (
-          <p className="dica-sec">
-            Tentativas: {tentativas.map((t) => `${numero(t)} s`).join(' · ')}. Vale o menor tempo.
-          </p>
-        )}
-        {def.modo === 'contagem' && <Contador valor={contagem} onChange={contar} rotulo={def.unidade} />}
-        {def.modo === 'distancia' && (
-          <>
-            <label className="campo">
-              Tamanho de uma volta no percurso (m)
-              <input
-                inputMode="decimal"
-                value={percurso}
-                onChange={(e) => {
-                  setPercurso(e.target.value)
-                  try {
-                    localStorage.setItem(PERCURSO, e.target.value)
-                  } catch {
-                    /* ignora */
-                  }
-                  distancia(contagem, e.target.value, extra)
-                }}
-              />
-            </label>
-            <Contador valor={contagem} onChange={contar} rotulo="voltas" />
-            <label className="campo">
-              Metros da última volta incompleta
-              <input
-                inputMode="decimal"
-                value={extra}
-                onChange={(e) => {
-                  setExtra(e.target.value)
-                  distancia(contagem, percurso, e.target.value)
-                }}
-              />
-            </label>
-          </>
-        )}
-      </section>
+      {def.modo !== 'medida' && (
+        <section className="cartao">
+          <h2>{def.modo === 'cronometro' ? 'Cronômetro' : `Cronômetro de ${def.duracao! >= 60 ? `${def.duracao! / 60} min` : `${def.duracao} s`}`}</h2>
+          <Cronometro c={c} duracao={def.modo === 'cronometro' ? undefined : def.duracao} />
+          {def.modo === 'cronometro' && !c.rodando && c.passado > 0 && (
+            <button className="botao-sec" onClick={guardarTentativa} style={{ marginTop: 10 }}>
+              Guardar {numero(c.passado)} s como {tentativas.length + 1}ª tentativa
+            </button>
+          )}
+          {def.modo === 'cronometro' && c.rodando && (
+            <button className="contador-mais" onClick={c.pausar}>
+              <strong>Sentou</strong>
+              <span>toque quando a pessoa sentar</span>
+            </button>
+          )}
+          {tentativas.length > 0 && <p className="dica-sec">Tentativas: {tentativas.map((t) => `${numero(t)} s`).join(' · ')}. Vale o menor tempo.</p>}
+          {def.modo === 'contagem' && <Contador valor={contagem} onChange={contar} rotulo={def.unidade} />}
+          {def.modo === 'distancia' && (
+            <>
+              <label className="campo">
+                Tamanho de uma volta no percurso (m)
+                <input
+                  inputMode="decimal"
+                  value={percurso}
+                  onChange={(e) => {
+                    setPercurso(e.target.value)
+                    try {
+                      localStorage.setItem(PERCURSO, e.target.value)
+                    } catch {
+                      /* ignora */
+                    }
+                    distancia(contagem, e.target.value, extra)
+                  }}
+                />
+              </label>
+              <Contador valor={contagem} onChange={contar} rotulo="voltas" />
+              <label className="campo">
+                Metros da última volta incompleta
+                <input
+                  inputMode="decimal"
+                  value={extra}
+                  onChange={(e) => {
+                    setExtra(e.target.value)
+                    distancia(contagem, percurso, e.target.value)
+                  }}
+                />
+              </label>
+            </>
+          )}
+        </section>
+      )}
 
       <section className="cartao formulario">
         <h2>Resultado</h2>
@@ -255,16 +260,26 @@ export function TesteFuncional({ def, inicial, idade, sexo, onSalvar, onVoltar }
         )}
         {classe?.faixa && idade !== null && sexo && (
           <p className="dica-sec">
-            Esperado para {sexo === 'feminino' ? 'mulheres' : 'homens'} de {ROTULO_GRUPO[grupoIdade(idade)]} anos: {numero(classe.faixa[0], def.unidade === 's' ? 1 : 0)} a{' '}
-            {numero(classe.faixa[1], def.unidade === 's' ? 1 : 0)} {def.unidade}.
+            Esperado para {sexo === 'feminino' ? 'mulheres' : 'homens'} de {ROTULO_GRUPO[grupoIdade(idade)]} anos:{' '}
+            {numero(classe.faixa[0], def.unidade === 's' ? 1 : 0)} a {numero(classe.faixa[1], def.unidade === 's' ? 1 : 0)} {def.unidade}.
           </p>
         )}
         {(idade === null || !sexo) && <p className="dica-sec">Preencha idade e sexo na anamnese para comparar com o esperado para a idade.</p>}
         <label className="campo">
           Observação
-          <textarea value={observacao} onChange={(e) => setObservacao(e.target.value)} rows={3} placeholder="Ex.: apoiou a mão na parede, sentiu dor no joelho…" />
+          <textarea
+            value={observacao}
+            onChange={(e) => setObservacao(e.target.value)}
+            rows={3}
+            placeholder="Ex.: apoiou a mão na parede, sentiu dor no joelho…"
+          />
         </label>
-        <button className="botao" disabled={valor === null} onClick={() => onSalvar({ valor: valor!, observacao: observacao.trim() })}>
+        <FotoExecucao foto={foto} onFoto={setFoto} />
+        <button
+          className="botao"
+          disabled={valor === null}
+          onClick={() => onSalvar({ valor: valor!, observacao: observacao.trim(), ...(foto ? { foto } : {}) })}
+        >
           Salvar resultado
         </button>
         {inicial && (
@@ -277,5 +292,54 @@ export function TesteFuncional({ def, inicial, idade, sexo, onSalvar, onVoltar }
         </button>
       </section>
     </>
+  )
+}
+
+/** Foto do paciente executando o teste: câmera ou galeria. Vai para o relatório em PDF. */
+function FotoExecucao({ foto, onFoto }: { foto?: FotoTeste; onFoto: (f?: FotoTeste) => void }) {
+  const [lendo, setLendo] = useState(false)
+
+  function escolher(e: React.ChangeEvent<HTMLInputElement>) {
+    const arquivo = e.target.files?.[0]
+    e.target.value = ''
+    if (!arquivo) return
+    setLendo(true)
+    const leitor = new FileReader()
+    leitor.onload = async () => {
+      const image = await reduzirFoto(String(leitor.result), 720)
+      const img = new Image()
+      img.onload = () => {
+        onFoto({ image, width: img.naturalWidth, height: img.naturalHeight })
+        setLendo(false)
+      }
+      img.onerror = () => setLendo(false)
+      img.src = image
+    }
+    leitor.onerror = () => setLendo(false)
+    leitor.readAsDataURL(arquivo)
+  }
+
+  return (
+    <div className="campo foto-execucao">
+      Foto do paciente executando
+      {foto && <img src={foto.image} alt="Paciente executando o teste" />}
+      <div className="acoes">
+        <label className="botao-sec">
+          <Camera size={16} /> {foto ? 'Tirar outra' : 'Tirar foto'}
+          <input type="file" accept="image/*" capture="environment" onChange={escolher} hidden />
+        </label>
+        <label className="botao-sec">
+          <ImageIcon size={16} /> Galeria
+          <input type="file" accept="image/*" onChange={escolher} hidden />
+        </label>
+      </div>
+      {lendo && <span className="dica-sec">Preparando a foto…</span>}
+      {foto && (
+        <button className="link" onClick={() => onFoto(undefined)}>
+          Remover a foto
+        </button>
+      )}
+      <span className="dica-sec">Opcional. A foto fica só neste aparelho e sai no relatório em PDF.</span>
+    </div>
   )
 }
