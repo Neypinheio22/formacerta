@@ -18,6 +18,7 @@ type Props = {
   perfil: Perfil | null
   onAdmin: () => void
   onAlunos: () => void
+  onEvolucao: () => void
   onConta: () => void
   onVitrine: () => void
   onRelatorio: () => void
@@ -28,7 +29,7 @@ const EM_BREVE = [
   { titulo: 'Teste de mobilidade', texto: 'Agachamento, tornozelo, elevação dos braços e equilíbrio.' },
 ]
 
-export function Home({ history, onStart, onOpen, onEstudio, onExercicio, onCorrida, onFlexibilidade, onAdams, onIdoso, perfil, onAdmin, onAlunos, onConta, onVitrine, onRelatorio, onPerfil }: Props) {
+export function Home({ history, onStart, onOpen, onEstudio, onExercicio, onCorrida, onFlexibilidade, onAdams, onIdoso, perfil, onAdmin, onAlunos, onEvolucao, onConta, onVitrine, onRelatorio, onPerfil }: Props) {
   return (
     <div className="tela">
       <FundoHex brilho />
@@ -43,9 +44,14 @@ export function Home({ history, onStart, onOpen, onEstudio, onExercicio, onCorri
               Administração
             </button>
           )}
-          {perfil.papel === 'profissional' && (
+          {(perfil.papel === 'profissional' || perfil.papel === 'admin') && (
             <button className="botao-sec" onClick={onAlunos}>
               Meus alunos
+            </button>
+          )}
+          {perfil.papel === 'aluno' && (
+            <button className="botao-sec" onClick={onEvolucao}>
+              Minha evolução
             </button>
           )}
         </div>

@@ -13,6 +13,7 @@ import { EstudioInicio } from './components/estudio/EstudioInicio'
 import { Referencias } from './components/estudio/Referencias'
 import { Admin } from './components/conta/Admin'
 import { MeusAlunos } from './components/conta/MeusAlunos'
+import { MinhaEvolucao } from './components/alunos/MinhaEvolucao'
 import { MinhaConta } from './components/conta/MinhaConta'
 import { Portao } from './components/conta/Portao'
 import { Home } from './components/Home'
@@ -49,6 +50,7 @@ type Screen =
   | { name: 'idoso' }
   | { name: 'admin' }
   | { name: 'alunos' }
+  | { name: 'evolucao' }
   | { name: 'conta' }
   | { name: 'vitrine' }
   | { name: 'perfil'; voltar: Screen }
@@ -188,6 +190,8 @@ function Telas({ inicial }: { inicial: Screen }) {
 
   if (screen.name === 'alunos' && perfil) return <MeusAlunos meuId={perfil.id} onVoltar={() => go({ name: 'inicio' })} />
 
+  if (screen.name === 'evolucao' && perfil) return <MinhaEvolucao meuId={perfil.id} nome={perfil.nome || perfil.email} onVoltar={() => go({ name: 'inicio' })} />
+
   if (screen.name === 'vitrine') return <Vitrine onVoltar={() => go({ name: 'inicio' })} />
 
   if (screen.name === 'conta') return <MinhaConta onVoltar={() => go({ name: 'inicio' })} />
@@ -206,6 +210,7 @@ function Telas({ inicial }: { inicial: Screen }) {
       perfil={perfil}
       onAdmin={() => go({ name: 'admin' })}
       onAlunos={() => go({ name: 'alunos' })}
+      onEvolucao={() => go({ name: 'evolucao' })}
       onConta={() => go({ name: 'conta' })}
       onVitrine={() => go({ name: 'vitrine' })}
       onRelatorio={() => go({ name: 'relatorio', voltar: screen })}

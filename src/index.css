@@ -2412,3 +2412,194 @@ ul.musculos.fortalecer li {
 .linha-campos.perimetria > .campo {
   justify-content: space-between;
 }
+
+/* Ficha do aluno e evolução */
+.barra-conta {
+  flex-wrap: wrap;
+}
+
+.cartao.pessoa.sem-botao {
+  display: block;
+  width: 100%;
+  cursor: pointer;
+  background: var(--vidro);
+  border: 1px solid var(--borda-verde);
+  border-radius: 20px;
+  padding: 16px 18px;
+  margin-top: 12px;
+}
+
+.cartao.pessoa h3 {
+  margin: 0;
+}
+
+.ficha-topo h1 {
+  margin: 0 0 4px;
+}
+
+.ficha-texto {
+  font-size: 0.88rem;
+  margin: 8px 0 0;
+  white-space: pre-wrap;
+}
+
+.ficha-topo .link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+  text-align: left;
+}
+
+.ficha-topo .link svg {
+  flex: none;
+}
+
+.ficha-topo .acoes-linha .botao,
+.ficha-topo .acoes-linha .botao-sec {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.seletor-comparar {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  padding: 4px;
+  margin: 12px 0;
+  border: 1px solid var(--borda);
+  border-radius: 999px;
+}
+
+.seletor-comparar button {
+  border: none;
+  background: none;
+  color: var(--texto-sec);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 8px 6px;
+  border-radius: 999px;
+}
+
+.seletor-comparar button.ativo {
+  background: var(--verde);
+  color: #02140b;
+}
+
+.placar {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.placar div {
+  border: 1px solid var(--borda);
+  border-radius: 14px;
+  padding: 10px 6px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  font-size: 0.8rem;
+  color: var(--texto-sec);
+}
+
+.placar b {
+  font-size: 1.6rem;
+  color: var(--texto);
+}
+
+.placar .melhorou {
+  border-color: rgba(54, 242, 148, 0.4);
+}
+
+.placar .melhorou b {
+  color: var(--verde);
+}
+
+.placar .piorou {
+  border-color: rgba(255, 90, 95, 0.4);
+}
+
+.placar .piorou b {
+  color: var(--vermelho);
+}
+
+.serie {
+  border-top: 1px solid var(--borda);
+  padding: 10px 0;
+}
+
+.serie summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.serie summary::-webkit-details-marker {
+  display: none;
+}
+
+.serie-nome {
+  font-size: 0.9rem;
+}
+
+.serie-valor {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+  text-align: right;
+}
+
+.serie-valor b {
+  font-size: 1.05rem;
+  white-space: nowrap;
+}
+
+.serie-valor small {
+  font-size: 0.75rem;
+  color: var(--texto-sec);
+  font-weight: 400;
+}
+
+.serie-valor .chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  white-space: nowrap;
+}
+
+.serie .grafico {
+  margin-top: 8px;
+}
+
+.chip-neutro {
+  background: rgba(159, 179, 194, 0.12);
+  color: var(--texto-sec);
+}
+
+.linha-fim {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.icone-apagar {
+  background: none;
+  border: none;
+  color: var(--texto-sec);
+  padding: 4px;
+  display: inline-flex;
+}
+
+.perimetria summary {
+  cursor: pointer;
+  font-weight: 600;
+  margin: 6px 0 10px;
+}
