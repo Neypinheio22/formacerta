@@ -53,12 +53,26 @@ describe('conteúdo do relatório', () => {
   it('avaliação do idoso entra com as medidas e a evolução', () => {
     const base = novaAvaliacao()
     const primeira: AvaliacaoIdoso = { ...base, id: 'a', date: '2026-09-01T10:00:00Z', avaliado: 'Raquel', anamnese: { ...base.anamnese, idade: 68, sexo: 'feminino' }, antropometria: { ...base.antropometria, peso: 66, estatura: 160 } }
-    const segunda: AvaliacaoIdoso = { ...primeira, id: 'b', date: '2026-10-20T10:00:00Z', antropometria: { ...primeira.antropometria, peso: 64 } }
+    const segunda: AvaliacaoIdoso = {
+      ...primeira,
+      id: 'b',
+      date: '2026-10-20T10:00:00Z',
+      antropometria: { ...primeira.antropometria, peso: 64 },
+      testes: { alcancarCostas: { valor: -5, observacao: 'Ombro direito travado', foto: { image: 'data:image/jpeg;base64,', width: 3, height: 4 } } },
+    }
     const s = secao({ tipo: 'idoso', registro: segunda }, [{ tipo: 'idoso', registro: primeira }, { tipo: 'idoso', registro: segunda }])
     expect(s.titulo).toBe('Avaliação funcional do idoso')
     expect(s.linhas[0]).toMatchObject({ rotulo: 'Avaliado', valor: '68 anos · feminino · 160 cm · 64,0 kg' })
     expect(s.linhas.find((l) => l.rotulo === 'IMC')?.valor).toBe('25,0 · Peso adequado')
-    expect(s.listas[0].titulo).toBe('Evolução desde 01/09/2026')
+    const lista = (titulo: string) => s.listas.find((l) => l.titulo === titulo)?.itens ?? []
+    expect(lista('Evolução desde 01/09/2026')).toContain('Peso: 66,0 → 64,0 (-2,0)')
+    // Todos os testes aparecem, os feitos com observação e foto, os outros como não realizados.
+    const testes = lista('Testes funcionais')
+    expect(testes).toHaveLength(7)
+    expect(testes.find((t) => t.startsWith('Alcançar atrás das costas'))).toBe(
+      'Alcançar atrás das costas: -5 cm · Dentro do esperado (esperado: -9 a 4 cm). Observação: Ombro direito travado. Foto abaixo.',
+    )
+    expect(testes).toContain('Caminhada de 6 minutos: não realizado.')
   })
 
   it('nome do arquivo sem acentos nem espaços', () => {

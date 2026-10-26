@@ -1,8 +1,10 @@
 // Texto de cada teste no relatório. O mesmo conteúdo vira a folha na tela
 // (para imprimir) e o PDF (para baixar ou mandar no WhatsApp).
 
-import { comparar, pontosDeAtencao, resumo as resumoIdoso } from '../idoso/analise'
-import type { AvaliacaoIdoso } from '../idoso/tipos'
+import { comparar, pontosDeAtencao, relacaoCinturaQuadril, resumo as resumoIdoso } from '../idoso/analise'
+import { ITENS_BERG } from '../idoso/berg'
+import { TESTES, classificar } from '../idoso/testes'
+import { CIRCUNFERENCIAS, type AvaliacaoIdoso } from '../idoso/tipos'
 import { planoCorretivo, recomendacao } from '../pose/recomendacoes'
 import { VIEWS, type Assessment, type Status } from '../pose/types'
 import { anguloAdams, classificarAdams, type RegistroAdams } from '../testes/adams'
@@ -151,6 +153,39 @@ export function secao(item: ItemRelatorio, mesmoAvaliado: ItemRelatorio[] = []):
     const atencao = pontosDeAtencao(a)
       .filter((p) => p.pontos.length)
       .map((p) => `${p.nome}: ${p.pontos.map((x) => x.texto).join(' ')}`)
+    // Todos os testes da bateria, mesmo os não feitos, com o esperado para a idade e a observação.
+    const testes = TESTES.map((t) => {
+      const r = a.testes[t.id]
+      if (!r) return `${t.nome}: não realizado.`
+      const casas = t.unidade === 's' ? 1 : 0
+      const c = classificar(t, r.valor, a.anamnese.idade, a.anamnese.sexo)
+      const esperado = c?.faixa ? ` (esperado: ${numero(c.faixa[0], casas)} a ${numero(c.faixa[1], casas)} ${t.unidade})` : ''
+      return `${t.nome}: ${numero(r.valor, casas)} ${t.unidade}${c ? ` · ${c.rotulo}` : ''}${esperado}.${r.observacao ? ` Observação: ${r.observacao.replace(/([^.!?])$/, '$1.')}` : ''}${r.foto ? ' Foto abaixo.' : ''}`
+    })
+    const berg = a.berg.some((n) => n !== null)
+      ? [...ITENS_BERG.map((it, i) => `${i + 1}. ${it.titulo}: ${a.berg[i] ?? '—'}`), ...(a.bergObservacao ? [`Observação: ${a.bergObservacao}`] : [])]
+      : []
+    const an = a.anamnese
+    const anamnese = (
+      [
+        ['Objetivo', an.objetivo],
+        ['Atividade física', an.atividade],
+        ['Medicamentos', an.medicamentos],
+        ['Doenças e condições', an.doencas],
+        ['Quedas nos últimos 12 meses', an.quedas === null ? '' : `${an.quedas}${an.quedasDetalhe ? ` (${an.quedasDetalhe})` : ''}`],
+        ['Dores', [an.dores, an.dorNota !== null ? `intensidade ${an.dorNota}/10` : ''].filter(Boolean).join(', ')],
+        ['Cirurgias', an.cirurgias],
+        ['Dispositivo auxiliar', an.dispositivo],
+        ['Observações', an.observacoes],
+      ] as const
+    )
+      .filter(([, v]) => v.trim())
+      .map(([k, v]) => `${k}: ${v}`)
+    const rcq = relacaoCinturaQuadril(a)
+    const antropometria = [
+      ...CIRCUNFERENCIAS.filter((c) => a.antropometria.circ[c.id]).map((c) => `${c.nome}: ${numero(a.antropometria.circ[c.id]!, 0)} cm`),
+      ...(rcq ? [`Relação cintura/quadril: ${numero(rcq, 2)}`] : []),
+    ]
     return {
       ...base,
       linhas: [
@@ -159,8 +194,12 @@ export function secao(item: ItemRelatorio, mesmoAvaliado: ItemRelatorio[] = []):
       ],
       textos: resumoIdoso(a).length === 0 ? ['Nenhum teste feito ainda.'] : [],
       listas: [
+        { titulo: 'Testes funcionais', itens: testes },
+        { titulo: 'Escala de Equilíbrio de Berg, por item', itens: berg },
         { titulo: `Evolução desde ${anterior ? dataCurta(anterior.date) : ''}`, itens: evolucao },
         { titulo: 'Pontos de atenção', itens: atencao },
+        { titulo: 'Anamnese', itens: anamnese },
+        { titulo: 'Circunferências', itens: antropometria },
       ].filter((l) => l.itens.length > 0),
       observacoes: a.observacoes,
       aviso: AVISO,

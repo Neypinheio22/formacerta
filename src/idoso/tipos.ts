@@ -46,7 +46,10 @@ export type Antropometria = {
 
 export type IdTeste = 'levantar' | 'flexaoBraco' | 'marcha' | 'caminhada' | 'tug' | 'sentarAlcancar' | 'alcancarCostas'
 
-export type ResultadoTeste = { valor: number; observacao: string }
+/** foto: o paciente executando o teste (JPEG reduzido, fica só no aparelho). */
+export type ResultadoTeste = { valor: number; observacao: string; foto?: FotoTeste }
+
+export type FotoTeste = { image: string; width: number; height: number }
 
 export type AvaliacaoIdoso = Registro & {
   anamnese: Anamnese

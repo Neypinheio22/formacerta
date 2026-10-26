@@ -2383,3 +2383,27 @@ ul.musculos.fortalecer li {
     margin: 14mm;
   }
 }
+
+/* Foto do paciente executando o teste do idoso */
+.foto-execucao img,
+.foto-teste {
+  display: block;
+  width: 100%;
+  max-height: 60dvh;
+  object-fit: contain;
+  border-radius: 14px;
+  background: #071a28;
+}
+
+.foto-teste {
+  margin-top: 8px;
+}
+
+.foto-execucao .acoes label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex: 1;
+  font-weight: 700;
+}

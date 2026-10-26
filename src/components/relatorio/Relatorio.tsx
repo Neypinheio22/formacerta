@@ -6,6 +6,7 @@ import { useConta } from '../../nuvem/conta'
 import { baixarPdf, compartilharPdf, gerarPdf, svgParaImagem, type Imagem, type ModoRelatorio } from '../../relatorio/pdf'
 import { carregarProfissional, contato, perfilPreenchido } from '../../relatorio/profissional'
 import { loadAssessments } from '../../storage'
+import { TESTES } from '../../idoso/testes'
 import { CHAVE_IDOSO, type AvaliacaoIdoso } from '../../idoso/tipos'
 import { CHAVE_ADAMS, type RegistroAdams } from '../../testes/adams'
 import { CHAVE_FLEX, type RegistroFlex } from '../../testes/flexibilidade'
@@ -330,6 +331,21 @@ function FotosDoTeste({ item }: { item: ItemRelatorio }) {
       )
     })
   if (item.tipo === 'flexibilidade') return item.registro.foto ? <FotoMedida foto={item.registro.foto} /> : null
-  if (item.tipo === 'idoso') return null
+  if (item.tipo === 'idoso')
+    return TESTES.filter((t) => item.registro.testes[t.id]?.foto).map((t) => (
+      <figure key={t.id} data-legenda={t.nome}>
+        <FotoSimples {...item.registro.testes[t.id]!.foto!} />
+        <figcaption>{t.nome}</figcaption>
+      </figure>
+    ))
   return item.registro.foto ? <FotoAdams image={item.registro.foto.image} resultado={item.registro.foto.resultado} /> : null
+}
+
+/** Foto sem marcações, dentro de um SVG para ir para o PDF como as outras. */
+function FotoSimples({ image, width, height }: { image: string; width: number; height: number }) {
+  return (
+    <svg viewBox={`0 0 ${width} ${height}`} className="pose-foto">
+      <image href={image} width={width} height={height} />
+    </svg>
+  )
 }
