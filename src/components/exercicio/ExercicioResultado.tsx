@@ -1,4 +1,6 @@
 import { EnviarResultado } from '../conta/EnviarResultado'
+import { ROTULO_NIVEL, planoExercicio } from '../../plano/plano'
+import { PlanoAcao } from '../plano/PlanoAcao'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { exercicioPorId, type Exercicio } from '../../movimento/exercicios'
 import type { Quadro, Repeticao, ResultadoExercicio } from '../../movimento/tipos'
@@ -7,7 +9,7 @@ import type { Status } from '../../pose/types'
 
 type Props = { resultado: ResultadoExercicio; onVoltar: () => void; onRefazer: () => void }
 
-const ROTULO: Record<Status, string> = { ok: 'Bom', atencao: 'Atenção', alerta: 'Corrigir' }
+const ROTULO = ROTULO_NIVEL
 const VELOCIDADES = [1, 0.5, 0.25]
 
 function scoreText(score: number) {
@@ -90,7 +92,6 @@ export function ExercicioResultado({ resultado, onVoltar, onRefazer }: Props) {
     else v.pause()
   }
 
-  const exercicios = [...new Set(resumo.flatMap((f) => f.exercises))]
   const data = new Date(resultado.date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })
 
   return (
@@ -216,16 +217,7 @@ export function ExercicioResultado({ resultado, onVoltar, onRefazer }: Props) {
         </section>
       )}
 
-      {exercicios.length > 0 && (
-        <section className="cartao">
-          <h2>Para melhorar a técnica</h2>
-          <ul className="exercicios">
-            {exercicios.map((e) => (
-              <li key={e}>{e}</li>
-            ))}
-          </ul>
-        </section>
-      )}
+      {reps.length > 0 && <PlanoAcao plano={planoExercicio(resultado)} />}
 
       <button className="botao grande" onClick={onRefazer}>
         Fazer de novo
@@ -246,7 +238,7 @@ const ALT = 150
 const ESQ = 30
 const BASE = 18
 
-const COR: Record<Status, string> = { ok: 'var(--verde)', atencao: 'var(--laranja)', alerta: 'var(--vermelho)' }
+const COR: Record<Status, string> = { ok: 'var(--verde)', atencao: 'var(--amarelo)', alerta: 'var(--vermelho)' }
 
 /** Ângulo principal ao longo do tempo, com as repetições marcadas. */
 function Grafico({ ex, resultado, tempo, onIr }: { ex: Exercicio; resultado: ResultadoExercicio; tempo: number; onIr: (t: number) => void }) {

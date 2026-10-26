@@ -1,6 +1,6 @@
 import type { Perfil } from '../nuvem/conta'
 import type { Assessment } from '../pose/types'
-import { Activity, ArrowRight, Clapperboard, Footprints, HeartPulse, PlayCircle, Ruler, Sparkles, Video } from 'lucide-react'
+import { Activity, ArrowRight, Brain, Clapperboard, Footprints, HeartPulse, PlayCircle, Ruler, Sparkles, Video } from 'lucide-react'
 import { FundoHex } from './FundoHex'
 import { Logo } from './Logo'
 import { VitrineCarrossel } from './vitrine/VitrineCarrossel'
@@ -76,6 +76,23 @@ export function Home({ history, onStart, onOpen, onEstudio, onExercicio, onCorri
           Começar avaliação <ArrowRight size={20} strokeWidth={2.5} />
         </button>
       </section>
+
+      {perfil && (
+        <section className="cartao destaque analise-ia">
+          <span className="etiqueta">
+            <Brain size={14} /> Novo · plano de ação
+          </span>
+          <h2>Análise do Personal IA</h2>
+          <p className="fluxo-ia">Aluno faz o teste sozinho + app gera o resultado + personal IA analisa</p>
+          <p className="dica-sec">
+            Cada teste vira 🟢 Adequado, 🟡 Precisa melhorar ou 🔴 Atenção, com os pontos de atenção, os exercícios recomendados e a data da reavaliação. A análise junta postura,
+            flexibilidade, corrida e os outros testes guardados na ficha num plano de treino só.
+          </p>
+          <button className="botao" onClick={perfil.papel === 'aluno' ? onEvolucao : onAlunos}>
+            {perfil.papel === 'aluno' ? 'Ver minha análise' : 'Ver a análise dos alunos'}
+          </button>
+        </section>
+      )}
 
       <section className="cartao destaque">
         <span className="etiqueta">

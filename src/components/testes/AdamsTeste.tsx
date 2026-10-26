@@ -2,6 +2,8 @@ import { ScanSearch } from 'lucide-react'
 import { textoAdams } from '../../compartilhar/whatsapp'
 import { EnviarResultado } from '../conta/EnviarResultado'
 import { EnviarWhatsApp } from '../conta/EnviarWhatsApp'
+import { PlanoAcao } from '../plano/PlanoAcao'
+import { planoAdams } from '../../plano/plano'
 import { useMemo, useState } from 'react'
 import { detectarComMascara, loadDetectorComMascara, loadSegmentador, segmentar, type Mascara } from '../../pose/detector'
 import { LM, type Point } from '../../pose/types'
@@ -319,6 +321,7 @@ function Detalhe(props: { registro: RegistroAdams; doMesmo: RegistroAdams[]; onA
   const { registro: r, doMesmo } = props
   const [obs, setObs] = useState(r.observacoes)
   const angulo = anguloAdams(r)!
+  const plano = planoAdams(r)
   return (
     <>
       <h1>{r.avaliado}</h1>
@@ -330,6 +333,7 @@ function Detalhe(props: { registro: RegistroAdams; doMesmo: RegistroAdams[]; onA
       <section className="cartao">
         <ResultadoAdamsCartao angulo={angulo} classe={classificarAdams(angulo)} lado={r.lado} fonte={r.escoliometro !== null ? 'pelo escoliômetro' : 'pela foto'} />
       </section>
+      {plano && <PlanoAcao plano={plano} />}
       <EnviarWhatsApp texto={textoAdams({ ...r, observacoes: obs })} avaliado={r.avaliado} onPdf={props.onRelatorio} />
       {r.foto && (
         <section className="cartao">
