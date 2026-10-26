@@ -1272,6 +1272,12 @@ ul.musculos.fortalecer li {
   background: #071a28;
 }
 
+/* Foto no lugar do desenho: mesma proporção (300×170) para os cartões ficarem alinhados. */
+.ilustracao-foto {
+  aspect-ratio: 300 / 170;
+  object-fit: cover;
+}
+
 .como-fazer figcaption {
   display: flex;
   flex-direction: column;

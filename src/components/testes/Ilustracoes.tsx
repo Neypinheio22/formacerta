@@ -1,7 +1,25 @@
 // Desenhos de como fazer cada teste, para o aluno usar como referência.
 // Feitos em SVG para ficarem nítidos em qualquer tela e não pesarem no app.
+// Quando o passo tem `foto` (arquivo em public/como-fazer/), a foto aparece no lugar do desenho;
+// se a foto não carregar, volta o desenho.
 
-type Passo = { titulo: string; texto: string; desenho: React.ReactNode; errado?: boolean }
+import { useState } from 'react'
+
+type Passo = { titulo: string; texto: string; desenho: React.ReactNode; foto?: string; errado?: boolean }
+
+function Imagem({ passo }: { passo: Passo }) {
+  const [falhou, setFalhou] = useState(false)
+  if (!passo.foto || falhou) return <>{passo.desenho}</>
+  return (
+    <img
+      className="ilustracao ilustracao-foto"
+      src={`${import.meta.env.BASE_URL}como-fazer/${passo.foto}`}
+      alt={passo.titulo}
+      loading="lazy"
+      onError={() => setFalhou(true)}
+    />
+  )
+}
 
 const CORPO = '#d9e4ec'
 const ROUPA = '#36f294'
@@ -185,7 +203,7 @@ function ComoFazer({ passos, titulo }: { passos: Passo[]; titulo: string }) {
       <div className="como-fazer-passos">
         {passos.map((p) => (
           <figure key={p.titulo} className={p.errado ? 'errado' : ''}>
-            {p.desenho}
+            <Imagem passo={p} />
             <figcaption>
               <strong>{p.titulo}</strong>
               <span>{p.texto}</span>
