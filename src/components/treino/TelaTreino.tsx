@@ -1,4 +1,4 @@
-import { Camera, CheckCircle2, Dumbbell, PlayCircle, TriangleAlert } from 'lucide-react'
+import { BadgeCheck, Camera, CheckCircle2, Dumbbell, PlayCircle, TriangleAlert } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { EXERCICIOS } from '../../movimento/exercicios'
 import type { ExercicioId } from '../../movimento/tipos'
@@ -19,6 +19,7 @@ type Props = {
   onVoltar: () => void
   onCamera: (exercicio?: ExercicioId) => void
   onCarga: () => void
+  onPersonais: () => void
 }
 
 /** Faixa de repetições escrita pelo personal ("10 a 12", "8-10", "15"). */
@@ -61,20 +62,26 @@ function LinhaExercicio({ ex, onCamera }: { ex: ExercicioTreino; onCamera: (id: 
 }
 
 /** Aviso fixo da série sugerida: quem monta o treino é o personal. */
-function AvisoSugerida({ temFicha }: { temFicha: boolean }) {
+function AvisoSugerida({ temFicha, onPersonais }: { temFicha: boolean; onPersonais: () => void }) {
   return (
     <section className="cartao aviso-sugerida">
       <p>
         <TriangleAlert size={18} /> <b>Série sugerida, não é o seu treino personalizado.</b>
       </p>
       <p className="dica-sec">{AVISO_SUGERIDA}</p>
-      {temFicha && <p className="dica-sec">Seu personal já tem a sua ficha: assim que ele montar os treinos, eles aparecem aqui no lugar desta série.</p>}
+      {temFicha ? (
+        <p className="dica-sec">Seu personal já tem a sua ficha: assim que ele montar os treinos, eles aparecem aqui no lugar desta série.</p>
+      ) : (
+        <button className="botao-sec" onClick={onPersonais}>
+          <BadgeCheck size={16} /> Encontrar personal com CREF
+        </button>
+      )}
     </section>
   )
 }
 
 /** Aba Treino: ficha A, B, C do personal, meta da semana e materiais extras. */
-export function TelaTreino({ perfil, abrir, onVoltar, onCamera, onCarga }: Props) {
+export function TelaTreino({ perfil, abrir, onVoltar, onCamera, onCarga, onPersonais }: Props) {
   const t = useMeuTreino(perfil)
   const [aberto, setAberto] = useState<string | null>(abrir ?? null)
   const [aviso, setAviso] = useState<string | null>(null)
@@ -108,7 +115,7 @@ export function TelaTreino({ perfil, abrir, onVoltar, onCamera, onCarga }: Props
           Treino <span className="verde">{treino.letra}</span>
           {treino.nome && ` · ${treino.nome}`}
         </h1>
-        {t.sugerida && <AvisoSugerida temFicha={!!t.ficha} />}
+        {t.sugerida && <AvisoSugerida temFicha={!!t.ficha} onPersonais={onPersonais} />}
         <p className="dica-sec">Toque na câmera ao lado do exercício para o app contar as repetições e corrigir o movimento.</p>
         <ol className="lista-treino">
           {treino.exercicios.map((ex, i) => (
@@ -138,7 +145,7 @@ export function TelaTreino({ perfil, abrir, onVoltar, onCamera, onCarga }: Props
 
       {t.carregando && aluno && <p className="carregando">Carregando sua ficha…</p>}
 
-      {t.sugerida && <AvisoSugerida temFicha={!!t.ficha} />}
+      {t.sugerida && <AvisoSugerida temFicha={!!t.ficha} onPersonais={onPersonais} />}
 
       {t.lista.length > 0 && (
         <div className="grade-treinos">

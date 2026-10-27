@@ -3853,3 +3853,121 @@ ul.musculos.fortalecer li {
 .aviso-curto {
   font-size: 0.78rem;
 }
+
+/* Encontrar personal */
+.busca-personal {
+  position: relative;
+}
+
+.busca-personal svg {
+  position: absolute;
+  left: 14px;
+  bottom: 15px;
+  color: var(--texto-sec);
+}
+
+.busca-personal input {
+  padding-left: 40px;
+}
+
+.lista-personais {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.personal-topo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.personal-topo h2 {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.personal-inicial {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: rgba(54, 242, 148, 0.14);
+  border: 1px solid rgba(54, 242, 148, 0.4);
+  color: var(--verde);
+  font-weight: 800;
+  font-size: 1.2rem;
+}
+
+.personal-cref {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin: 2px 0 0;
+  color: var(--verde);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.personal-info {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin: 0;
+}
+
+.personal-info span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.personal-selo {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--texto-sec);
+}
+
+.personal-cartao .acoes-linha a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  text-decoration: none;
+}
+
+.rodape-lista {
+  font-size: 0.78rem;
+  text-align: center;
+}
+
+.personal-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.personal-chips li {
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--borda-verde);
+  background: rgba(54, 242, 148, 0.08);
+  color: var(--verde);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.personal-bio {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  white-space: pre-line;
+}

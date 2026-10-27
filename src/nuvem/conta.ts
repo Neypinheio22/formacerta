@@ -19,6 +19,12 @@ export type Perfil = {
   termos_aceitos_em?: string | null
   /** Recebe por e-mail o lembrete de reavaliação. */
   lembretes_email?: boolean
+  /** Profissional: contato e lista "Encontrar personal" (só aparece se ele autorizar). */
+  whatsapp?: string
+  cidade?: string
+  especialidade?: string
+  bio?: string
+  aparecer_na_lista?: boolean
 }
 
 export type Conta = {

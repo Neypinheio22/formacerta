@@ -1,6 +1,6 @@
 import type { Perfil } from '../nuvem/conta'
 import type { Assessment } from '../pose/types'
-import { Activity, ArrowRight, Brain, Clapperboard, Crown, Dumbbell, FileText, Footprints, HeartPulse, PersonStanding, PlayCircle, Ruler, Sparkles, type LucideIcon } from 'lucide-react'
+import { Activity, ArrowRight, BadgeCheck, Brain, Clapperboard, Crown, Dumbbell, FileText, Footprints, HeartPulse, PersonStanding, PlayCircle, Ruler, Sparkles, type LucideIcon } from 'lucide-react'
 import { useState } from 'react'
 import { FundoHex } from './FundoHex'
 import { Logo } from './Logo'
@@ -30,6 +30,7 @@ type Props = {
   onPlanos: () => void
   onRelatorio: () => void
   onTreino: (letra?: string) => void
+  onPersonais: () => void
 }
 
 type Atalho = { titulo: string; texto: string; Icone: LucideIcon; abrir: () => void; soPersonal?: boolean }
@@ -55,7 +56,7 @@ function Grupo({ titulo, atalhos, personal }: { titulo: string; atalhos: Atalho[
   )
 }
 
-export function Home({ history, onStart, onOpen, onEstudio, onExercicio, onCarga, onCorrida, onFlexibilidade, onAdams, onIdoso, perfil, onAdmin, onAlunos, onReavaliacoes, onEvolucao, onVitrine, onPlanos, onRelatorio, onTreino }: Props) {
+export function Home({ history, onStart, onOpen, onEstudio, onExercicio, onCarga, onCorrida, onFlexibilidade, onAdams, onIdoso, perfil, onAdmin, onAlunos, onReavaliacoes, onEvolucao, onVitrine, onPlanos, onRelatorio, onTreino, onPersonais }: Props) {
   const verPlanos = usePlanosLiberados(perfil)
   const [todoHistorico, setTodoHistorico] = useState(false)
   // O aluno só vê o que ele mesmo usa; as ferramentas de avaliar e atender alunos ficam para o personal.
@@ -150,6 +151,7 @@ export function Home({ history, onStart, onOpen, onEstudio, onExercicio, onCarga
           ...(perfil
             ? [{ titulo: 'Central de Inteligência', texto: aluno ? 'Minha análise e exercícios' : '🟢🟡🔴 de cada aluno', Icone: Brain, abrir: aluno ? onEvolucao : onAlunos }]
             : []),
+          ...(aluno ? [{ titulo: 'Encontrar personal', texto: 'Profissional com CREF e WhatsApp', Icone: BadgeCheck, abrir: onPersonais }] : []),
           { titulo: 'Relatório', texto: 'PDF com sua logo e CREF', Icone: FileText, abrir: onRelatorio, soPersonal: true },
           { titulo: 'Modo estúdio', texto: 'Grave com 2 ou 3 celulares', Icone: Clapperboard, abrir: onEstudio, soPersonal: true },
         ]}

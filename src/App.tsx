@@ -19,6 +19,7 @@ import { MinhaConta } from './components/conta/MinhaConta'
 import { Portao } from './components/conta/Portao'
 import { BarraInferior, type Aba } from './components/BarraInferior'
 import { Home } from './components/Home'
+import { EncontrarPersonal } from './components/conta/EncontrarPersonal'
 import { TelaTreino } from './components/treino/TelaTreino'
 import { Vitrine } from './components/vitrine/Vitrine'
 import { Pagamento, type Pedido } from './components/planos/Pagamento'
@@ -46,6 +47,7 @@ type Screen =
   | { name: 'referencias'; abrir?: string }
   | { name: 'exercicio'; exercicio?: ExercicioId }
   | { name: 'treino'; abrir?: string }
+  | { name: 'personais'; voltar: Screen }
   | { name: 'exercicio-vivo'; config: ConfigExercicio }
   | { name: 'exercicio-arquivo'; config: ConfigExercicio; arquivo: File }
   | { name: 'exercicio-resultado'; resultado: ResultadoExercicio }
@@ -187,6 +189,8 @@ function Telas({ inicial }: { inicial: Screen }) {
     if (screen.name === 'corrida-resultado') {
       return <CorridaResultado resultado={screen.resultado} onVoltar={() => go({ name: 'inicio' })} onOutraVista={(vista) => go({ name: 'corrida', vista })} />
     }
+    if (screen.name === 'personais') return <EncontrarPersonal meuNome={perfil?.nome ?? ''} onVoltar={() => go(screen.voltar)} />
+
     if (screen.name === 'treino')
       return (
         <TelaTreino
@@ -195,6 +199,7 @@ function Telas({ inicial }: { inicial: Screen }) {
           onVoltar={() => go({ name: 'inicio' })}
           onCamera={(exercicio) => go({ name: 'exercicio', exercicio })}
           onCarga={() => go({ name: 'carga' })}
+          onPersonais={() => go({ name: 'personais', voltar: screen })}
         />
       )
 
@@ -259,6 +264,7 @@ function Telas({ inicial }: { inicial: Screen }) {
         onPlanos={() => go({ name: 'planos' })}
         onRelatorio={() => go({ name: 'relatorio', voltar: screen })}
         onTreino={(abrir) => go({ name: 'treino', abrir })}
+        onPersonais={() => go({ name: 'personais', voltar: screen })}
       />
     )
   }
