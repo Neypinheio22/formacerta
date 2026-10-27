@@ -3,6 +3,7 @@ import type { Assessment } from '../pose/types'
 import { Activity, ArrowRight, Brain, Clapperboard, Footprints, HeartPulse, PlayCircle, Ruler, Sparkles, Video } from 'lucide-react'
 import { FundoHex } from './FundoHex'
 import { Logo } from './Logo'
+import { CartaoReavaliacao } from './plano/Reavaliacoes'
 import { VitrineCarrossel } from './vitrine/VitrineCarrossel'
 
 type Props = {
@@ -18,6 +19,7 @@ type Props = {
   perfil: Perfil | null
   onAdmin: () => void
   onAlunos: () => void
+  onReavaliacoes: () => void
   onEvolucao: () => void
   onConta: () => void
   onVitrine: () => void
@@ -29,7 +31,7 @@ const EM_BREVE = [
   { titulo: 'Teste de mobilidade', texto: 'Agachamento, tornozelo, elevação dos braços e equilíbrio.' },
 ]
 
-export function Home({ history, onStart, onOpen, onEstudio, onExercicio, onCorrida, onFlexibilidade, onAdams, onIdoso, perfil, onAdmin, onAlunos, onEvolucao, onConta, onVitrine, onRelatorio, onPerfil }: Props) {
+export function Home({ history, onStart, onOpen, onEstudio, onExercicio, onCorrida, onFlexibilidade, onAdams, onIdoso, perfil, onAdmin, onAlunos, onReavaliacoes, onEvolucao, onConta, onVitrine, onRelatorio, onPerfil }: Props) {
   return (
     <div className="tela">
       <FundoHex brilho />
@@ -65,6 +67,8 @@ export function Home({ history, onStart, onOpen, onEstudio, onExercicio, onCorri
       </header>
 
       {perfil && <VitrineCarrossel onAbrir={onVitrine} />}
+
+      {perfil && <CartaoReavaliacao perfil={perfil} onAbrir={onReavaliacoes} />}
 
       <section className="cartao destaque">
         <span className="etiqueta">

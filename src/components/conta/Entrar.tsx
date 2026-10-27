@@ -1,8 +1,11 @@
 import { useState } from 'react'
 import { cadastrar, entrar, esqueciSenha, senhaFraca } from '../../nuvem/conta'
 import { Logo } from '../Logo'
+import { VERSAO_TERMOS } from '../../nuvem/privacidade'
+import { AceiteLgpd } from './AceiteLgpd'
 import { Privacidade } from './Privacidade'
 import { Suporte } from './Suporte'
+import { Termos } from './Termos'
 
 type Modo = 'entrar' | 'cadastrar' | 'esqueci'
 
@@ -14,7 +17,8 @@ export function Entrar() {
   const [email, setEmail] = useState('')
   const [senha, setSenha] = useState('')
   const [aceito, setAceito] = useState(false)
-  const [verPrivacidade, setVerPrivacidade] = useState(false)
+  const [saude, setSaude] = useState(false)
+  const [ver, setVer] = useState<'termos' | 'privacidade' | null>(null)
   const [erro, setErro] = useState<string | null>(null)
   const [aviso, setAviso] = useState<string | null>(null)
   const [enviando, setEnviando] = useState(false)
@@ -37,7 +41,7 @@ export function Entrar() {
       if (erro) setErro(erro)
       else setAviso('Se este e-mail tiver cadastro, chega um link para você criar uma senha nova.')
     } else {
-      const r = await cadastrar({ email, senha, nome, papel, registro })
+      const r = await cadastrar({ email, senha, nome, papel, registro, termosVersao: VERSAO_TERMOS })
       if (r.erro) setErro(r.erro)
       else if (r.confirmar) {
         setAviso('Cadastro feito. Abra o link que chegou no seu e-mail para confirmar. Depois disso, o administrador libera o seu acesso.')
@@ -47,14 +51,15 @@ export function Entrar() {
     setEnviando(false)
   }
 
-  if (verPrivacidade) return <Privacidade onVoltar={() => setVerPrivacidade(false)} />
+  if (ver === 'termos') return <Termos onVoltar={() => setVer(null)} />
+  if (ver === 'privacidade') return <Privacidade onVoltar={() => setVer(null)} />
 
   const emailOk = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.trim())
   const pronto =
     emailOk &&
     (modo === 'esqueci' ||
       (modo === 'entrar' && senha.length > 0) ||
-      (modo === 'cadastrar' && nome.trim() !== '' && !senhaFraca(senha) && aceito))
+      (modo === 'cadastrar' && nome.trim() !== '' && !senhaFraca(senha) && aceito && saude))
 
   return (
     <div className="tela">
@@ -113,16 +118,14 @@ export function Entrar() {
         )}
 
         {modo === 'cadastrar' && (
-          <label className="aceite">
-            <input type="checkbox" checked={aceito} onChange={(e) => setAceito(e.target.checked)} />
-            <span>
-              Li e aceito a{' '}
-              <button type="button" className="link" onClick={() => setVerPrivacidade(true)}>
-                política de privacidade
-              </button>
-              .
-            </span>
-          </label>
+          <AceiteLgpd
+            termos={aceito}
+            saude={saude}
+            onTermos={setAceito}
+            onSaude={setSaude}
+            onVerTermos={() => setVer('termos')}
+            onVerPrivacidade={() => setVer('privacidade')}
+          />
         )}
 
         {erro && <p className="mensagem erro">{erro}</p>}
@@ -158,6 +161,15 @@ export function Entrar() {
           </button>
         )}
       </div>
+
+      <p className="links-legais">
+        <button className="link" onClick={() => setVer('termos')}>
+          Termos de uso
+        </button>
+        <button className="link" onClick={() => setVer('privacidade')}>
+          Política de privacidade
+        </button>
+      </p>
 
       <Suporte />
 

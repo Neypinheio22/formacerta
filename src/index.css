@@ -2888,3 +2888,91 @@ ul.musculos.fortalecer li {
   opacity: 1;
   border-color: currentColor;
 }
+
+/* LGPD: aceites e links dos termos */
+.aceite-saude {
+  padding: 10px 12px;
+  border: 1px solid rgba(54, 242, 148, 0.35);
+  border-radius: 12px;
+  background: rgba(54, 242, 148, 0.06);
+}
+
+.aceite-saude strong {
+  color: var(--texto);
+}
+
+.links-legais {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  margin: 14px 0 0;
+  font-size: 0.85rem;
+}
+
+.texto-longo ul {
+  margin: 6px 0;
+  padding-left: 20px;
+  color: var(--texto-sec);
+  line-height: 1.55;
+}
+
+.texto-longo li {
+  margin: 4px 0;
+}
+
+/* Lembrete de reavaliação */
+.lista-lembretes {
+  list-style: none;
+  margin: 10px 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.lista-lembretes li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-size: 0.92rem;
+}
+
+.lista-lembretes .chip {
+  white-space: nowrap;
+}
+
+.acoes-lembrete {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.acoes-lembrete a {
+  text-decoration: none;
+}
+
+.titulo-secao {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 20px 0 8px;
+  font-size: 1.05rem;
+}
+
+.titulo-secao svg {
+  color: var(--verde);
+}
+
+.botoes-coluna {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.botoes-coluna .botao-sec {
+  width: 100%;
+}

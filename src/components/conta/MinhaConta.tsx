@@ -2,8 +2,10 @@ import { useEffect, useState } from 'react'
 import { ROTULO_PAPEL, sair, useConta } from '../../nuvem/conta'
 import { excluirMinhaConta, salvarMeuPerfil } from '../../nuvem/gestao'
 import { ROTULO_TIPO, apagarResultado, listarResultados, type ResultadoNuvem } from '../../nuvem/resultados'
+import { baixarMeusDados, definirLembretes } from '../../nuvem/privacidade'
 import { Privacidade } from './Privacidade'
 import { Suporte } from './Suporte'
+import { Termos } from './Termos'
 
 export function MinhaConta({ onVoltar }: { onVoltar: () => void }) {
   const { perfil, recarregar } = useConta()
@@ -11,7 +13,8 @@ export function MinhaConta({ onVoltar }: { onVoltar: () => void }) {
   const [registro, setRegistro] = useState(perfil?.registro ?? '')
   const [meus, setMeus] = useState<ResultadoNuvem[]>([])
   const [erro, setErro] = useState<string | null>(null)
-  const [verPrivacidade, setVerPrivacidade] = useState(false)
+  const [ver, setVer] = useState<'termos' | 'privacidade' | null>(null)
+  const [lembretes, setLembretes] = useState(perfil?.lembretes_email !== false)
 
   useEffect(() => {
     if (!perfil) return
@@ -22,7 +25,8 @@ export function MinhaConta({ onVoltar }: { onVoltar: () => void }) {
   }, [perfil])
 
   if (!perfil) return null
-  if (verPrivacidade) return <Privacidade onVoltar={() => setVerPrivacidade(false)} />
+  if (ver === 'termos') return <Termos onVoltar={() => setVer(null)} />
+  if (ver === 'privacidade') return <Privacidade onVoltar={() => setVer(null)} />
 
   async function salvar() {
     const erro = await salvarMeuPerfil(perfil!.id, { nome: nome.trim(), registro: registro.trim() })
@@ -35,6 +39,19 @@ export function MinhaConta({ onVoltar }: { onVoltar: () => void }) {
     const erro = await apagarResultado(id)
     if (erro) setErro(erro)
     else setMeus((m) => m.filter((x) => x.id !== id))
+  }
+
+  async function trocarLembretes(ligado: boolean) {
+    setLembretes(ligado)
+    const erro = await definirLembretes(perfil!.id, ligado)
+    if (erro) {
+      setErro(erro)
+      setLembretes(!ligado)
+    } else recarregar()
+  }
+
+  async function baixar() {
+    setErro(await baixarMeusDados(perfil!))
   }
 
   async function excluirTudo() {
@@ -97,9 +114,38 @@ export function MinhaConta({ onVoltar }: { onVoltar: () => void }) {
         </section>
       )}
 
-      <button className="botao-sec" onClick={() => setVerPrivacidade(true)}>
-        Política de privacidade
-      </button>
+      {'lembretes_email' in perfil && (
+        <section className="cartao">
+          <h2>Lembrete de reavaliação</h2>
+          <label className="aceite">
+            <input type="checkbox" checked={lembretes} onChange={(e) => trocarLembretes(e.target.checked)} />
+            <span>
+              {perfil.papel === 'aluno'
+                ? 'Receber um e-mail quando chegar a data de refazer os meus testes.'
+                : 'Receber um e-mail quando chegar a data de reavaliar os meus alunos.'}
+            </span>
+          </label>
+        </section>
+      )}
+
+      <section className="cartao">
+        <h2>Privacidade e meus dados</h2>
+        <p className="dica-sec">
+          Pela LGPD você pode ver, levar e apagar os seus dados quando quiser.
+          {perfil.termos_aceitos_em && ` Você aceitou os termos em ${new Date(perfil.termos_aceitos_em).toLocaleDateString('pt-BR')}.`}
+        </p>
+        <div className="botoes-coluna">
+          <button className="botao-sec" onClick={baixar}>
+            Baixar meus dados
+          </button>
+          <button className="botao-sec" onClick={() => setVer('termos')}>
+            Termos de uso
+          </button>
+          <button className="botao-sec" onClick={() => setVer('privacidade')}>
+            Política de privacidade
+          </button>
+        </div>
+      </section>
       <button className="botao-sec" onClick={() => sair()}>
         Sair da conta
       </button>

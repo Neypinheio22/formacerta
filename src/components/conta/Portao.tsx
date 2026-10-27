@@ -2,6 +2,8 @@ import { useCallback, useEffect, useState } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from '../../nuvem/cliente'
 import { ContextoConta, buscarPerfil, type Perfil } from '../../nuvem/conta'
+import { precisaAceitar } from '../../nuvem/privacidade'
+import { AceitarTermos } from './AceitarTermos'
 import { Aguardando } from './Aguardando'
 import { Entrar } from './Entrar'
 import { NovaSenha } from './NovaSenha'
@@ -39,6 +41,7 @@ export function Portao({ children }: { children: React.ReactNode }) {
   else if (trocandoSenha && sessao) tela = <NovaSenha onPronto={() => setTrocandoSenha(false)} />
   else if (!sessao || !perfil) tela = <Entrar />
   else if (perfil.situacao !== 'liberado') tela = <Aguardando />
+  else if (precisaAceitar(perfil)) tela = <AceitarTermos />
   else tela = children
 
   return <ContextoConta.Provider value={{ sessao, perfil, carregando, recarregar }}>{tela}</ContextoConta.Provider>

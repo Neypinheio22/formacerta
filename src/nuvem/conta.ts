@@ -14,6 +14,11 @@ export type Perfil = {
   registro: string
   profissional_id: string | null
   criado_em: string
+  /** Versão dos Termos de uso e da Política de privacidade que a pessoa aceitou. */
+  termos_versao?: string | null
+  termos_aceitos_em?: string | null
+  /** Recebe por e-mail o lembrete de reavaliação. */
+  lembretes_email?: boolean
 }
 
 export type Conta = {
@@ -71,13 +76,14 @@ export async function entrar(email: string, senha: string) {
   return error ? erroAmigavel(error) : null
 }
 
-export async function cadastrar(dados: { email: string; senha: string; nome: string; papel: 'profissional' | 'aluno'; registro: string }) {
+export async function cadastrar(dados: { email: string; senha: string; nome: string; papel: 'profissional' | 'aluno'; registro: string; termosVersao: string }) {
   const { data, error } = await supabase.auth.signUp({
     email: dados.email.trim(),
     password: dados.senha,
     options: {
       emailRedirectTo: enderecoApp(),
-      data: { nome: dados.nome.trim(), papel: dados.papel, registro: dados.registro.trim() },
+      // O banco guarda o aceite dos termos e do uso dos dados de saúde junto com o cadastro.
+      data: { nome: dados.nome.trim(), papel: dados.papel, registro: dados.registro.trim(), termos_versao: dados.termosVersao, consentimento_saude: true },
     },
   })
   if (error) return { erro: erroAmigavel(error), confirmar: false }
