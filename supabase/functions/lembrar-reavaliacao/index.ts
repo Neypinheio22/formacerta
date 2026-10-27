@@ -7,6 +7,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2'
 
 const APP = 'https://neypinheio22.github.io/formacerta/'
 const SUPORTE = 'ney.comercial@gmail.com'
+// Remetente: domínio verificado no Resend. Para trocar, crie o segredo EMAIL_REMETENTE no Supabase.
 // Lembretes atrasados há mais que isso não são mandados (evita e-mail velho).
 const JANELA_DIAS = 7
 
@@ -78,7 +79,7 @@ Deno.serve(async (req) => {
 
   const chave = Deno.env.get('RESEND_API_KEY')
   if (!chave) return ok({ enviados: 0, motivo: 'RESEND_API_KEY não configurada' })
-  const remetente = Deno.env.get('EMAIL_REMETENTE') || 'FormaCerta <onboarding@resend.dev>'
+  const remetente = Deno.env.get('EMAIL_REMETENTE') || 'FormaCerta <lembrete@belezudis.com.br>'
 
   const banco = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, { auth: { persistSession: false } })
   const hoje = hojeBrasil()
