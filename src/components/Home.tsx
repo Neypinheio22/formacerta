@@ -99,7 +99,7 @@ export function Home({ history, onStart, onOpen, onEstudio, onExercicio, onCarga
       {aluno && (
         <>
           <SemanaCartao feitos={treino.feitosNaSemana} meta={treino.meta} podeMudar={!treino.metaDoPersonal && !treino.treinos.length} onMudar={treino.mudarMetaLocal} />
-          {treino.proximo && <ProximoTreinoCartao treino={treino.proximo} onAbrir={() => onTreino(treino.proximo!.letra)} />}
+          {treino.proximo && <ProximoTreinoCartao treino={treino.proximo} sugerida={treino.sugerida} onAbrir={() => onTreino(treino.proximo!.letra)} />}
         </>
       )}
 

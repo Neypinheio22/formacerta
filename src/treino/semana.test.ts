@@ -37,3 +37,12 @@ describe('água', () => {
   it('tem teto', () => expect(metaAguaPorPeso(200)).toBe(4500))
   it('mostra em litros', () => expect(litros(1750)).toBe('1,8 L'))
 })
+
+describe('série sugerida', async () => {
+  const { SERIE_SUGERIDA } = await import('./sugerida')
+  const { EXERCICIOS } = await import('../movimento/exercicios')
+  it('todo exercício abre na câmera', () => {
+    for (const t of SERIE_SUGERIDA) for (const e of t.exercicios) expect(noCatalogo(EXERCICIOS, e.nome), e.nome).toBeDefined()
+  })
+  it('depois do B volta para o A', () => expect(proximoTreino(SERIE_SUGERIDA, 'B')?.letra).toBe('A'))
+})

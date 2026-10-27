@@ -1,4 +1,4 @@
-import { Camera, CheckCircle2, Dumbbell, PlayCircle } from 'lucide-react'
+import { Camera, CheckCircle2, Dumbbell, PlayCircle, TriangleAlert } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { EXERCICIOS } from '../../movimento/exercicios'
 import type { ExercicioId } from '../../movimento/tipos'
@@ -9,7 +9,8 @@ import { carregarSeries, doExercicio, proximaCarga, type Faixa } from '../../tre
 import { diaLocal, noCatalogo } from '../../treino/semana'
 import { SemanaCartao } from './CartoesAluno'
 import { ListaMateriais } from './Materiais'
-import { useMeuTreino } from './useMeuTreino'
+import { gravarUltimaSugerida, useMeuTreino } from './useMeuTreino'
+import { AVISO_SUGERIDA } from '../../treino/sugerida'
 
 type Props = {
   perfil: Perfil | null
@@ -59,6 +60,19 @@ function LinhaExercicio({ ex, onCamera }: { ex: ExercicioTreino; onCamera: (id: 
   )
 }
 
+/** Aviso fixo da série sugerida: quem monta o treino é o personal. */
+function AvisoSugerida({ temFicha }: { temFicha: boolean }) {
+  return (
+    <section className="cartao aviso-sugerida">
+      <p>
+        <TriangleAlert size={18} /> <b>Série sugerida, não é o seu treino personalizado.</b>
+      </p>
+      <p className="dica-sec">{AVISO_SUGERIDA}</p>
+      {temFicha && <p className="dica-sec">Seu personal já tem a sua ficha: assim que ele montar os treinos, eles aparecem aqui no lugar desta série.</p>}
+    </section>
+  )
+}
+
 /** Aba Treino: ficha A, B, C do personal, meta da semana e materiais extras. */
 export function TelaTreino({ perfil, abrir, onVoltar, onCamera, onCarga }: Props) {
   const t = useMeuTreino(perfil)
@@ -67,14 +81,15 @@ export function TelaTreino({ perfil, abrir, onVoltar, onCamera, onCarga }: Props
   const [salvando, setSalvando] = useState(false)
   const aluno = perfil?.papel === 'aluno'
 
-  const treino = t.treinos.find((x) => x.letra === aberto) ?? null
+  const treino = t.lista.find((x) => x.letra === aberto) ?? null
 
   async function concluir(tr: Treino | null) {
     setSalvando(true)
-    const erro = tr && perfil ? await marcarFeito(perfil.id, tr) : null
+    const erro = tr && perfil && !t.sugerida ? await marcarFeito(perfil.id, tr) : null
     setSalvando(false)
     if (erro) return setAviso(erro)
     marcarDia(diaLocal(new Date()))
+    if (tr && t.sugerida) gravarUltimaSugerida(tr.letra)
     setAviso(tr ? `Treino ${tr.letra} concluído! Mandou bem. 💪` : 'Treino de hoje marcado! 💪')
     setAberto(null)
     t.recarregar()
@@ -93,6 +108,7 @@ export function TelaTreino({ perfil, abrir, onVoltar, onCamera, onCarga }: Props
           Treino <span className="verde">{treino.letra}</span>
           {treino.nome && ` · ${treino.nome}`}
         </h1>
+        {t.sugerida && <AvisoSugerida temFicha={!!t.ficha} />}
         <p className="dica-sec">Toque na câmera ao lado do exercício para o app contar as repetições e corrigir o movimento.</p>
         <ol className="lista-treino">
           {treino.exercicios.map((ex, i) => (
@@ -122,11 +138,14 @@ export function TelaTreino({ perfil, abrir, onVoltar, onCamera, onCarga }: Props
 
       {t.carregando && aluno && <p className="carregando">Carregando sua ficha…</p>}
 
-      {t.treinos.length > 0 && (
+      {t.sugerida && <AvisoSugerida temFicha={!!t.ficha} />}
+
+      {t.lista.length > 0 && (
         <div className="grade-treinos">
-          {t.treinos.map((x) => (
+          {t.lista.map((x) => (
             <button key={x.id} className={`atalho treino-letra ${t.proximo?.id === x.id ? 'proximo' : ''}`} onClick={() => setAberto(x.letra)}>
               <span className="treino-letra-grande">{x.letra}</span>
+              {t.sugerida && <span className="etiqueta-sugerida">Sugerida pelo app</span>}
               <strong>{x.nome || `Treino ${x.letra}`}</strong>
               <span>
                 {x.exercicios.length} exercício{x.exercicios.length === 1 ? '' : 's'}
@@ -135,18 +154,6 @@ export function TelaTreino({ perfil, abrir, onVoltar, onCamera, onCarga }: Props
             </button>
           ))}
         </div>
-      )}
-
-      {!t.carregando && aluno && !t.treinos.length && (
-        <section className="cartao">
-          <h2>Sua ficha de treino</h2>
-          <p className="dica-sec">
-            {t.ficha ? 'Seu personal ainda não montou os treinos A, B, C. Assim que montar, eles aparecem aqui.' : 'Quando um personal acompanhar você no app, a ficha de treino dele aparece aqui.'}
-          </p>
-          <button className="botao" onClick={() => concluir(null)} disabled={salvando}>
-            <CheckCircle2 size={18} /> Treinei hoje
-          </button>
-        </section>
       )}
 
       {!aluno && (

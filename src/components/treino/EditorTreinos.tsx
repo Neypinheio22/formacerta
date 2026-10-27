@@ -1,10 +1,11 @@
-import { Pencil, Plus, Trash2, X } from 'lucide-react'
+import { Copy, Pencil, Plus, Trash2, X } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { EXERCICIOS } from '../../movimento/exercicios'
 import type { Ficha } from '../../nuvem/fichas'
 import { apagarTreino, definirMetaSemana, exercicioVazio, listarTreinos, salvarTreino, type ExercicioTreino, type Treino } from '../../nuvem/treinos'
 import { SUGESTOES_EXERCICIO } from '../../treino/carga'
 import { proximaLetra } from '../../treino/semana'
+import { SERIE_SUGERIDA } from '../../treino/sugerida'
 import { MateriaisEditor } from './Materiais'
 
 const SUGESTOES = [...new Set([...EXERCICIOS.map((e) => e.nome), ...SUGESTOES_EXERCICIO])].sort((a, b) => a.localeCompare(b, 'pt-BR'))
@@ -105,6 +106,14 @@ export function EditorTreinos({ ficha, meuId }: { ficha: Ficha; meuId: string })
     else setMeta(n)
   }
 
+  async function usarSugerida() {
+    for (const t of SERIE_SUGERIDA) {
+      const e = await salvarTreino(ficha.id, { letra: t.letra, nome: t.nome, exercicios: t.exercicios })
+      if (e) return setErro(e)
+    }
+    carregar()
+  }
+
   async function apagar(t: Treino) {
     if (!confirm(`Apagar o treino ${t.letra}${t.nome ? ` (${t.nome})` : ''}?`)) return
     const e = await apagarTreino(t.id)
@@ -137,7 +146,14 @@ export function EditorTreinos({ ficha, meuId }: { ficha: Ficha; meuId: string })
         <h2>Ficha de treino</h2>
         <p className="dica-sec">{primeiro} vê o próximo treino na tela inicial e marca quando concluir.</p>
         {treinos === null && <p className="carregando">Carregando treinos…</p>}
-        {treinos?.length === 0 && <p className="dica-sec">Nenhum treino ainda. Comece pelo treino A.</p>}
+        {treinos?.length === 0 && (
+          <>
+            <p className="dica-sec">Nenhum treino ainda. Enquanto isso, {primeiro} vê a série sugerida pelo app, com o aviso para procurar um personal. Comece pelo treino A ou use a série sugerida como base e ajuste.</p>
+            <button className="botao-sec" onClick={usarSugerida}>
+              <Copy size={16} /> Usar a série sugerida como base
+            </button>
+          </>
+        )}
         {treinos && treinos.length > 0 && (
           <ul className="historico">
             {treinos.map((t) => (

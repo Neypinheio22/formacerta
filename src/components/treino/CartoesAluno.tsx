@@ -40,10 +40,10 @@ export function SemanaCartao({ feitos, meta, podeMudar, onMudar }: { feitos: num
 }
 
 /** Próximo treino da ficha montada pelo personal. */
-export function ProximoTreinoCartao({ treino, onAbrir }: { treino: Treino; onAbrir: () => void }) {
+export function ProximoTreinoCartao({ treino, sugerida, onAbrir }: { treino: Treino; sugerida?: boolean; onAbrir: () => void }) {
   return (
     <section className="cartao destaque proximo-treino">
-      <span className="dica-sec">Próximo treino</span>
+      <span className="dica-sec">{sugerida ? 'Próximo treino · série sugerida pelo app' : 'Próximo treino'}</span>
       <h2>
         <span className="verde">{treino.letra}</span>
         {treino.nome && ` · ${treino.nome}`}
@@ -51,6 +51,7 @@ export function ProximoTreinoCartao({ treino, onAbrir }: { treino: Treino; onAbr
       <p className="dica-sec">
         {treino.exercicios.length} exercício{treino.exercicios.length === 1 ? '' : 's'}
       </p>
+      {sugerida && <p className="dica-sec aviso-curto">Sugestão geral. Procure um personal qualificado para montar o seu treino.</p>}
       <button className="botao" onClick={onAbrir}>
         Ir para o treino <ArrowRight size={18} strokeWidth={2.5} />
       </button>

@@ -3820,3 +3820,36 @@ ul.musculos.fortalecer li {
   grid-auto-flow: column;
   grid-auto-columns: 1fr;
 }
+
+/* Série sugerida pelo app: aviso para procurar um personal */
+.aviso-sugerida {
+  border-color: rgba(250, 204, 21, 0.45);
+  background: rgba(250, 204, 21, 0.06);
+}
+
+.aviso-sugerida p {
+  margin: 0;
+}
+
+.aviso-sugerida p:first-child {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--amarelo);
+}
+
+.etiqueta-sugerida {
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--amarelo);
+}
+
+.atalho .etiqueta-sugerida + strong {
+  margin-top: 2px;
+}
+
+.aviso-curto {
+  font-size: 0.78rem;
+}

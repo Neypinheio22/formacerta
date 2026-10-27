@@ -4,8 +4,26 @@ import type { Ficha } from '../../nuvem/fichas'
 import { diasMarcados, listarFeitos, listarTreinos, minhaFicha, type Treino, type TreinoFeito } from '../../nuvem/treinos'
 import { carregarSeries } from '../../treino/carga'
 import { diasTreinadosNaSemana, proximoTreino } from '../../treino/semana'
+import { SERIE_SUGERIDA } from '../../treino/sugerida'
 
 const CHAVE_META = 'formacerta:meta-semana'
+const CHAVE_ULTIMA_SUGERIDA = 'formacerta:ultima-sugerida'
+
+function lerUltimaSugerida(): string | null {
+  try {
+    return localStorage.getItem(CHAVE_ULTIMA_SUGERIDA)
+  } catch {
+    return null
+  }
+}
+
+export function gravarUltimaSugerida(letra: string) {
+  try {
+    localStorage.setItem(CHAVE_ULTIMA_SUGERIDA, letra)
+  } catch {
+    // Sem espaço no aparelho: o próximo volta ao A.
+  }
+}
 
 export function lerMetaLocal(): number {
   try {
@@ -60,7 +78,10 @@ export function useMeuTreino(perfil: Perfil | null) {
   const feitosNaSemana = diasTreinadosNaSemana(datas)
   const metaDoPersonal = ficha?.treinos_semana ?? null
   const meta = metaDoPersonal ?? (treinos.length || metaLocal)
-  const proximo = proximoTreino(treinos, feitos[0]?.letra || null)
+  // Sem treino do personal, o aluno segue a série sugerida pelo app (com aviso).
+  const sugerida = perfil?.papel === 'aluno' && !carregando && !treinos.length
+  const lista = sugerida ? SERIE_SUGERIDA : treinos
+  const proximo = proximoTreino(lista, sugerida ? lerUltimaSugerida() : feitos[0]?.letra || null)
 
   function mudarMetaLocal(n: number) {
     const v = Math.min(7, Math.max(1, n))
@@ -68,5 +89,5 @@ export function useMeuTreino(perfil: Perfil | null) {
     setMetaLocal(v)
   }
 
-  return { ficha, treinos, feitos, carregando, feitosNaSemana, meta, metaDoPersonal, proximo, mudarMetaLocal, recarregar }
+  return { ficha, treinos, lista, sugerida, feitos, carregando, feitosNaSemana, meta, metaDoPersonal, proximo, mudarMetaLocal, recarregar }
 }
