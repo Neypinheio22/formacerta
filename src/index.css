@@ -3023,6 +3023,7 @@ ul.musculos.fortalecer li {
   border: none;
   color: var(--texto-sec);
   padding: 4px;
+}
 
 /* LGPD: aceites e links dos termos */
 .aceite-saude {
@@ -3375,4 +3376,480 @@ ul.musculos.fortalecer li {
 
 .pix .botao {
   align-self: stretch;
+}
+
+/* Menu do aluno: barra fixa embaixo, saudação, meta da semana, água, treinos A/B/C e materiais */
+.com-barra .tela {
+  padding-bottom: calc(110px + env(safe-area-inset-bottom));
+}
+
+.barra-inferior {
+  position: fixed;
+  left: 50%;
+  bottom: calc(10px + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  z-index: 20;
+  width: min(528px, calc(100% - 24px));
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  padding: 6px;
+  background: rgba(5, 31, 47, 0.92);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--borda-verde);
+  border-radius: 24px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+}
+
+.barra-inferior button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 0;
+  background: none;
+  border: 0;
+  color: var(--texto-sec);
+  font: inherit;
+  font-size: 0.72rem;
+  cursor: pointer;
+}
+
+.barra-inferior-icone {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 30px;
+  border-radius: 999px;
+  transition: background 0.2s ease;
+}
+
+.barra-inferior button.ativo {
+  color: var(--verde);
+  font-weight: 600;
+}
+
+.barra-inferior button.ativo .barra-inferior-icone {
+  background: rgba(54, 242, 148, 0.14);
+  box-shadow: 0 0 14px rgba(54, 242, 148, 0.3);
+}
+
+.saudacao {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.saudacao p {
+  margin: 8px 0 0;
+  color: var(--texto-sec);
+  font-size: 0.95rem;
+}
+
+.saudacao h1 {
+  margin: 0;
+  font-size: 2rem;
+  line-height: 1.1;
+}
+
+.saudacao .barra-botoes {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.saudacao .botao-sec {
+  width: auto;
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+}
+
+.semana-cartao {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 14px;
+}
+
+.semana-icone {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  color: var(--verde);
+  background: rgba(54, 242, 148, 0.1);
+  border: 1px solid rgba(54, 242, 148, 0.3);
+}
+
+.semana-corpo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.semana-topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.semana-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--texto-sec);
+  font-size: 0.78rem;
+}
+
+.semana-meta button {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid var(--borda-verde);
+  background: none;
+  color: var(--verde);
+  cursor: pointer;
+}
+
+.semana-meta button:disabled {
+  opacity: 0.35;
+}
+
+.barra-meta {
+  position: relative;
+  height: 24px;
+  border-radius: 999px;
+  background: rgba(159, 179, 194, 0.14);
+  overflow: hidden;
+}
+
+.barra-meta span {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--verde-escuro), var(--verde));
+  box-shadow: 0 0 12px rgba(54, 242, 148, 0.45);
+  transition: width 0.4s ease;
+}
+
+.barra-meta b {
+  position: relative;
+  display: block;
+  text-align: center;
+  line-height: 24px;
+  font-size: 0.8rem;
+  color: var(--texto);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+}
+
+.semana-parabens {
+  margin: 0;
+  color: var(--verde);
+  font-size: 0.82rem;
+}
+
+.proximo-treino {
+  text-align: center;
+  align-items: center;
+}
+
+.proximo-treino h2 {
+  margin: 2px 0;
+  font-size: 1.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.proximo-treino .botao {
+  width: auto;
+  padding-inline: 26px;
+}
+
+.agua-topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.agua-topo h2 {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+}
+
+.agua-meta {
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--borda-verde);
+  background: none;
+  color: var(--verde);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.agua-ajuste {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 10px 0;
+}
+
+.agua-peso {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--texto-sec);
+  font-size: 0.8rem;
+}
+
+.agua-peso input {
+  width: 64px;
+  padding: 6px 8px;
+  border-radius: 10px;
+  border: 1px solid var(--borda);
+  background: var(--fundo);
+  color: var(--texto);
+  font: inherit;
+}
+
+.barra-meta.agua {
+  margin: 12px 0 10px;
+}
+
+.agua-botoes {
+  display: grid;
+  grid-template-columns: 56px 1fr;
+  gap: 8px;
+}
+
+.agua-botoes .botao,
+.agua-botoes .botao-sec {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.grade-treinos {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.grade-treinos .treino-letra:last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+}
+
+.treino-letra {
+  min-height: 120px;
+}
+
+.treino-letra.proximo {
+  border-color: var(--verde);
+  box-shadow: 0 0 18px rgba(54, 242, 148, 0.18);
+}
+
+.treino-letra-grande {
+  font-size: 1.8rem;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--verde);
+}
+
+.lista-treino {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: ex;
+}
+
+.exercicio-treino {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  background: var(--vidro);
+  border: 1px solid var(--borda-verde);
+  border-radius: 18px;
+  counter-increment: ex;
+}
+
+.exercicio-treino::before {
+  content: counter(ex);
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(54, 242, 148, 0.12);
+  color: var(--verde);
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.exercicio-treino > div {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.exercicio-treino .dica-sec {
+  margin: 0;
+}
+
+.exercicio-carga {
+  font-size: 0.8rem;
+  color: var(--texto-sec);
+}
+
+.botao-sec.camera-mini {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+}
+
+.exercicios-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.exercicios-editor > li {
+  padding: 12px;
+  border: 1px solid var(--borda);
+  border-radius: 16px;
+}
+
+.exercicio-linha {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.exercicio-linha input {
+  flex: 1;
+  min-width: 0;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid var(--borda);
+  background: var(--fundo);
+  color: var(--texto);
+  font: inherit;
+}
+
+.materiais {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 10px 0;
+  padding: 0;
+  list-style: none;
+}
+
+.material {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.material-abrir {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  padding: 10px 12px;
+  text-align: left;
+  background: rgba(2, 11, 22, 0.5);
+  border: 1px solid var(--borda-verde);
+  border-radius: 16px;
+  color: var(--texto);
+  font: inherit;
+  cursor: pointer;
+}
+
+.material-abrir .atalho-icone {
+  flex: none;
+  margin: 0;
+}
+
+.material-texto {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.material-texto span,
+.material-texto small {
+  color: var(--texto-sec);
+  font-size: 0.8rem;
+}
+
+.abas-ficha {
+  grid-template-columns: none;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+}
+
+/* Série sugerida pelo app: aviso para procurar um personal */
+.aviso-sugerida {
+  border-color: rgba(250, 204, 21, 0.45);
+  background: rgba(250, 204, 21, 0.06);
+}
+
+.aviso-sugerida p {
+  margin: 0;
+}
+
+.aviso-sugerida p:first-child {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--amarelo);
+}
+
+.etiqueta-sugerida {
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--amarelo);
+}
+
+.atalho .etiqueta-sugerida + strong {
+  margin-top: 2px;
+}
+
+.aviso-curto {
+  font-size: 0.78rem;
 }

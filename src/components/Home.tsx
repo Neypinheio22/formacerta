@@ -6,6 +6,8 @@ import { FundoHex } from './FundoHex'
 import { Logo } from './Logo'
 import { CartaoReavaliacao } from './plano/Reavaliacoes'
 import { usePlanosLiberados } from './planos/usePlanosLiberados'
+import { AguaCartao, ProximoTreinoCartao, SemanaCartao } from './treino/CartoesAluno'
+import { useMeuTreino } from './treino/useMeuTreino'
 import { VitrineCarrossel } from './vitrine/VitrineCarrossel'
 
 type Props = {
@@ -24,10 +26,10 @@ type Props = {
   onAlunos: () => void
   onReavaliacoes: () => void
   onEvolucao: () => void
-  onConta: () => void
   onVitrine: () => void
   onPlanos: () => void
   onRelatorio: () => void
+  onTreino: (letra?: string) => void
 }
 
 type Atalho = { titulo: string; texto: string; Icone: LucideIcon; abrir: () => void; soPersonal?: boolean }
@@ -53,22 +55,25 @@ function Grupo({ titulo, atalhos, personal }: { titulo: string; atalhos: Atalho[
   )
 }
 
-export function Home({ history, onStart, onOpen, onEstudio, onExercicio, onCarga, onCorrida, onFlexibilidade, onAdams, onIdoso, perfil, onAdmin, onAlunos, onReavaliacoes, onEvolucao, onConta, onVitrine, onPlanos, onRelatorio }: Props) {
+export function Home({ history, onStart, onOpen, onEstudio, onExercicio, onCarga, onCorrida, onFlexibilidade, onAdams, onIdoso, perfil, onAdmin, onAlunos, onReavaliacoes, onEvolucao, onVitrine, onPlanos, onRelatorio, onTreino }: Props) {
   const verPlanos = usePlanosLiberados(perfil)
   const [todoHistorico, setTodoHistorico] = useState(false)
   // O aluno só vê o que ele mesmo usa; as ferramentas de avaliar e atender alunos ficam para o personal.
   const personal = !perfil || perfil.papel !== 'aluno'
   const aluno = perfil?.papel === 'aluno'
+  const treino = useMeuTreino(perfil)
 
   return (
     <div className="tela">
       <FundoHex brilho />
 
-      {perfil && (
-        <div className="barra-conta">
-          <button className="link" onClick={onConta}>
-            {perfil.nome ? perfil.nome.split(' ')[0] : perfil.email} · Minha conta
-          </button>
+      {perfil ? (
+        <header className="saudacao">
+          <div>
+            <Logo size={22} />
+            <p>Bem-vindo(a),</p>
+            <h1>{perfil.nome ? perfil.nome.split(' ')[0] : perfil.email.split('@')[0]}</h1>
+          </div>
           <span className="barra-botoes">
             {verPlanos && (
               <button className="botao-sec" onClick={onPlanos}>
@@ -80,26 +85,23 @@ export function Home({ history, onStart, onOpen, onEstudio, onExercicio, onCarga
                 Administração
               </button>
             )}
-            {(perfil.papel === 'profissional' || perfil.papel === 'admin') && (
-              <button className="botao-sec" onClick={onAlunos}>
-                Meus alunos
-              </button>
-            )}
-            {perfil.papel === 'aluno' && (
-              <button className="botao-sec" onClick={onEvolucao}>
-                Minha evolução
-              </button>
-            )}
           </span>
-        </div>
+        </header>
+      ) : (
+        <header className="marca">
+          <Logo size={30} />
+          <p className="slogan">
+            Treine certo. <span className="verde">Evolua sempre.</span>
+          </p>
+        </header>
       )}
 
-      <header className="marca">
-        <Logo size={30} />
-        <p className="slogan">
-          Treine certo. <span className="verde">Evolua sempre.</span>
-        </p>
-      </header>
+      {aluno && (
+        <>
+          <SemanaCartao feitos={treino.feitosNaSemana} meta={treino.meta} podeMudar={!treino.metaDoPersonal && !treino.treinos.length} onMudar={treino.mudarMetaLocal} />
+          {treino.proximo && <ProximoTreinoCartao treino={treino.proximo} sugerida={treino.sugerida} onAbrir={() => onTreino(treino.proximo!.letra)} />}
+        </>
+      )}
 
       {perfil && <VitrineCarrossel onAbrir={onVitrine} />}
 
@@ -116,14 +118,19 @@ export function Home({ history, onStart, onOpen, onEstudio, onExercicio, onCarga
         </button>
       </section>
 
-      <Grupo
-        titulo="Treino"
-        personal={personal}
-        atalhos={[
-          { titulo: 'Exercício em vídeo', texto: 'Conta as repetições e corrige', Icone: PlayCircle, abrir: onExercicio },
-          { titulo: 'Projeção de carga', texto: 'Quanto colocar no próximo treino', Icone: Dumbbell, abrir: onCarga },
-        ]}
-      />
+      {aluno && <AguaCartao />}
+
+      {/* Com a barra de baixo, o treino tem a aba própria. */}
+      {!perfil && (
+        <Grupo
+          titulo="Treino"
+          personal={personal}
+          atalhos={[
+            { titulo: 'Exercício em vídeo', texto: 'Conta as repetições e corrige', Icone: PlayCircle, abrir: onExercicio },
+            { titulo: 'Projeção de carga', texto: 'Quanto colocar no próximo treino', Icone: Dumbbell, abrir: onCarga },
+          ]}
+        />
+      )}
 
       <Grupo
         titulo="Testes"

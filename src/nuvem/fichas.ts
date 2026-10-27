@@ -28,6 +28,8 @@ export type Ficha = {
   saude: string
   observacoes: string
   consentimento_em: string | null
+  /** Meta de treinos por semana escolhida pelo profissional (null: número de treinos da ficha). */
+  treinos_semana?: number | null
   criado_em: string
   atualizado_em: string
 }

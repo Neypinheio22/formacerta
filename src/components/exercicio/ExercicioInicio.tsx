@@ -5,6 +5,8 @@ import type { ExercicioId } from '../../movimento/tipos'
 export type ConfigExercicio = { exercicio: ExercicioId; alvo: number }
 
 type Props = {
+  /** Exercício já escolhido (vindo da ficha de treino). */
+  inicial?: ExercicioId
   onVoltar: () => void
   onAoVivo: (c: ConfigExercicio) => void
   onArquivo: (c: ConfigExercicio, arquivo: File) => void
@@ -12,8 +14,8 @@ type Props = {
 
 const ALVOS = [5, 8, 10, 12]
 
-export function ExercicioInicio({ onVoltar, onAoVivo, onArquivo }: Props) {
-  const [exercicio, setExercicio] = useState<ExercicioId>('agachamento-lateral')
+export function ExercicioInicio({ inicial, onVoltar, onAoVivo, onArquivo }: Props) {
+  const [exercicio, setExercicio] = useState<ExercicioId>(inicial ?? 'agachamento-lateral')
   const [grupo, setGrupo] = useState<Grupo>(exercicioPorId(exercicio).grupo)
   const [alvo, setAlvo] = useState(8)
 

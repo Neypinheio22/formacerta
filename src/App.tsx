@@ -17,7 +17,9 @@ import { MeusAlunos } from './components/conta/MeusAlunos'
 import { MinhaEvolucao } from './components/alunos/MinhaEvolucao'
 import { MinhaConta } from './components/conta/MinhaConta'
 import { Portao } from './components/conta/Portao'
+import { BarraInferior, type Aba } from './components/BarraInferior'
 import { Home } from './components/Home'
+import { TelaTreino } from './components/treino/TelaTreino'
 import { Vitrine } from './components/vitrine/Vitrine'
 import { Pagamento, type Pedido } from './components/planos/Pagamento'
 import { Planos } from './components/planos/Planos'
@@ -26,7 +28,7 @@ import { PerfilProfissional } from './components/relatorio/PerfilProfissional'
 import { Relatorio } from './components/relatorio/Relatorio'
 import { ProjecaoCarga } from './components/treino/ProjecaoCarga'
 import type { ConfigCorrida, ResultadoCorrida, VistaCorrida } from './corrida/tipos'
-import type { ResultadoExercicio } from './movimento/tipos'
+import type { ExercicioId, ResultadoExercicio } from './movimento/tipos'
 import { AdamsTeste } from './components/testes/AdamsTeste'
 import { FlexTeste } from './components/testes/FlexTeste'
 import { IdosoModulo } from './components/idoso/IdosoModulo'
@@ -42,7 +44,8 @@ type Screen =
   | { name: 'estudio-controle' }
   | { name: 'estudio-camera'; codigo?: string }
   | { name: 'referencias'; abrir?: string }
-  | { name: 'exercicio' }
+  | { name: 'exercicio'; exercicio?: ExercicioId }
+  | { name: 'treino'; abrir?: string }
   | { name: 'exercicio-vivo'; config: ConfigExercicio }
   | { name: 'exercicio-arquivo'; config: ConfigExercicio; arquivo: File }
   | { name: 'exercicio-resultado'; resultado: ResultadoExercicio }
@@ -93,146 +96,170 @@ function Telas({ inicial }: { inicial: Screen }) {
   const verResultado = useCallback((resultado: ResultadoExercicio) => go({ name: 'exercicio-resultado', resultado }), [go])
   const verCorrida = useCallback((resultado: ResultadoCorrida) => go({ name: 'corrida-resultado', resultado }), [go])
 
-  if (screen.name === 'avaliacao') {
-    return (
-      <PostureAssessment
-        onCancel={() => go({ name: 'inicio' })}
-        onDone={(a) => {
-          saveAssessment(a)
-          setHistory(loadAssessments())
-          go({ name: 'resultado', assessment: a })
-        }}
-      />
-    )
-  }
-
-  if (screen.name === 'resultado') {
-    return (
-      <AssessmentResult
-        assessment={screen.assessment}
-        onBack={() => go({ name: 'inicio' })}
-        onRelatorio={() => go({ name: 'relatorio', marcados: [screen.assessment.id], voltar: screen })}
-      />
-    )
-  }
-
-  if (screen.name === 'estudio') {
-    return (
-      <EstudioInicio
-        onVoltar={() => go({ name: 'inicio' })}
-        onControle={() => go({ name: 'estudio-controle' })}
-        onCamera={() => go({ name: 'estudio-camera' })}
-        onReferencias={() => go({ name: 'referencias' })}
-      />
-    )
-  }
-
-  if (screen.name === 'estudio-controle') {
-    return <EstudioControle onSair={() => go({ name: 'estudio' })} onSalvo={(r) => go({ name: 'referencias', abrir: r.id })} />
-  }
-
-  if (screen.name === 'estudio-camera') {
-    return <EstudioCamera codigoInicial={screen.codigo} onSair={() => go({ name: 'estudio' })} />
-  }
-
-  if (screen.name === 'referencias') {
-    return <Referencias abrir={screen.abrir} onVoltar={() => go({ name: 'estudio' })} onGravar={() => go({ name: 'estudio-controle' })} />
-  }
-
-  if (screen.name === 'exercicio') {
-    return (
-      <ExercicioInicio
-        onVoltar={() => go({ name: 'inicio' })}
-        onAoVivo={(config) => go({ name: 'exercicio-vivo', config })}
-        onArquivo={(config, arquivo) => go({ name: 'exercicio-arquivo', config, arquivo })}
-      />
-    )
-  }
-
-  if (screen.name === 'exercicio-vivo') {
-    return <ExercicioAoVivo {...screen.config} onCancel={() => go({ name: 'exercicio' })} onDone={verResultado} />
-  }
-
-  if (screen.name === 'exercicio-arquivo') {
-    return <ExercicioArquivo {...screen.config} arquivo={screen.arquivo} onCancel={() => go({ name: 'exercicio' })} onDone={verResultado} />
-  }
-
-  if (screen.name === 'exercicio-resultado') {
-    return <ExercicioResultado resultado={screen.resultado} onVoltar={() => go({ name: 'inicio' })} onRefazer={() => go({ name: 'exercicio' })} />
-  }
-
-  if (screen.name === 'corrida') {
-    return <CorridaInicio key={screen.vista} vistaInicial={screen.vista} onVoltar={() => go({ name: 'inicio' })} onArquivo={(config, arquivo) => go({ name: 'corrida-arquivo', config, arquivo })} />
-  }
-
-  if (screen.name === 'corrida-arquivo') {
-    return <CorridaArquivo config={screen.config} arquivo={screen.arquivo} onCancel={() => go({ name: 'corrida', vista: screen.config.vista })} onDone={verCorrida} />
-  }
-
-  if (screen.name === 'corrida-resultado') {
-    return <CorridaResultado resultado={screen.resultado} onVoltar={() => go({ name: 'inicio' })} onOutraVista={(vista) => go({ name: 'corrida', vista })} />
-  }
-  if (screen.name === 'carga') return <ProjecaoCarga onVoltar={() => go({ name: 'inicio' })} />
-
-  if (screen.name === 'flexibilidade')
-    return <FlexTeste onVoltar={() => go({ name: 'inicio' })} onRelatorio={(r) => go({ name: 'relatorio', avaliado: r.avaliado, marcados: [r.id], voltar: screen })} />
-
-  if (screen.name === 'adams')
-    return <AdamsTeste onVoltar={() => go({ name: 'inicio' })} onRelatorio={(r) => go({ name: 'relatorio', avaliado: r.avaliado, marcados: [r.id], voltar: screen })} />
-
-  if (screen.name === 'perfil') return <PerfilProfissional textoVoltar="Voltar" onVoltar={() => go(screen.voltar)} />
-
-  if (screen.name === 'relatorio')
-    return (
-      <Relatorio
-        key={screen.marcados?.join()}
-        avaliadoInicial={screen.avaliado}
-        marcados={screen.marcados}
-        textoVoltar="Voltar"
-        onVoltar={() => go(screen.voltar)}
-        onPerfil={() => go({ name: 'perfil', voltar: screen })}
-      />
-    )
-
-  if (screen.name === 'idoso') return <IdosoModulo onVoltar={() => go({ name: 'inicio' })} onRelatorio={(a) => go({ name: 'relatorio', avaliado: a.avaliado, marcados: [a.id], voltar: screen })} />
-
-  if (screen.name === 'admin') return <Admin onVoltar={() => go({ name: 'inicio' })} />
-
-  if (screen.name === 'alunos' && perfil) return <MeusAlunos meuId={perfil.id} onVoltar={() => go({ name: 'inicio' })} />
-
-  if (screen.name === 'reavaliacoes' && perfil) return <Reavaliacoes perfil={perfil} onVoltar={() => go({ name: 'inicio' })} />
-
-  if (screen.name === 'evolucao' && perfil) return <MinhaEvolucao meuId={perfil.id} nome={perfil.nome || perfil.email} onVoltar={() => go({ name: 'inicio' })} />
-
-  if (screen.name === 'vitrine') return <Vitrine onVoltar={() => go({ name: 'inicio' })} />
-
-  if (screen.name === 'conta') return <MinhaConta onVoltar={() => go({ name: 'inicio' })} onPlanos={() => go({ name: 'planos' })} />
-
-  if (screen.name === 'planos') return <Planos onVoltar={() => go({ name: 'inicio' })} onPagar={(pedido) => go({ name: 'pagamento', pedido })} />
-
-  if (screen.name === 'pagamento') return <Pagamento pedido={screen.pedido} onVoltar={() => go({ name: 'planos' })} onPronto={() => go({ name: 'planos' })} />
-
+  const aba: Aba | null = (['inicio', 'treino', 'evolucao', 'alunos', 'conta'] as const).find((a) => a === screen.name) ?? null
+  const conteudo = desenhar()
+  if (!perfil || !aba) return conteudo
   return (
-    <Home
-      history={history}
-      onStart={() => go({ name: 'avaliacao' })}
-      onOpen={(a) => go({ name: 'resultado', assessment: a })}
-      onEstudio={() => go({ name: 'estudio' })}
-      onExercicio={() => go({ name: 'exercicio' })}
-      onCarga={() => go({ name: 'carga' })}
-      onCorrida={() => go({ name: 'corrida' })}
-      onFlexibilidade={() => go({ name: 'flexibilidade' })}
-      onAdams={() => go({ name: 'adams' })}
-      onIdoso={() => go({ name: 'idoso' })}
-      perfil={perfil}
-      onAdmin={() => go({ name: 'admin' })}
-      onAlunos={() => go({ name: 'alunos' })}
-      onReavaliacoes={() => go({ name: 'reavaliacoes' })}
-      onEvolucao={() => go({ name: 'evolucao' })}
-      onConta={() => go({ name: 'conta' })}
-      onVitrine={() => go({ name: 'vitrine' })}
-      onPlanos={() => go({ name: 'planos' })}
-      onRelatorio={() => go({ name: 'relatorio', voltar: screen })}
-    />
+    <div className="com-barra">
+      {conteudo}
+      <BarraInferior atual={aba} aluno={perfil.papel === 'aluno'} onIr={(a) => go({ name: a })} />
+    </div>
   )
+
+  function desenhar() {
+    if (screen.name === 'avaliacao') {
+      return (
+        <PostureAssessment
+          onCancel={() => go({ name: 'inicio' })}
+          onDone={(a) => {
+            saveAssessment(a)
+            setHistory(loadAssessments())
+            go({ name: 'resultado', assessment: a })
+          }}
+        />
+      )
+    }
+
+    if (screen.name === 'resultado') {
+      return (
+        <AssessmentResult
+          assessment={screen.assessment}
+          onBack={() => go({ name: 'inicio' })}
+          onRelatorio={() => go({ name: 'relatorio', marcados: [screen.assessment.id], voltar: screen })}
+        />
+      )
+    }
+
+    if (screen.name === 'estudio') {
+      return (
+        <EstudioInicio
+          onVoltar={() => go({ name: 'inicio' })}
+          onControle={() => go({ name: 'estudio-controle' })}
+          onCamera={() => go({ name: 'estudio-camera' })}
+          onReferencias={() => go({ name: 'referencias' })}
+        />
+      )
+    }
+
+    if (screen.name === 'estudio-controle') {
+      return <EstudioControle onSair={() => go({ name: 'estudio' })} onSalvo={(r) => go({ name: 'referencias', abrir: r.id })} />
+    }
+
+    if (screen.name === 'estudio-camera') {
+      return <EstudioCamera codigoInicial={screen.codigo} onSair={() => go({ name: 'estudio' })} />
+    }
+
+    if (screen.name === 'referencias') {
+      return <Referencias abrir={screen.abrir} onVoltar={() => go({ name: 'estudio' })} onGravar={() => go({ name: 'estudio-controle' })} />
+    }
+
+    if (screen.name === 'exercicio') {
+      return (
+        <ExercicioInicio
+          inicial={screen.exercicio}
+          onVoltar={() => go({ name: 'inicio' })}
+          onAoVivo={(config) => go({ name: 'exercicio-vivo', config })}
+          onArquivo={(config, arquivo) => go({ name: 'exercicio-arquivo', config, arquivo })}
+        />
+      )
+    }
+
+    if (screen.name === 'exercicio-vivo') {
+      return <ExercicioAoVivo {...screen.config} onCancel={() => go({ name: 'exercicio' })} onDone={verResultado} />
+    }
+
+    if (screen.name === 'exercicio-arquivo') {
+      return <ExercicioArquivo {...screen.config} arquivo={screen.arquivo} onCancel={() => go({ name: 'exercicio' })} onDone={verResultado} />
+    }
+
+    if (screen.name === 'exercicio-resultado') {
+      return <ExercicioResultado resultado={screen.resultado} onVoltar={() => go({ name: 'inicio' })} onRefazer={() => go({ name: 'exercicio' })} />
+    }
+
+    if (screen.name === 'corrida') {
+      return <CorridaInicio key={screen.vista} vistaInicial={screen.vista} onVoltar={() => go({ name: 'inicio' })} onArquivo={(config, arquivo) => go({ name: 'corrida-arquivo', config, arquivo })} />
+    }
+
+    if (screen.name === 'corrida-arquivo') {
+      return <CorridaArquivo config={screen.config} arquivo={screen.arquivo} onCancel={() => go({ name: 'corrida', vista: screen.config.vista })} onDone={verCorrida} />
+    }
+
+    if (screen.name === 'corrida-resultado') {
+      return <CorridaResultado resultado={screen.resultado} onVoltar={() => go({ name: 'inicio' })} onOutraVista={(vista) => go({ name: 'corrida', vista })} />
+    }
+    if (screen.name === 'treino')
+      return (
+        <TelaTreino
+          perfil={perfil}
+          abrir={screen.abrir}
+          onVoltar={() => go({ name: 'inicio' })}
+          onCamera={(exercicio) => go({ name: 'exercicio', exercicio })}
+          onCarga={() => go({ name: 'carga' })}
+        />
+      )
+
+    if (screen.name === 'carga') return <ProjecaoCarga onVoltar={() => go({ name: 'inicio' })} />
+
+    if (screen.name === 'flexibilidade')
+      return <FlexTeste onVoltar={() => go({ name: 'inicio' })} onRelatorio={(r) => go({ name: 'relatorio', avaliado: r.avaliado, marcados: [r.id], voltar: screen })} />
+
+    if (screen.name === 'adams')
+      return <AdamsTeste onVoltar={() => go({ name: 'inicio' })} onRelatorio={(r) => go({ name: 'relatorio', avaliado: r.avaliado, marcados: [r.id], voltar: screen })} />
+
+    if (screen.name === 'perfil') return <PerfilProfissional textoVoltar="Voltar" onVoltar={() => go(screen.voltar)} />
+
+    if (screen.name === 'relatorio')
+      return (
+        <Relatorio
+          key={screen.marcados?.join()}
+          avaliadoInicial={screen.avaliado}
+          marcados={screen.marcados}
+          textoVoltar="Voltar"
+          onVoltar={() => go(screen.voltar)}
+          onPerfil={() => go({ name: 'perfil', voltar: screen })}
+        />
+      )
+
+    if (screen.name === 'idoso') return <IdosoModulo onVoltar={() => go({ name: 'inicio' })} onRelatorio={(a) => go({ name: 'relatorio', avaliado: a.avaliado, marcados: [a.id], voltar: screen })} />
+
+    if (screen.name === 'admin') return <Admin onVoltar={() => go({ name: 'inicio' })} />
+
+    if (screen.name === 'alunos' && perfil) return <MeusAlunos meuId={perfil.id} onVoltar={() => go({ name: 'inicio' })} />
+
+    if (screen.name === 'reavaliacoes' && perfil) return <Reavaliacoes perfil={perfil} onVoltar={() => go({ name: 'inicio' })} />
+
+    if (screen.name === 'evolucao' && perfil) return <MinhaEvolucao meuId={perfil.id} nome={perfil.nome || perfil.email} onVoltar={() => go({ name: 'inicio' })} />
+
+    if (screen.name === 'vitrine') return <Vitrine onVoltar={() => go({ name: 'inicio' })} />
+
+    if (screen.name === 'conta') return <MinhaConta onVoltar={() => go({ name: 'inicio' })} onPlanos={() => go({ name: 'planos' })} />
+
+    if (screen.name === 'planos') return <Planos onVoltar={() => go({ name: 'inicio' })} onPagar={(pedido) => go({ name: 'pagamento', pedido })} />
+
+    if (screen.name === 'pagamento') return <Pagamento pedido={screen.pedido} onVoltar={() => go({ name: 'planos' })} onPronto={() => go({ name: 'planos' })} />
+
+    return (
+      <Home
+        history={history}
+        onStart={() => go({ name: 'avaliacao' })}
+        onOpen={(a) => go({ name: 'resultado', assessment: a })}
+        onEstudio={() => go({ name: 'estudio' })}
+        onExercicio={() => go({ name: 'exercicio' })}
+        onCarga={() => go({ name: 'carga' })}
+        onCorrida={() => go({ name: 'corrida' })}
+        onFlexibilidade={() => go({ name: 'flexibilidade' })}
+        onAdams={() => go({ name: 'adams' })}
+        onIdoso={() => go({ name: 'idoso' })}
+        perfil={perfil}
+        onAdmin={() => go({ name: 'admin' })}
+        onAlunos={() => go({ name: 'alunos' })}
+        onReavaliacoes={() => go({ name: 'reavaliacoes' })}
+        onEvolucao={() => go({ name: 'evolucao' })}
+        onVitrine={() => go({ name: 'vitrine' })}
+        onPlanos={() => go({ name: 'planos' })}
+        onRelatorio={() => go({ name: 'relatorio', voltar: screen })}
+        onTreino={(abrir) => go({ name: 'treino', abrir })}
+      />
+    )
+  }
 }
