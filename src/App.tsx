@@ -21,6 +21,7 @@ import { Vitrine } from './components/vitrine/Vitrine'
 import { PostureAssessment } from './components/PostureAssessment'
 import { PerfilProfissional } from './components/relatorio/PerfilProfissional'
 import { Relatorio } from './components/relatorio/Relatorio'
+import { ProjecaoCarga } from './components/treino/ProjecaoCarga'
 import type { ConfigCorrida, ResultadoCorrida, VistaCorrida } from './corrida/tipos'
 import type { ResultadoExercicio } from './movimento/tipos'
 import { AdamsTeste } from './components/testes/AdamsTeste'
@@ -45,6 +46,7 @@ type Screen =
   | { name: 'corrida'; vista?: VistaCorrida }
   | { name: 'corrida-arquivo'; config: ConfigCorrida; arquivo: File }
   | { name: 'corrida-resultado'; resultado: ResultadoCorrida }
+  | { name: 'carga' }
   | { name: 'flexibilidade' }
   | { name: 'adams' }
   | { name: 'idoso' }
@@ -164,6 +166,8 @@ function Telas({ inicial }: { inicial: Screen }) {
   if (screen.name === 'corrida-resultado') {
     return <CorridaResultado resultado={screen.resultado} onVoltar={() => go({ name: 'inicio' })} onOutraVista={(vista) => go({ name: 'corrida', vista })} />
   }
+  if (screen.name === 'carga') return <ProjecaoCarga onVoltar={() => go({ name: 'inicio' })} />
+
   if (screen.name === 'flexibilidade')
     return <FlexTeste onVoltar={() => go({ name: 'inicio' })} onRelatorio={(r) => go({ name: 'relatorio', avaliado: r.avaliado, marcados: [r.id], voltar: screen })} />
 
@@ -203,6 +207,7 @@ function Telas({ inicial }: { inicial: Screen }) {
       onOpen={(a) => go({ name: 'resultado', assessment: a })}
       onEstudio={() => go({ name: 'estudio' })}
       onExercicio={() => go({ name: 'exercicio' })}
+      onCarga={() => go({ name: 'carga' })}
       onCorrida={() => go({ name: 'corrida' })}
       onFlexibilidade={() => go({ name: 'flexibilidade' })}
       onAdams={() => go({ name: 'adams' })}
@@ -214,7 +219,6 @@ function Telas({ inicial }: { inicial: Screen }) {
       onConta={() => go({ name: 'conta' })}
       onVitrine={() => go({ name: 'vitrine' })}
       onRelatorio={() => go({ name: 'relatorio', voltar: screen })}
-      onPerfil={() => go({ name: 'perfil', voltar: screen })}
     />
   )
 }
