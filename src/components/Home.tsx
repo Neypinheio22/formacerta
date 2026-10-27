@@ -1,10 +1,11 @@
 import type { Perfil } from '../nuvem/conta'
 import type { Assessment } from '../pose/types'
-import { Activity, ArrowRight, Brain, Clapperboard, Dumbbell, FileText, Footprints, HeartPulse, PersonStanding, PlayCircle, Ruler, Sparkles, type LucideIcon } from 'lucide-react'
+import { Activity, ArrowRight, Brain, Clapperboard, Crown, Dumbbell, FileText, Footprints, HeartPulse, PersonStanding, PlayCircle, Ruler, Sparkles, type LucideIcon } from 'lucide-react'
 import { useState } from 'react'
 import { FundoHex } from './FundoHex'
 import { Logo } from './Logo'
 import { CartaoReavaliacao } from './plano/Reavaliacoes'
+import { usePlanosLiberados } from './planos/usePlanosLiberados'
 import { VitrineCarrossel } from './vitrine/VitrineCarrossel'
 
 type Props = {
@@ -25,6 +26,7 @@ type Props = {
   onEvolucao: () => void
   onConta: () => void
   onVitrine: () => void
+  onPlanos: () => void
   onRelatorio: () => void
 }
 
@@ -51,7 +53,8 @@ function Grupo({ titulo, atalhos, personal }: { titulo: string; atalhos: Atalho[
   )
 }
 
-export function Home({ history, onStart, onOpen, onEstudio, onExercicio, onCarga, onCorrida, onFlexibilidade, onAdams, onIdoso, perfil, onAdmin, onAlunos, onReavaliacoes, onEvolucao, onConta, onVitrine, onRelatorio }: Props) {
+export function Home({ history, onStart, onOpen, onEstudio, onExercicio, onCarga, onCorrida, onFlexibilidade, onAdams, onIdoso, perfil, onAdmin, onAlunos, onReavaliacoes, onEvolucao, onConta, onVitrine, onPlanos, onRelatorio }: Props) {
+  const verPlanos = usePlanosLiberados(perfil)
   const [todoHistorico, setTodoHistorico] = useState(false)
   // O aluno só vê o que ele mesmo usa; as ferramentas de avaliar e atender alunos ficam para o personal.
   const personal = !perfil || perfil.papel !== 'aluno'
@@ -66,21 +69,28 @@ export function Home({ history, onStart, onOpen, onEstudio, onExercicio, onCarga
           <button className="link" onClick={onConta}>
             {perfil.nome ? perfil.nome.split(' ')[0] : perfil.email} · Minha conta
           </button>
-          {perfil.papel === 'admin' && (
-            <button className="botao-sec" onClick={onAdmin}>
-              Administração
-            </button>
-          )}
-          {(perfil.papel === 'profissional' || perfil.papel === 'admin') && (
-            <button className="botao-sec" onClick={onAlunos}>
-              Meus alunos
-            </button>
-          )}
-          {perfil.papel === 'aluno' && (
-            <button className="botao-sec" onClick={onEvolucao}>
-              Minha evolução
-            </button>
-          )}
+          <span className="barra-botoes">
+            {verPlanos && (
+              <button className="botao-sec" onClick={onPlanos}>
+                <Crown size={14} /> Planos
+              </button>
+            )}
+            {perfil.papel === 'admin' && (
+              <button className="botao-sec" onClick={onAdmin}>
+                Administração
+              </button>
+            )}
+            {(perfil.papel === 'profissional' || perfil.papel === 'admin') && (
+              <button className="botao-sec" onClick={onAlunos}>
+                Meus alunos
+              </button>
+            )}
+            {perfil.papel === 'aluno' && (
+              <button className="botao-sec" onClick={onEvolucao}>
+                Minha evolução
+              </button>
+            )}
+          </span>
         </div>
       )}
 

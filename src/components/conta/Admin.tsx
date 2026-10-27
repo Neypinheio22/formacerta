@@ -2,9 +2,10 @@ import { useEffect, useMemo, useState } from 'react'
 import { ROTULO_PAPEL, ROTULO_SITUACAO, useConta, type Perfil, type Situacao } from '../../nuvem/conta'
 import { definirSituacao, excluirConta, listarPerfis } from '../../nuvem/gestao'
 import { ModerarVitrine } from '../vitrine/ModerarVitrine'
+import { AdminPagamentos, AdminPlanos } from '../planos/AdminCobranca'
 import { ROTULO_TIPO, listarResultados, type ResultadoNuvem, type TipoResultado } from '../../nuvem/resultados'
 
-type Aba = 'aguardando' | 'profissionais' | 'alunos' | 'resultados' | 'vitrine'
+type Aba = 'aguardando' | 'profissionais' | 'alunos' | 'resultados' | 'vitrine' | 'planos' | 'pagamentos'
 
 /** Tela do administrador: libera, bloqueia e exclui profissionais e alunos. */
 export function Admin({ onVoltar }: { onVoltar: () => void }) {
@@ -64,7 +65,7 @@ export function Admin({ onVoltar }: { onVoltar: () => void }) {
       </header>
 
       <h1>Administração</h1>
-      <p className="dica-sec">Você gerencia todos os profissionais, alunos, resultados e fotos da vitrine do FormaCerta.</p>
+      <p className="dica-sec">Você gerencia todos os profissionais, alunos, resultados, fotos da vitrine, planos e pagamentos do FormaCerta.</p>
 
       <div className="numeros">
         <div>
@@ -94,12 +95,18 @@ export function Admin({ onVoltar }: { onVoltar: () => void }) {
         <button className={aba === 'vitrine' ? 'ativo' : ''} onClick={() => setAba('vitrine')}>
           Vitrine
         </button>
+        <button className={aba === 'planos' ? 'ativo' : ''} onClick={() => setAba('planos')}>
+          Planos
+        </button>
+        <button className={aba === 'pagamentos' ? 'ativo' : ''} onClick={() => setAba('pagamentos')}>
+          Pagamentos
+        </button>
       </div>
 
       {erro && <p className="mensagem erro">{erro}</p>}
       {carregando && <p className="carregando">Carregando…</p>}
 
-      {!carregando && aba !== 'resultados' && aba !== 'vitrine' && (
+      {!carregando && (aba === 'aguardando' || aba === 'profissionais' || aba === 'alunos') && (
         <>
           {aba !== 'aguardando' && (
             <label className="campo">
@@ -148,6 +155,10 @@ export function Admin({ onVoltar }: { onVoltar: () => void }) {
       {!carregando && aba === 'resultados' && <ResumoResultados resultados={resultados} nomePorId={nomePorId} />}
 
       {!carregando && aba === 'vitrine' && <ModerarVitrine nomePorId={nomePorId} />}
+
+      {!carregando && aba === 'planos' && <AdminPlanos perfis={perfis} />}
+
+      {!carregando && aba === 'pagamentos' && <AdminPagamentos nomePorId={nomePorId} />}
     </div>
   )
 }
