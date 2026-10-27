@@ -1,6 +1,6 @@
 // Plano de ação: transforma cada teste numa avaliação que gera ação no treino.
 // Teste → Resultado → Classificação (🟢 🟡 🔴) → Pontos de atenção →
-// Exercícios recomendados → Reavaliação. A "Análise do Personal IA" junta os
+// Exercícios recomendados → Reavaliação. A Central de Inteligência junta os
 // planos de todos os testes do aluno num plano de treino só.
 // As regras são automáticas e servem de ponto de partida: o personal ajusta.
 
@@ -341,7 +341,7 @@ export function planoDeNuvem(r: ResultadoNuvem): PlanoTeste | null {
   return null
 }
 
-// ---------- Análise do Personal IA ----------
+// ---------- Análise geral (Central de Inteligência) ----------
 
 export type Prioridade = PontoAtencao & { teste: string }
 
