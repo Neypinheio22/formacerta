@@ -4,6 +4,7 @@ import { Activity, ArrowRight, Brain, Clapperboard, Dumbbell, FileText, Footprin
 import { useState } from 'react'
 import { FundoHex } from './FundoHex'
 import { Logo } from './Logo'
+import { CartaoReavaliacao } from './plano/Reavaliacoes'
 import { VitrineCarrossel } from './vitrine/VitrineCarrossel'
 
 type Props = {
@@ -20,6 +21,7 @@ type Props = {
   perfil: Perfil | null
   onAdmin: () => void
   onAlunos: () => void
+  onReavaliacoes: () => void
   onEvolucao: () => void
   onConta: () => void
   onVitrine: () => void
@@ -49,7 +51,7 @@ function Grupo({ titulo, atalhos, personal }: { titulo: string; atalhos: Atalho[
   )
 }
 
-export function Home({ history, onStart, onOpen, onEstudio, onExercicio, onCarga, onCorrida, onFlexibilidade, onAdams, onIdoso, perfil, onAdmin, onAlunos, onEvolucao, onConta, onVitrine, onRelatorio }: Props) {
+export function Home({ history, onStart, onOpen, onEstudio, onExercicio, onCarga, onCorrida, onFlexibilidade, onAdams, onIdoso, perfil, onAdmin, onAlunos, onReavaliacoes, onEvolucao, onConta, onVitrine, onRelatorio }: Props) {
   const [todoHistorico, setTodoHistorico] = useState(false)
   // O aluno só vê o que ele mesmo usa; as ferramentas de avaliar e atender alunos ficam para o personal.
   const personal = !perfil || perfil.papel !== 'aluno'
@@ -90,6 +92,8 @@ export function Home({ history, onStart, onOpen, onEstudio, onExercicio, onCarga
       </header>
 
       {perfil && <VitrineCarrossel onAbrir={onVitrine} />}
+
+      {perfil && <CartaoReavaliacao perfil={perfil} onAbrir={onReavaliacoes} />}
 
       <section className="cartao destaque">
         <span className="etiqueta">
