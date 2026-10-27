@@ -1,5 +1,9 @@
 import { ScanSearch } from 'lucide-react'
+import { textoAdams } from '../../compartilhar/whatsapp'
 import { EnviarResultado } from '../conta/EnviarResultado'
+import { EnviarWhatsApp } from '../conta/EnviarWhatsApp'
+import { PlanoAcao } from '../plano/PlanoAcao'
+import { planoAdams } from '../../plano/plano'
 import { useMemo, useState } from 'react'
 import { detectarComMascara, loadDetectorComMascara, loadSegmentador, segmentar, type Mascara } from '../../pose/detector'
 import { LM, type Point } from '../../pose/types'
@@ -26,7 +30,7 @@ function carregarImagem(src: string): Promise<HTMLImageElement> {
   })
 }
 
-export function AdamsTeste({ onVoltar }: { onVoltar: () => void }) {
+export function AdamsTeste({ onVoltar, onRelatorio }: { onVoltar: () => void; onRelatorio: (r: RegistroAdams) => void }) {
   const [tela, setTela] = useState<Tela>({ nome: 'novo' })
   const [lista, setLista] = useState(() => carregar<RegistroAdams>(CHAVE_ADAMS))
   const recarregar = () => setLista(carregar<RegistroAdams>(CHAVE_ADAMS))
@@ -65,6 +69,7 @@ export function AdamsTeste({ onVoltar }: { onVoltar: () => void }) {
           registro={registro}
           doMesmo={doAvaliado(lista, registro.avaliado)}
           onAbrir={(id) => ir({ nome: 'detalhe', id })}
+          onRelatorio={() => onRelatorio(registro)}
           onMudou={recarregar}
           onApagado={() => {
             recarregar()
@@ -263,7 +268,7 @@ function ResultadoAdamsCartao({ angulo, classe, lado, fonte }: { angulo: number;
 }
 
 /** Foto com o contorno das costas, os dois pontos mais altos e a linha entre eles. */
-function FotoAdams({ image, resultado: r }: { image: string; resultado: ResultadoAdams }) {
+export function FotoAdams({ image, resultado: r }: { image: string; resultado: ResultadoAdams }) {
   const t = Math.max(r.largura, r.altura) / 160
   const { xEsq, yEsq, xDir, yDir, xMeio } = r.picos
   return (
@@ -312,10 +317,11 @@ function Historico({ lista, onAbrir }: { lista: RegistroAdams[]; onAbrir: (id: s
   )
 }
 
-function Detalhe(props: { registro: RegistroAdams; doMesmo: RegistroAdams[]; onAbrir: (id: string) => void; onMudou: () => void; onApagado: () => void }) {
+function Detalhe(props: { registro: RegistroAdams; doMesmo: RegistroAdams[]; onAbrir: (id: string) => void; onRelatorio: () => void; onMudou: () => void; onApagado: () => void }) {
   const { registro: r, doMesmo } = props
   const [obs, setObs] = useState(r.observacoes)
   const angulo = anguloAdams(r)!
+  const plano = planoAdams(r)
   return (
     <>
       <h1>{r.avaliado}</h1>
@@ -327,6 +333,8 @@ function Detalhe(props: { registro: RegistroAdams; doMesmo: RegistroAdams[]; onA
       <section className="cartao">
         <ResultadoAdamsCartao angulo={angulo} classe={classificarAdams(angulo)} lado={r.lado} fonte={r.escoliometro !== null ? 'pelo escoliômetro' : 'pela foto'} />
       </section>
+      {plano && <PlanoAcao plano={plano} />}
+      <EnviarWhatsApp texto={textoAdams({ ...r, observacoes: obs })} avaliado={r.avaliado} onPdf={props.onRelatorio} />
       {r.foto && (
         <section className="cartao">
           <h2>Foto na flexão do tronco</h2>
@@ -371,6 +379,9 @@ function Detalhe(props: { registro: RegistroAdams; doMesmo: RegistroAdams[]; onA
           Salvar observações
         </button>
       </section>
+      <button className="botao" onClick={props.onRelatorio}>
+        Relatório para imprimir ou enviar
+      </button>
       <button
         className="botao-sec perigo"
         onClick={() => {

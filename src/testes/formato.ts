@@ -1,6 +1,6 @@
 import type { Status } from '../pose/types'
 
-export const ROTULO_STATUS: Record<Status, string> = { ok: 'Bom', atencao: 'Atenção', alerta: 'Encaminhar' }
+export const ROTULO_STATUS: Record<Status, string> = { ok: 'Adequado', atencao: 'Precisa melhorar', alerta: 'Atenção' }
 
 export const dataCurta = (iso: string) => new Date(iso).toLocaleDateString('pt-BR')
 

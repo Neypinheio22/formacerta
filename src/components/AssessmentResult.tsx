@@ -1,21 +1,15 @@
-import { planoCorretivo, recomendacao } from '../pose/recomendacoes'
-import { VIEWS, type Assessment, type Status } from '../pose/types'
+import { recomendacao } from '../pose/recomendacoes'
+import { planoPostura } from '../plano/plano'
+import { PlanoAcao } from './plano/PlanoAcao'
+import { VIEWS, type Assessment } from '../pose/types'
+import { textoPostura } from '../compartilhar/whatsapp'
+import { ROTULO_POSTURA as ROTULO, textoPontuacao as scoreText } from '../relatorio/conteudo'
 import { EnviarResultado } from './conta/EnviarResultado'
+import { EnviarWhatsApp } from './conta/EnviarWhatsApp'
 import { PosePhoto } from './PosePhoto'
 
-const ROTULO: Record<Status, string> = { ok: 'Bom', atencao: 'Atenção', alerta: 'Corrigir' }
-
-function scoreText(score: number) {
-  if (score >= 85) return 'Postura muito boa'
-  if (score >= 65) return 'Alguns pontos para ajustar'
-  return 'Vale focar na correção'
-}
-
-export function AssessmentResult({ assessment, onBack }: { assessment: Assessment; onBack: () => void }) {
+export function AssessmentResult({ assessment, onBack, onRelatorio }: { assessment: Assessment; onBack: () => void; onRelatorio: () => void }) {
   const problemas = assessment.views.flatMap((v) => v.findings).filter((f) => f.status !== 'ok')
-  const plano = planoCorretivo(problemas)
-  // Avaliações salvas antes das recomendações por músculo só têm a lista de exercícios.
-  const antigos = problemas.some((f) => !f.correcao) ? [...new Set(problemas.filter((f) => !f.correcao).flatMap((f) => f.exercises))] : []
   const data = new Date(assessment.date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })
 
   return (
@@ -39,43 +33,9 @@ export function AssessmentResult({ assessment, onBack }: { assessment: Assessmen
         </div>
       </section>
 
-      {problemas.length > 0 && (
-        <section className="cartao">
-          <h2>Seu plano de correção</h2>
-          {plano.alongar.length > 0 && (
-            <div className="grupo-musculos">
-              <h3>Alongar</h3>
-              <ul className="musculos alongar">
-                {plano.alongar.map((m) => (
-                  <li key={m}>{m}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-          {plano.fortalecer.length > 0 && (
-            <div className="grupo-musculos">
-              <h3>Fortalecer</h3>
-              <ul className="musculos fortalecer">
-                {plano.fortalecer.map((m) => (
-                  <li key={m}>{m}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-          {(plano.exercicios.length > 0 || antigos.length > 0) && <h3 className="sub">Exercícios</h3>}
-          <ul className="exercicios">
-            {plano.exercicios.map((e) => (
-              <li key={e.nome}>
-                <span className={`foco foco-${e.foco}`}>{e.foco === 'alongar' ? 'Alongar' : 'Fortalecer'}</span> {e.nome} <span className="valor">{e.dose}</span>
-              </li>
-            ))}
-            {antigos.map((e) => (
-              <li key={e}>{e}</li>
-            ))}
-          </ul>
-          <p className="dica-sec">Faça 3 a 4 vezes por semana e repita a avaliação em 30 dias para ver sua evolução. Os músculos indicados são uma triagem pelas fotos: o personal confirma na avaliação presencial.</p>
-        </section>
-      )}
+      <EnviarWhatsApp texto={textoPostura(assessment)} onPdf={onRelatorio} />
+
+      <PlanoAcao plano={planoPostura(assessment)} />
 
       {assessment.views.map((v) => (
         <section className="cartao" key={v.view}>
@@ -99,6 +59,14 @@ export function AssessmentResult({ assessment, onBack }: { assessment: Assessmen
           </div>
         </section>
       ))}
+
+      <section className="cartao personal">
+        <h2>Acompanhamento do personal</h2>
+        <p className="dica-sec">Gere o relatório com a logo e o registro do profissional para imprimir, salvar em PDF ou mandar no WhatsApp.</p>
+        <button className="botao" onClick={onRelatorio}>
+          Relatório para imprimir ou enviar
+        </button>
+      </section>
 
       <EnviarResultado tipo="postura" id={assessment.id} feitoEm={assessment.date} resultado={assessment} />
 

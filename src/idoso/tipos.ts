@@ -26,12 +26,24 @@ export type Anamnese = {
   observacoes: string
 }
 
+// Perimetria na ordem da ficha do personal Romildo. As três "antigas" (um lado só)
+// vêm das primeiras avaliações e só aparecem quando foram medidas.
 export const CIRCUNFERENCIAS = [
-  { id: 'braco', nome: 'Braço' },
+  { id: 'torax', nome: 'Tórax' },
+  { id: 'bracoD', nome: 'Braço direito' },
+  { id: 'bracoE', nome: 'Braço esquerdo' },
+  { id: 'antebracoD', nome: 'Antebraço direito' },
+  { id: 'antebracoE', nome: 'Antebraço esquerdo' },
+  { id: 'abdomen', nome: 'Abdômen' },
   { id: 'cintura', nome: 'Cintura' },
   { id: 'quadril', nome: 'Quadril' },
-  { id: 'coxa', nome: 'Coxa' },
-  { id: 'panturrilha', nome: 'Panturrilha' },
+  { id: 'coxaE', nome: 'Coxa esquerda' },
+  { id: 'coxaD', nome: 'Coxa direita' },
+  { id: 'panturrilhaE', nome: 'Panturrilha esquerda' },
+  { id: 'panturrilhaD', nome: 'Panturrilha direita' },
+  { id: 'braco', nome: 'Braço', antiga: true },
+  { id: 'coxa', nome: 'Coxa', antiga: true },
+  { id: 'panturrilha', nome: 'Panturrilha', antiga: true },
 ] as const
 export type Circunferencia = (typeof CIRCUNFERENCIAS)[number]['id']
 
@@ -46,7 +58,10 @@ export type Antropometria = {
 
 export type IdTeste = 'levantar' | 'flexaoBraco' | 'marcha' | 'caminhada' | 'tug' | 'sentarAlcancar' | 'alcancarCostas'
 
-export type ResultadoTeste = { valor: number; observacao: string }
+/** foto: o paciente executando o teste (JPEG reduzido, fica só no aparelho). */
+export type ResultadoTeste = { valor: number; observacao: string; foto?: FotoTeste }
+
+export type FotoTeste = { image: string; width: number; height: number }
 
 export type AvaliacaoIdoso = Registro & {
   anamnese: Anamnese

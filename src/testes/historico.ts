@@ -26,7 +26,12 @@ function tentar(chave: string, lista: unknown[]) {
   }
 }
 
-const semFoto = <T extends Registro>(r: T): T => ({ ...r, foto: undefined })
+// Tira também as fotos de cada teste da avaliação do idoso.
+const semFoto = <T extends Registro>(r: T): T => {
+  const testes = (r as { testes?: Record<string, object> }).testes
+  const limpo = { ...r, foto: undefined }
+  return testes ? { ...limpo, testes: Object.fromEntries(Object.entries(testes).map(([k, t]) => [k, { ...t, foto: undefined }])) } : limpo
+}
 
 function gravar<T extends Registro>(chave: string, lista: T[]): boolean {
   lista = lista.slice(0, MAXIMO)

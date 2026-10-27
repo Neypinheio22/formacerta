@@ -1,7 +1,7 @@
 import { supabase } from './cliente'
 import { erroAmigavel } from './conta'
 
-export type TipoResultado = 'postura' | 'corrida' | 'exercicio' | 'flexibilidade' | 'adams' | 'idoso'
+export type TipoResultado = 'postura' | 'corrida' | 'exercicio' | 'flexibilidade' | 'adams' | 'idoso' | 'medidas' | 'estrategia'
 
 export const ROTULO_TIPO: Record<TipoResultado, string> = {
   postura: 'Avaliação de postura',
@@ -10,6 +10,8 @@ export const ROTULO_TIPO: Record<TipoResultado, string> = {
   flexibilidade: 'Teste de Flexibilidade',
   adams: 'Teste de Adams',
   idoso: 'Avaliação funcional do idoso',
+  medidas: 'Medidas do corpo',
+  estrategia: 'Estratégia do professor',
 }
 
 // Fotos, vídeos e os pontos do corpo quadro a quadro ficam só no celular.
@@ -38,6 +40,8 @@ export type Envio = {
   resultado: unknown
   enviadoPor: string
   alunoId: string | null
+  /** Ficha do aluno onde o resultado entra. */
+  fichaId?: string | null
   apelido: string
   idade: number | null
   sexo: 'feminino' | 'masculino' | 'outro' | null
@@ -48,10 +52,12 @@ export async function enviarResultado(e: Envio) {
   const { error } = await supabase.from('resultados').insert({
     enviado_por: e.enviadoPor,
     aluno_id: e.alunoId,
+    ficha_id: e.fichaId ?? null,
     apelido: e.apelido.trim().slice(0, 60),
     tipo: e.tipo,
     feito_em: e.feitoEm,
-    dados: resumir(e.resultado),
+    // A estratégia do professor é texto longo e não tem foto: vai inteira.
+    dados: e.tipo === 'estrategia' ? e.resultado : resumir(e.resultado),
     idade: e.idade,
     sexo: e.sexo,
     altura_cm: e.alturaCm,
@@ -66,6 +72,7 @@ export type ResultadoNuvem = {
   feito_em: string
   apelido: string
   aluno_id: string | null
+  ficha_id: string | null
   enviado_por: string
   idade: number | null
   sexo: string | null
@@ -73,9 +80,10 @@ export type ResultadoNuvem = {
   dados: Record<string, unknown>
 }
 
-export async function listarResultados(alunoId?: string): Promise<{ lista: ResultadoNuvem[]; erro: string | null }> {
+export async function listarResultados(filtro: { alunoId?: string; fichaId?: string } = {}): Promise<{ lista: ResultadoNuvem[]; erro: string | null }> {
   let q = supabase.from('resultados').select('*').order('feito_em', { ascending: false }).limit(500)
-  if (alunoId) q = q.eq('aluno_id', alunoId)
+  if (filtro.alunoId) q = q.eq('aluno_id', filtro.alunoId)
+  if (filtro.fichaId) q = q.eq('ficha_id', filtro.fichaId)
   const { data, error } = await q
   return { lista: (data ?? []) as ResultadoNuvem[], erro: error ? erroAmigavel(error) : null }
 }

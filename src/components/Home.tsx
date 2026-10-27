@@ -1,6 +1,6 @@
 import type { Perfil } from '../nuvem/conta'
 import type { Assessment } from '../pose/types'
-import { Activity, ArrowRight, Clapperboard, Crown, Footprints, HeartPulse, PlayCircle, Ruler, Sparkles, Video } from 'lucide-react'
+import { Activity, ArrowRight, Brain, Clapperboard, Crown, Footprints, HeartPulse, PlayCircle, Ruler, Sparkles, Video } from 'lucide-react'
 import { FundoHex } from './FundoHex'
 import { Logo } from './Logo'
 import { usePlanosLiberados } from './planos/usePlanosLiberados'
@@ -19,16 +19,19 @@ type Props = {
   perfil: Perfil | null
   onAdmin: () => void
   onAlunos: () => void
+  onEvolucao: () => void
   onConta: () => void
   onVitrine: () => void
   onPlanos: () => void
+  onRelatorio: () => void
+  onPerfil: () => void
 }
 
 const EM_BREVE = [
   { titulo: 'Teste de mobilidade', texto: 'Agachamento, tornozelo, elevação dos braços e equilíbrio.' },
 ]
 
-export function Home({ history, onStart, onOpen, onEstudio, onExercicio, onCorrida, onFlexibilidade, onAdams, onIdoso, perfil, onAdmin, onAlunos, onConta, onVitrine, onPlanos }: Props) {
+export function Home({ history, onStart, onOpen, onEstudio, onExercicio, onCorrida, onFlexibilidade, onAdams, onIdoso, perfil, onAdmin, onAlunos, onEvolucao, onConta, onVitrine, onPlanos, onRelatorio, onPerfil }: Props) {
   const verPlanos = usePlanosLiberados(perfil)
   return (
     <div className="tela">
@@ -50,9 +53,14 @@ export function Home({ history, onStart, onOpen, onEstudio, onExercicio, onCorri
                 Administração
               </button>
             )}
-            {perfil.papel === 'profissional' && (
+            {(perfil.papel === 'profissional' || perfil.papel === 'admin') && (
               <button className="botao-sec" onClick={onAlunos}>
                 Meus alunos
+              </button>
+            )}
+            {perfil.papel === 'aluno' && (
+              <button className="botao-sec" onClick={onEvolucao}>
+                Minha evolução
               </button>
             )}
           </span>
@@ -79,13 +87,30 @@ export function Home({ history, onStart, onOpen, onEstudio, onExercicio, onCorri
         </button>
       </section>
 
+      {perfil && (
+        <section className="cartao destaque analise-ia">
+          <span className="etiqueta">
+            <Brain size={14} /> Novo · inteligência
+          </span>
+          <h2>Central de Inteligência</h2>
+          <p className="fluxo-ia">Aluno faz o teste sozinho + app gera o resultado + personal analisa</p>
+          <p className="dica-sec">
+            Escolha o aluno e veja postura, mobilidade, corrida, flexibilidade e coluna em 🟢 Adequado, 🟡 Precisa melhorar ou 🔴 Atenção, com os exercícios ligados aos
+            achados. O app coleta, organiza e sugere; o professor revisa a análise e define a estratégia.
+          </p>
+          <button className="botao" onClick={perfil.papel === 'aluno' ? onEvolucao : onAlunos}>
+            {perfil.papel === 'aluno' ? 'Ver minha análise' : 'Abrir a central dos alunos'}
+          </button>
+        </section>
+      )}
+
       <section className="cartao destaque">
         <span className="etiqueta">
           <Video size={14} /> Novo · análise em vídeo
         </span>
         <h2>Exercício em movimento</h2>
         <p className="dica-sec">
-          Grave ou envie um vídeo do agachamento ou da flexão. O app lê o movimento quadro a quadro, conta as repetições e mostra o que corrigir em cada uma.
+          Grave ou envie um vídeo de 15 exercícios: pernas, costas, trapézio, ombro, bíceps, tríceps, abdominal e corpo inteiro. O app lê o movimento quadro a quadro, conta as repetições e mostra o que corrigir em cada uma.
         </p>
         <button className="botao" onClick={onExercicio}>
           <PlayCircle size={18} strokeWidth={2.5} /> Analisar exercício
@@ -144,6 +169,20 @@ export function Home({ history, onStart, onOpen, onEstudio, onExercicio, onCorri
           </button>
         </div>
         <p className="dica-sec">São testes de triagem: não substituem o diagnóstico médico.</p>
+      </section>
+
+      <section className="cartao destaque">
+        <span className="etiqueta">Para o personal</span>
+        <h2>Relatório dos testes</h2>
+        <p className="dica-sec">Junte os testes do avaliado num relatório com a sua logo, nome e CREF. Imprima, salve em PDF ou mande no WhatsApp.</p>
+        <div className="acoes">
+          <button className="botao" onClick={onRelatorio}>
+            Fazer relatório
+          </button>
+          <button className="botao-sec" onClick={onPerfil}>
+            Meu perfil e logo
+          </button>
+        </div>
       </section>
 
       {history.length > 0 && (

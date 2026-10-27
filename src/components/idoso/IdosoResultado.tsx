@@ -14,21 +14,23 @@ import { TESTES } from '../../idoso/testes'
 import { CIRCUNFERENCIAS, type AvaliacaoIdoso } from '../../idoso/tipos'
 import { dataCurta, numero } from '../../testes/formato'
 import { EnviarResultado } from '../conta/EnviarResultado'
+import { EnviarWhatsApp } from '../conta/EnviarWhatsApp'
 import { AvisoTriagem, GraficoEvolucao } from '../testes/comum'
+import { PlanoAcao } from '../plano/PlanoAcao'
+import { NIVEL, planoIdoso } from '../../plano/plano'
 
 type Props = {
   a: AvaliacaoIdoso
   /** Avaliações da mesma pessoa, da mais nova para a mais antiga. */
   doMesmo: AvaliacaoIdoso[]
   onAbrir: (id: string) => void
+  onRelatorio: () => void
   onEditar: () => void
   onReavaliar: () => void
   onApagar: () => void
 }
 
-const SINAL: Record<string, string> = { ok: '✓', atencao: '!', alerta: '!!' }
-
-export function IdosoResultado({ a, doMesmo, onAbrir, onEditar, onReavaliar, onApagar }: Props) {
+export function IdosoResultado({ a, doMesmo, onAbrir, onRelatorio, onEditar, onReavaliar, onApagar }: Props) {
   const linhas = resumo(a)
   const anteriores = doMesmo.filter((x) => x.date < a.date)
   const [baseId, setBaseId] = useState(() => anteriores[anteriores.length - 1]?.id ?? '')
@@ -36,19 +38,8 @@ export function IdosoResultado({ a, doMesmo, onAbrir, onEditar, onReavaliar, onA
   const comparacao = base ? comparar(base, a) : []
   const ate = doMesmo.filter((x) => x.date <= a.date)
   const pontos = pontosDeAtencao(a)
-  const [copiado, setCopiado] = useState(false)
   const rcq = relacaoCinturaQuadril(a)
-
-  async function compartilhar() {
-    const texto = textoCompartilhar(a, base)
-    try {
-      if (navigator.share) return await navigator.share({ title: `Avaliação funcional — ${a.avaliado}`, text: texto })
-    } catch {
-      return
-    }
-    await navigator.clipboard?.writeText(texto)
-    setCopiado(true)
-  }
+  const plano = planoIdoso(a)
 
   return (
     <>
@@ -75,15 +66,15 @@ export function IdosoResultado({ a, doMesmo, onAbrir, onEditar, onReavaliar, onA
           ))}
         </ul>
         <div className="acoes">
-          <button className="botao-sec" onClick={compartilhar}>
-            Compartilhar
-          </button>
           <button className="botao-sec" onClick={onEditar}>
             Editar
           </button>
         </div>
-        {copiado && <p className="mensagem ok">Texto copiado. Cole no WhatsApp.</p>}
       </section>
+
+      {plano && <PlanoAcao plano={plano} />}
+
+      <EnviarWhatsApp texto={textoCompartilhar(a, base)} avaliado={a.avaliado} onPdf={onRelatorio} />
 
       <section className="cartao">
         <h2>📈 Evolução</h2>
@@ -171,7 +162,7 @@ export function IdosoResultado({ a, doMesmo, onAbrir, onEditar, onReavaliar, onA
                 <b>{p.nome}</b>
                 {p.status ? (
                   <span className={`chip chip-${p.status}`}>
-                    {SINAL[p.status]} {p.status === 'ok' ? 'Sem alerta' : p.status === 'atencao' ? 'Atenção' : 'Prioridade'}
+                    {NIVEL[p.status].emoji} {NIVEL[p.status].rotulo}
                   </span>
                 ) : (
                   <span className="chip">Não avaliado</span>
@@ -200,6 +191,7 @@ export function IdosoResultado({ a, doMesmo, onAbrir, onEditar, onReavaliar, onA
                 </span>
               </div>
               {a.testes[t.id]!.observacao && <p className="achado-detalhe">{a.testes[t.id]!.observacao}</p>}
+              {a.testes[t.id]!.foto && <img className="foto-teste" src={a.testes[t.id]!.foto!.image} alt={`${t.nome}: paciente executando`} />}
             </li>
           ))}
           {a.berg.some((n) => n !== null) && (

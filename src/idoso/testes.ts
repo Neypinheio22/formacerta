@@ -37,6 +37,8 @@ export type DefTeste = {
   risco?: number
   /** Termo de busca do vídeo explicativo. */
   busca: string
+  /** Vídeo de exemplo escolhido pelo personal, que abre no lugar da busca. */
+  video?: string
 }
 
 const jardas = (faixas: [number, number][]) => faixas.map(([a, b]) => [Math.round(a * 0.9144), Math.round(b * 0.9144)] as [number, number])
@@ -208,6 +210,9 @@ export const TESTES: DefTeste[] = [
     busca: 'teste alcançar atrás das costas idoso',
   },
 ]
+
+/** Vídeo do personal Romildo com exemplos de vários testes da bateria. */
+export const VIDEO_EXEMPLOS = 'https://youtube.com/shorts/Z79kpHtdyhQ'
 
 export const teste = (id: IdTeste) => TESTES.find((t) => t.id === id)!
 

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { EXERCICIOS } from '../../movimento/exercicios'
+import { EXERCICIOS, GRUPOS, exercicioPorId, type Grupo } from '../../movimento/exercicios'
 import type { ExercicioId } from '../../movimento/tipos'
 
 export type ConfigExercicio = { exercicio: ExercicioId; alvo: number }
@@ -14,7 +14,13 @@ const ALVOS = [5, 8, 10, 12]
 
 export function ExercicioInicio({ onVoltar, onAoVivo, onArquivo }: Props) {
   const [exercicio, setExercicio] = useState<ExercicioId>('agachamento-lateral')
+  const [grupo, setGrupo] = useState<Grupo>(exercicioPorId(exercicio).grupo)
   const [alvo, setAlvo] = useState(8)
+
+  function escolherGrupo(g: Grupo) {
+    setGrupo(g)
+    setExercicio(EXERCICIOS.find((ex) => ex.grupo === g)!.id)
+  }
 
   function onFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -36,8 +42,15 @@ export function ExercicioInicio({ onVoltar, onAoVivo, onArquivo }: Props) {
       </p>
 
       <h2 className="secao">Qual exercício?</h2>
+      <div className="timer esquerda">
+        {GRUPOS.map((g) => (
+          <button key={g} className={g === grupo ? 'ativo' : ''} onClick={() => escolherGrupo(g)}>
+            {g}
+          </button>
+        ))}
+      </div>
       <div className="opcoes">
-        {EXERCICIOS.map((ex) => (
+        {EXERCICIOS.filter((ex) => ex.grupo === grupo).map((ex) => (
           <button key={ex.id} className={`opcao ${ex.id === exercicio ? 'ativo' : ''}`} onClick={() => setExercicio(ex.id)}>
             <strong>
               {ex.nome} <span className="verde">· {ex.vista}</span>

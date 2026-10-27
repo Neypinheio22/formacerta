@@ -1,7 +1,6 @@
 import { computeScore } from '../pose/analysis'
 import type { Status } from '../pose/types'
-import { ContadorReps } from './contador'
-import type { Exercicio } from './exercicios'
+import { contadorDe, type Exercicio } from './exercicios'
 import type { Quadro, Repeticao, ResultadoExercicio } from './tipos'
 
 const PESO: Record<Status, number> = { ok: 0, atencao: 1, alerta: 2 }
@@ -17,7 +16,7 @@ export function avaliarRep(ex: Exercicio, n: number, rep: Omit<Repeticao, 'n' | 
 
 /** Passa por todos os quadros do vídeo, separa as repetições e avalia cada uma. */
 export function encontrarReps(ex: Exercicio, quadros: Quadro[]): Repeticao[] {
-  const contador = new ContadorReps(ex.cima, ex.baixo)
+  const contador = contadorDe(ex)
   const reps: Repeticao[] = []
   for (const q of quadros) {
     const rep = contador.adicionar(q.t, q.medidas?.angulo)

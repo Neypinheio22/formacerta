@@ -4,7 +4,7 @@
 import type { Status } from '../pose/types'
 import { ITENS_BERG, MAXIMO_BERG, classificarBerg, totalBerg } from './berg'
 import { ROTULO_AREA, TESTES, classificar, type Area } from './testes'
-import type { AvaliacaoIdoso, Sexo } from './tipos'
+import { CIRCUNFERENCIAS, type AvaliacaoIdoso, type Circunferencia, type Sexo } from './tipos'
 
 export function calcularImc(peso: number | null, estaturaCm: number | null): number | null {
   if (!peso || !estaturaCm) return null
@@ -45,6 +45,13 @@ export function classificarRcq(rcq: number, sexo: Sexo | null): { status: Status
 
 /** Panturrilha abaixo de 31 cm sugere perda de massa muscular no idoso. */
 export const panturrilhaBaixa = (cm: number) => cm < 31
+
+/** A panturrilha mais fina medida (esquerda, direita ou a antiga de um lado só). */
+export function menorPanturrilha(a: { antropometria: { circ: Partial<Record<Circunferencia, number>> } }): number | null {
+  const { panturrilhaE, panturrilhaD, panturrilha } = a.antropometria.circ
+  const medidas = [panturrilhaE, panturrilhaD, panturrilha].filter((v): v is number => !!v)
+  return medidas.length ? Math.min(...medidas) : null
+}
 
 export const imcDe = (a: AvaliacaoIdoso) => calcularImc(a.antropometria.peso, a.antropometria.estatura)
 
@@ -125,8 +132,8 @@ export function pontosDeAtencao(a: AvaliacaoIdoso): PontosArea[] {
     const c = classificarImc(imc, idade)
     marcar('capacidade', c.status, `IMC ${fmt(imc, 1)}: ${c.rotulo.toLowerCase()}.`)
   }
-  const pant = a.antropometria.circ.panturrilha
-  if (pant && panturrilhaBaixa(pant)) marcar('capacidade', 'atencao', `Panturrilha com ${fmt(pant)} cm (abaixo de 31 cm): possível perda de massa muscular.`)
+  const pant = menorPanturrilha(a)
+  if (pant !== null && panturrilhaBaixa(pant)) marcar('capacidade', 'atencao', `Panturrilha com ${fmt(pant)} cm (abaixo de 31 cm): possível perda de massa muscular.`)
   if (a.anamnese.dorNota !== null && a.anamnese.dorNota >= 7) marcar('capacidade', 'alerta', `Dor forte relatada (${a.anamnese.dorNota}/10).`)
 
   return (Object.keys(por) as Area[]).map((area) => ({
@@ -161,15 +168,6 @@ export const METRICAS: Metrica[] = [
     status: (a) => classificarImc(imcDe(a) ?? 0, a.anamnese.idade).status,
   },
   {
-    id: 'cintura',
-    rotulo: 'Cintura',
-    unidade: 'cm',
-    casas: 0,
-    maiorMelhor: false,
-    valor: (a) => a.antropometria.circ.cintura ?? null,
-    status: (a) => classificarCintura(a.antropometria.circ.cintura ?? 0, a.anamnese.sexo)?.status ?? 'ok',
-  },
-  {
     id: 'berg',
     rotulo: 'Equilíbrio Berg',
     unidade: 'pontos',
@@ -181,6 +179,18 @@ export const METRICAS: Metrica[] = [
     },
     status: (a) => bergDe(a)?.status ?? 'ok',
   },
+  ...CIRCUNFERENCIAS.map(
+    (c): Metrica => ({
+      id: c.id,
+      rotulo: c.nome,
+      unidade: 'cm',
+      casas: 0,
+      // Cintura e abdômen menores são melhores; nos membros, depende do objetivo.
+      maiorMelhor: c.id === 'cintura' || c.id === 'abdomen' ? false : null,
+      valor: (a) => a.antropometria.circ[c.id] ?? null,
+      status: (a) => (c.id === 'cintura' ? (classificarCintura(a.antropometria.circ.cintura ?? 0, a.anamnese.sexo)?.status ?? 'ok') : 'ok'),
+    }),
+  ),
   ...TESTES.map(
     (t): Metrica => ({
       id: t.id,
