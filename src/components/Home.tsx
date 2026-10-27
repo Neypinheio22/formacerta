@@ -83,7 +83,7 @@ export function Home({ history, onStart, onOpen, onEstudio, onExercicio, onCorri
             <Brain size={14} /> Novo · inteligência
           </span>
           <h2>Central de Inteligência</h2>
-          <p className="fluxo-ia">Aluno faz o teste sozinho + app gera o resultado + personal IA analisa</p>
+          <p className="fluxo-ia">Aluno faz o teste sozinho + app gera o resultado + personal analisa</p>
           <p className="dica-sec">
             Escolha o aluno e veja postura, mobilidade, corrida, flexibilidade e coluna em 🟢 Adequado, 🟡 Precisa melhorar ou 🔴 Atenção, com os exercícios ligados aos
             achados. O app coleta, organiza e sugere; o professor revisa a análise e define a estratégia.
