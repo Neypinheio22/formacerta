@@ -3,6 +3,8 @@ import { ROTULO_PAPEL, sair, useConta } from '../../nuvem/conta'
 import { excluirMinhaConta, salvarMeuPerfil } from '../../nuvem/gestao'
 import { ROTULO_TIPO, apagarResultado, listarResultados, type ResultadoNuvem } from '../../nuvem/resultados'
 import { baixarMeusDados, definirLembretes } from '../../nuvem/privacidade'
+import { BIO_MAXIMO, salvarContato, type DadosContato } from '../../nuvem/profissionais'
+import { telefoneValido } from '../../compartilhar/whatsapp'
 import { usePlanosLiberados } from '../planos/usePlanosLiberados'
 import { Privacidade } from './Privacidade'
 import { Suporte } from './Suporte'
@@ -17,6 +19,14 @@ export function MinhaConta({ onVoltar, onPlanos }: { onVoltar: () => void; onPla
   const [ver, setVer] = useState<'termos' | 'privacidade' | null>(null)
   const verPlanos = usePlanosLiberados(perfil)
   const [lembretes, setLembretes] = useState(perfil?.lembretes_email !== false)
+  const [contato, setContato] = useState<DadosContato>({
+    whatsapp: perfil?.whatsapp ?? '',
+    cidade: perfil?.cidade ?? '',
+    especialidade: perfil?.especialidade ?? '',
+    bio: perfil?.bio ?? '',
+    aparecer_na_lista: perfil?.aparecer_na_lista ?? false,
+  })
+  const [contatoSalvo, setContatoSalvo] = useState(false)
 
   useEffect(() => {
     if (!perfil) return
@@ -34,6 +44,17 @@ export function MinhaConta({ onVoltar, onPlanos }: { onVoltar: () => void; onPla
     const erro = await salvarMeuPerfil(perfil!.id, { nome: nome.trim(), registro: registro.trim() })
     if (erro) setErro(erro)
     else recarregar()
+  }
+
+  async function salvarDadosContato() {
+    if (contato.aparecer_na_lista && !registro.trim()) return setErro('Preencha o número do CREF acima para aparecer na lista.')
+    if (contato.aparecer_na_lista && !telefoneValido(contato.whatsapp)) return setErro('Coloque o WhatsApp com DDD para os alunos chamarem você.')
+    const erro = await salvarContato(perfil!.id, contato)
+    setErro(erro)
+    if (!erro) {
+      setContatoSalvo(true)
+      recarregar()
+    }
   }
 
   async function apagar(id: string) {
@@ -92,6 +113,46 @@ export function MinhaConta({ onVoltar, onPlanos }: { onVoltar: () => void; onPla
           Salvar
         </button>
       </section>
+
+      {perfil.papel !== 'aluno' && 'aparecer_na_lista' in perfil && (
+        <section className="cartao formulario">
+          <h2>Aparecer para os alunos</h2>
+          <p className="dica-sec">Alunos sem personal procuram um profissional habilitado em "Encontrar personal" e chamam no seu WhatsApp. Só aparecem nome, CREF, cidade, especialidades, biografia e WhatsApp.</p>
+          <label className="campo">
+            WhatsApp com DDD
+            <input inputMode="tel" autoComplete="tel" value={contato.whatsapp} maxLength={20} placeholder="(11) 98765-4321" onChange={(e) => setContato({ ...contato, whatsapp: e.target.value })} />
+          </label>
+          <label className="campo">
+            Cidade
+            <input value={contato.cidade} maxLength={60} placeholder="Ex.: São Paulo - SP" onChange={(e) => setContato({ ...contato, cidade: e.target.value })} />
+          </label>
+          <label className="campo">
+            Especialidades (separe por vírgula)
+            <input value={contato.especialidade} maxLength={200} placeholder="Ex.: Idosos, hipertrofia, corrida, postura" onChange={(e) => setContato({ ...contato, especialidade: e.target.value })} />
+          </label>
+          <label className="campo">
+            Sobre você (biografia curta)
+            <textarea
+              value={contato.bio}
+              maxLength={BIO_MAXIMO}
+              rows={4}
+              placeholder="Ex.: Formado em Educação Física pela USP, 10 anos de experiência com idosos e reabilitação. Atendo em academia e a domicílio."
+              onChange={(e) => setContato({ ...contato, bio: e.target.value })}
+            />
+            <small className="dica-sec">
+              {contato.bio.length}/{BIO_MAXIMO}
+            </small>
+          </label>
+          <label className="aceite">
+            <input type="checkbox" checked={contato.aparecer_na_lista} onChange={(e) => setContato({ ...contato, aparecer_na_lista: e.target.checked })} />
+            <span>Autorizo mostrar estes dados aos alunos do FormaCerta na lista "Encontrar personal".</span>
+          </label>
+          {contatoSalvo && <p className="mensagem ok">Dados guardados.</p>}
+          <button className="botao" onClick={salvarDadosContato}>
+            Guardar dados de contato
+          </button>
+        </section>
+      )}
 
       {perfil.papel === 'aluno' && (
         <section className="cartao">
