@@ -12,6 +12,7 @@ import { EstudioControle } from './components/estudio/EstudioControle'
 import { EstudioInicio } from './components/estudio/EstudioInicio'
 import { Referencias } from './components/estudio/Referencias'
 import { Admin } from './components/conta/Admin'
+import { Reavaliacoes } from './components/plano/Reavaliacoes'
 import { MeusAlunos } from './components/conta/MeusAlunos'
 import { MinhaEvolucao } from './components/alunos/MinhaEvolucao'
 import { MinhaConta } from './components/conta/MinhaConta'
@@ -23,6 +24,7 @@ import { Planos } from './components/planos/Planos'
 import { PostureAssessment } from './components/PostureAssessment'
 import { PerfilProfissional } from './components/relatorio/PerfilProfissional'
 import { Relatorio } from './components/relatorio/Relatorio'
+import { ProjecaoCarga } from './components/treino/ProjecaoCarga'
 import type { ConfigCorrida, ResultadoCorrida, VistaCorrida } from './corrida/tipos'
 import type { ResultadoExercicio } from './movimento/tipos'
 import { AdamsTeste } from './components/testes/AdamsTeste'
@@ -47,11 +49,13 @@ type Screen =
   | { name: 'corrida'; vista?: VistaCorrida }
   | { name: 'corrida-arquivo'; config: ConfigCorrida; arquivo: File }
   | { name: 'corrida-resultado'; resultado: ResultadoCorrida }
+  | { name: 'carga' }
   | { name: 'flexibilidade' }
   | { name: 'adams' }
   | { name: 'idoso' }
   | { name: 'admin' }
   | { name: 'alunos' }
+  | { name: 'reavaliacoes' }
   | { name: 'evolucao' }
   | { name: 'conta' }
   | { name: 'vitrine' }
@@ -168,6 +172,8 @@ function Telas({ inicial }: { inicial: Screen }) {
   if (screen.name === 'corrida-resultado') {
     return <CorridaResultado resultado={screen.resultado} onVoltar={() => go({ name: 'inicio' })} onOutraVista={(vista) => go({ name: 'corrida', vista })} />
   }
+  if (screen.name === 'carga') return <ProjecaoCarga onVoltar={() => go({ name: 'inicio' })} />
+
   if (screen.name === 'flexibilidade')
     return <FlexTeste onVoltar={() => go({ name: 'inicio' })} onRelatorio={(r) => go({ name: 'relatorio', avaliado: r.avaliado, marcados: [r.id], voltar: screen })} />
 
@@ -194,6 +200,8 @@ function Telas({ inicial }: { inicial: Screen }) {
 
   if (screen.name === 'alunos' && perfil) return <MeusAlunos meuId={perfil.id} onVoltar={() => go({ name: 'inicio' })} />
 
+  if (screen.name === 'reavaliacoes' && perfil) return <Reavaliacoes perfil={perfil} onVoltar={() => go({ name: 'inicio' })} />
+
   if (screen.name === 'evolucao' && perfil) return <MinhaEvolucao meuId={perfil.id} nome={perfil.nome || perfil.email} onVoltar={() => go({ name: 'inicio' })} />
 
   if (screen.name === 'vitrine') return <Vitrine onVoltar={() => go({ name: 'inicio' })} />
@@ -211,6 +219,7 @@ function Telas({ inicial }: { inicial: Screen }) {
       onOpen={(a) => go({ name: 'resultado', assessment: a })}
       onEstudio={() => go({ name: 'estudio' })}
       onExercicio={() => go({ name: 'exercicio' })}
+      onCarga={() => go({ name: 'carga' })}
       onCorrida={() => go({ name: 'corrida' })}
       onFlexibilidade={() => go({ name: 'flexibilidade' })}
       onAdams={() => go({ name: 'adams' })}
@@ -218,12 +227,12 @@ function Telas({ inicial }: { inicial: Screen }) {
       perfil={perfil}
       onAdmin={() => go({ name: 'admin' })}
       onAlunos={() => go({ name: 'alunos' })}
+      onReavaliacoes={() => go({ name: 'reavaliacoes' })}
       onEvolucao={() => go({ name: 'evolucao' })}
       onConta={() => go({ name: 'conta' })}
       onVitrine={() => go({ name: 'vitrine' })}
       onPlanos={() => go({ name: 'planos' })}
       onRelatorio={() => go({ name: 'relatorio', voltar: screen })}
-      onPerfil={() => go({ name: 'perfil', voltar: screen })}
     />
   )
 }

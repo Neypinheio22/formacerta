@@ -1,5 +1,6 @@
 import { supabase } from './cliente'
 import { erroAmigavel } from './conta'
+import { dataReavaliacao } from '../plano/lembretes'
 
 export type TipoResultado = 'postura' | 'corrida' | 'exercicio' | 'flexibilidade' | 'adams' | 'idoso' | 'medidas' | 'estrategia'
 
@@ -49,7 +50,7 @@ export type Envio = {
 }
 
 export async function enviarResultado(e: Envio) {
-  const { error } = await supabase.from('resultados').insert({
+  const linha = {
     enviado_por: e.enviadoPor,
     aluno_id: e.alunoId,
     ficha_id: e.fichaId ?? null,
@@ -57,12 +58,15 @@ export async function enviarResultado(e: Envio) {
     tipo: e.tipo,
     feito_em: e.feitoEm,
     // A estratégia do professor é texto longo e não tem foto: vai inteira.
-    dados: e.tipo === 'estrategia' ? e.resultado : resumir(e.resultado),
+    dados: (e.tipo === 'estrategia' ? e.resultado : resumir(e.resultado)) as Record<string, unknown>,
     idade: e.idade,
     sexo: e.sexo,
     altura_cm: e.alturaCm,
     consentimento_em: new Date().toISOString(),
-  })
+  }
+  // Dia de refazer o teste, pelo plano de ação: o banco usa para mandar o lembrete por e-mail.
+  const reavaliar_em = dataReavaliacao({ ...linha, id: '' })
+  const { error } = await supabase.from('resultados').insert({ ...linha, reavaliar_em })
   return error ? erroAmigavel(error) : null
 }
 
