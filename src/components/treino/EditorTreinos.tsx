@@ -4,21 +4,67 @@ import { EXERCICIOS } from '../../movimento/exercicios'
 import type { Ficha } from '../../nuvem/fichas'
 import { apagarTreino, definirMetaSemana, exercicioVazio, listarTreinos, salvarTreino, type ExercicioTreino, type Treino } from '../../nuvem/treinos'
 import { SUGESTOES_EXERCICIO } from '../../treino/carga'
+import { linhasDe, linhaVazia, tipoDe, TIPOS_LINHA, type CampoLinha, type LinhaSerie, type TipoLinha } from '../../treino/linhas'
 import { proximaLetra } from '../../treino/semana'
 import { SERIE_SUGERIDA } from '../../treino/sugerida'
 import { MateriaisEditor } from './Materiais'
+import { RetornosAluno } from './RetornosAluno'
 
 const SUGESTOES = [...new Set([...EXERCICIOS.map((e) => e.nome), ...SUGESTOES_EXERCICIO])].sort((a, b) => a.localeCompare(b, 'pt-BR'))
 
 type Rascunho = { id?: string; letra: string; nome: string; exercicios: ExercicioTreino[] }
 
+/** Linhas do exercício: cada uma com os campos do tipo escolhido (série/rep, carga, intervalo...). */
+function EditorLinhas({ linhas, onMudar }: { linhas: LinhaSerie[]; onMudar: (l: LinhaSerie[]) => void }) {
+  const [tipoNovo, setTipoNovo] = useState<TipoLinha>('reps_carga')
+  const mudar = (i: number, chave: CampoLinha, valor: string) => onMudar(linhas.map((l, j) => (j === i ? { ...l, [chave]: valor } : l)))
+  return (
+    <>
+      <ul className="linhas-serie">
+        {linhas.map((l, i) => {
+          const t = tipoDe(l.tipo)
+          return (
+            <li key={i} className="linha-serie">
+              <div className="linha-serie-campos" style={{ '--n': t.campos.length } as React.CSSProperties}>
+                {t.campos.map((k) => (
+                  <label key={k.chave} className="campo">
+                    {k.rotulo}
+                    <input value={l[k.chave] ?? ''} onChange={(e) => mudar(i, k.chave, e.target.value)} maxLength={k.max} placeholder={k.exemplo} />
+                  </label>
+                ))}
+              </div>
+              <button type="button" className="icone-apagar" aria-label={`Tirar linha ${t.nome}`} onClick={() => onMudar(linhas.filter((_, j) => j !== i))}>
+                <Trash2 size={16} />
+              </button>
+            </li>
+          )
+        })}
+      </ul>
+      {linhas.length < 20 && (
+        <div className="nova-linha">
+          <select value={tipoNovo} onChange={(e) => setTipoNovo(e.target.value as TipoLinha)} aria-label="Tipo da linha">
+            {TIPOS_LINHA.map((t) => (
+              <option key={t.tipo} value={t.tipo}>
+                {t.nome}
+              </option>
+            ))}
+          </select>
+          <button type="button" className="botao-sec" onClick={() => onMudar([...linhas, linhaVazia(tipoNovo)])}>
+            <Plus size={16} /> Linha
+          </button>
+        </div>
+      )}
+    </>
+  )
+}
+
 function FormTreino({ inicial, onSalvar, onCancelar }: { inicial: Rascunho; onSalvar: (r: Rascunho) => Promise<string | null>; onCancelar: () => void }) {
-  const [r, setR] = useState(inicial)
+  // Treinos antigos (séries, repetições e dica) abrem já convertidos em linhas.
+  const [r, setR] = useState<Rascunho>(() => ({ ...inicial, exercicios: inicial.exercicios.map((e) => ({ ...e, linhas: linhasDe(e) })) }))
   const [salvando, setSalvando] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
 
-  const mudarEx = (i: number, campo: keyof ExercicioTreino, valor: string) =>
-    setR((x) => ({ ...x, exercicios: x.exercicios.map((e, j) => (j === i ? { ...e, [campo]: valor } : e)) }))
+  const mudarEx = (i: number, mudancas: Partial<ExercicioTreino>) => setR((x) => ({ ...x, exercicios: x.exercicios.map((e, j) => (j === i ? { ...e, ...mudancas } : e)) }))
 
   async function salvar(e: React.FormEvent) {
     e.preventDefault()
@@ -35,6 +81,7 @@ function FormTreino({ inicial, onSalvar, onCancelar }: { inicial: Rascunho; onSa
         Nome do treino
         <input value={r.nome} onChange={(e) => setR({ ...r, nome: e.target.value })} maxLength={60} placeholder="Ex.: Pernas, Superiores, Glúteo" />
       </label>
+      <p className="dica-sec">Em cada exercício, adicione as linhas que quiser: escolha o tipo (repetições e carga, cadência, observações...) e toque em + Linha.</p>
       <datalist id="sugestoes-treino">
         {SUGESTOES.map((s) => (
           <option key={s} value={s} />
@@ -44,25 +91,12 @@ function FormTreino({ inicial, onSalvar, onCancelar }: { inicial: Rascunho; onSa
         {r.exercicios.map((ex, i) => (
           <li key={i}>
             <div className="exercicio-linha">
-              <input list="sugestoes-treino" value={ex.nome} onChange={(e) => mudarEx(i, 'nome', e.target.value)} maxLength={80} placeholder="Exercício" aria-label="Exercício" />
+              <input list="sugestoes-treino" value={ex.nome} onChange={(e) => mudarEx(i, { nome: e.target.value })} maxLength={80} placeholder="Exercício" aria-label="Exercício" />
               <button type="button" className="icone-apagar" aria-label="Tirar exercício" onClick={() => setR({ ...r, exercicios: r.exercicios.filter((_, j) => j !== i) })}>
                 <X size={16} />
               </button>
             </div>
-            <div className="tres-campos">
-              <label className="campo">
-                Séries
-                <input value={ex.series} onChange={(e) => mudarEx(i, 'series', e.target.value)} maxLength={10} inputMode="numeric" />
-              </label>
-              <label className="campo">
-                Repetições
-                <input value={ex.reps} onChange={(e) => mudarEx(i, 'reps', e.target.value)} maxLength={20} />
-              </label>
-              <label className="campo">
-                Dica
-                <input value={ex.obs} onChange={(e) => mudarEx(i, 'obs', e.target.value)} maxLength={200} placeholder="Ex.: 60 s descanso" />
-              </label>
-            </div>
+            <EditorLinhas linhas={ex.linhas ?? []} onMudar={(linhas) => mudarEx(i, { linhas })} />
           </li>
         ))}
       </ol>
@@ -193,6 +227,7 @@ export function EditorTreinos({ ficha, meuId }: { ficha: Ficha; meuId: string })
         </label>
         {erro && <p className="mensagem erro">{erro}</p>}
       </section>
+      <RetornosAluno ficha={ficha} treinos={treinos ?? []} />
       <MateriaisEditor meuId={meuId} fichaId={ficha.id} nome={ficha.nome} />
     </>
   )

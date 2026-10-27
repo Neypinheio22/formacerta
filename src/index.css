@@ -3971,3 +3971,150 @@ ul.musculos.fortalecer li {
   line-height: 1.5;
   white-space: pre-line;
 }
+
+/* Linhas do exercício na ficha de treino (série/rep, carga, intervalo...) */
+.linhas-serie {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0 0 8px;
+  padding: 0;
+  list-style: none;
+}
+
+.linha-serie {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.linha-serie-campos {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(var(--n, 3), minmax(0, 1fr));
+  gap: 6px;
+  min-width: 0;
+}
+
+.linha-serie-campos .campo {
+  font-size: 0.78rem;
+  gap: 4px;
+}
+
+.linha-serie-campos input {
+  min-width: 0;
+  width: 100%;
+  padding: 10px 8px;
+}
+
+.linha-serie .icone-apagar {
+  flex: none;
+  margin-bottom: 6px;
+}
+
+.nova-linha {
+  display: flex;
+  gap: 6px;
+}
+
+.nova-linha select {
+  flex: 1;
+  min-width: 0;
+  padding: 10px;
+  border-radius: 12px;
+  border: 1px solid var(--borda);
+  background: var(--cartao);
+  color: var(--texto);
+  font: inherit;
+}
+
+.nova-linha .botao-sec {
+  flex: none;
+  width: auto;
+  margin: 0;
+  padding: 10px 14px;
+}
+
+.linha-aluno {
+  font-size: 0.88rem;
+}
+
+.linha-aluno.linha-nota {
+  font-size: 0.8rem;
+  color: var(--texto-sec);
+}
+
+/* Treino finalizado: retorno do aluno */
+.finalizado {
+  text-align: center;
+}
+
+.finalizado-medalha {
+  display: inline-grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 6px;
+  border-radius: 50%;
+  background: rgba(54, 242, 148, 0.14);
+  color: var(--verde);
+}
+
+.finalizado-tempos {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px 12px;
+  margin: 14px 0 0;
+  padding: 14px;
+  border: 1px solid var(--borda);
+  border-radius: 14px;
+  text-align: left;
+}
+
+.finalizado-tempos dt {
+  font-weight: 600;
+}
+
+.finalizado-tempos dd {
+  margin: 0;
+  text-align: right;
+}
+
+.retorno-resumo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin: 8px 0;
+  font-size: 0.88rem;
+}
+
+.retornos {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.retornos > li {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  border: 1px solid var(--borda);
+  border-radius: 12px;
+}
+
+.retornos .linha-fim {
+  justify-content: space-between;
+}
+
+.retornos .dica-sec {
+  margin: 0;
+}
+
+.retorno-comentario {
+  font-size: 0.88rem;
+  font-style: italic;
+}

@@ -38,7 +38,7 @@ export function EnviarWhatsApp({ texto, avaliado = '', onPdf }: Props) {
           <button className="botao botao-whatsapp" onClick={onPdf}>
             <FileText size={20} /> Enviar PDF pelo WhatsApp
           </button>
-          <p className="dica-sec">Abre o relatório em PDF com a marca FormaCerta, a sua logo e o seu CREF. Lá, toque em “Enviar PDF pelo WhatsApp” e escolha a conversa.</p>
+          <p className="dica-sec">Abre o relatório em PDF com a marca FormaCerta, a sua logo e o seu registro. Lá, toque em “Enviar PDF pelo WhatsApp” e escolha a conversa.</p>
           <h3 className="sub">Ou mande só o texto</h3>
         </>
       )}

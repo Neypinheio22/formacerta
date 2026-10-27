@@ -1,11 +1,13 @@
-import { BadgeCheck, Camera, CheckCircle2, Dumbbell, PlayCircle, TriangleAlert } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { BadgeCheck, Camera, CheckCircle2, Dumbbell, Medal, PlayCircle, TriangleAlert } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
 import { EXERCICIOS } from '../../movimento/exercicios'
 import type { ExercicioId } from '../../movimento/tipos'
 import type { Perfil } from '../../nuvem/conta'
-import { marcarDia, marcarFeito, type ExercicioTreino, type Treino } from '../../nuvem/treinos'
+import { INTENSIDADES, marcarDia, marcarFeito, type ExercicioTreino, type Retorno, type Treino } from '../../nuvem/treinos'
 import { numero } from '../../testes/formato'
 import { carregarSeries, doExercicio, proximaCarga, type Faixa } from '../../treino/carga'
+import { linhasDe, repsDe, resumoLinha } from '../../treino/linhas'
+import { hora, minutos, textoDuracao } from '../../treino/retorno'
 import { diaLocal, noCatalogo } from '../../treino/semana'
 import { SemanaCartao } from './CartoesAluno'
 import { ListaMateriais } from './Materiais'
@@ -35,17 +37,20 @@ function LinhaExercicio({ ex, onCamera }: { ex: ExercicioTreino; onCamera: (id: 
   const naCamera = noCatalogo(EXERCICIOS, ex.nome)
   const series = useMemo(() => doExercicio(carregarSeries(), ex.nome), [ex.nome])
   const ultima = series[series.length - 1]
-  const sugestao = ultima ? proximaCarga(ultima, faixaDe(ex.reps), 2) : null
+  const sugestao = ultima ? proximaCarga(ultima, faixaDe(repsDe(ex)), 2) : null
   return (
     <li className="exercicio-treino">
       <div>
         <strong>{ex.nome}</strong>
-        <span className="dica-sec">
-          {ex.series && `${ex.series} séries`}
-          {ex.series && ex.reps && ' × '}
-          {ex.reps && `${ex.reps} repetições`}
-        </span>
-        {ex.obs && <span className="dica-sec">💡 {ex.obs}</span>}
+        {linhasDe(ex).map((l, i) => {
+          const r = resumoLinha(l)
+          return (
+            <span key={i} className={`linha-aluno ${l.tipo === 'reps_carga' || l.tipo === 'reps_carga_tempo' || l.tipo === 'reps_tempo' ? '' : 'linha-nota'}`}>
+              {['observacoes', 'cadencia', 'exercicio'].includes(l.tipo) && <b>{r.rotulo}: </b>}
+              {r.texto}
+            </span>
+          )
+        })}
         {ultima && sugestao && (
           <span className="exercicio-carga">
             Última: {kg(ultima.kg)} × {ultima.reps} · hoje: <b className="verde">{kg(sugestao.kg)}</b>
@@ -58,6 +63,100 @@ function LinhaExercicio({ ex, onCamera }: { ex: ExercicioTreino; onCamera: (id: 
         </button>
       )}
     </li>
+  )
+}
+
+const CHAVE_INICIO = 'formacerta:inicio-treino'
+
+/** Hora em que o aluno abriu o treino. Fica no aparelho para não perder se a tela recarregar. */
+function inicioDoTreino(letra: string): string {
+  try {
+    const salvo = JSON.parse(localStorage.getItem(CHAVE_INICIO) ?? 'null') as { letra: string; inicio: string } | null
+    // Mais de 4 h aberto: foi esquecido, começa de novo.
+    if (salvo?.letra === letra && Date.now() - new Date(salvo.inicio).getTime() < 4 * 3600000) return salvo.inicio
+  } catch {
+    // Sem armazenamento: começa agora.
+  }
+  const inicio = new Date().toISOString()
+  try {
+    localStorage.setItem(CHAVE_INICIO, JSON.stringify({ letra, inicio }))
+  } catch {
+    // Sem espaço no aparelho: só não lembra.
+  }
+  return inicio
+}
+
+function esquecerInicio() {
+  try {
+    localStorage.removeItem(CHAVE_INICIO)
+  } catch {
+    // Nada a fazer.
+  }
+}
+
+/** Tela "Treino finalizado": início, fim, tempo, intensidade e comentário para o personal. */
+function TreinoFinalizado({ treino, inicio, fim, salvando, erro, comPersonal, onConcluir, onVoltar }: { treino: Treino; inicio: string; fim: string; salvando: boolean; erro: string | null; comPersonal: boolean; onConcluir: (r: Retorno) => void; onVoltar: () => void }) {
+  const [intensidade, setIntensidade] = useState('')
+  const [comentario, setComentario] = useState('')
+  const m = minutos(inicio, fim) ?? 0
+  return (
+    <div className="tela">
+      <header className="topo">
+        <button className="voltar" onClick={onVoltar}>
+          ← Voltar ao treino
+        </button>
+      </header>
+      <section className="cartao destaque finalizado">
+        <span className="finalizado-medalha">
+          <Medal size={34} />
+        </span>
+        <h1>Tudo certo!</h1>
+        <p className="dica-sec">
+          Treino {treino.letra}
+          {treino.nome && ` · ${treino.nome}`} finalizado com sucesso.
+        </p>
+        <dl className="finalizado-tempos">
+          <dt>Início</dt>
+          <dd>{hora(inicio)}</dd>
+          <dt>Fim</dt>
+          <dd>{hora(fim)}</dd>
+          <dt>Tempo de treino</dt>
+          <dd>
+            <b className="verde">{textoDuracao(m)}</b>
+          </dd>
+        </dl>
+      </section>
+      <form
+        className="cartao formulario"
+        onSubmit={(e) => {
+          e.preventDefault()
+          onConcluir({ inicio, fim, intensidade, comentario })
+        }}
+      >
+        <label className="campo">
+          Como foi a intensidade do treino?
+          <select value={intensidade} onChange={(e) => setIntensidade(e.target.value)} required>
+            <option value="" disabled>
+              Selecione
+            </option>
+            {INTENSIDADES.map((i) => (
+              <option key={i} value={i}>
+                {i}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="campo">
+          Se quiser, deixe seu comentário
+          <textarea value={comentario} onChange={(e) => setComentario(e.target.value)} maxLength={500} rows={4} placeholder="Ex.: senti o joelho no afundo, deu para subir a carga no supino…" />
+        </label>
+        {erro && <p className="mensagem erro">{erro}</p>}
+        {comPersonal && <p className="dica-sec">Seu personal vê o tempo, a intensidade e o comentário na sua ficha.</p>}
+        <button className="botao grande" type="submit" disabled={salvando || !intensidade}>
+          <CheckCircle2 size={20} /> {salvando ? 'Guardando…' : 'Concluir'}
+        </button>
+      </form>
+    </div>
   )
 }
 
@@ -86,15 +185,26 @@ export function TelaTreino({ perfil, abrir, onVoltar, onCamera, onCarga, onPerso
   const [aberto, setAberto] = useState<string | null>(abrir ?? null)
   const [aviso, setAviso] = useState<string | null>(null)
   const [salvando, setSalvando] = useState(false)
+  const [inicio, setInicio] = useState<string | null>(null)
+  const [fim, setFim] = useState<string | null>(null)
   const aluno = perfil?.papel === 'aluno'
 
   const treino = t.lista.find((x) => x.letra === aberto) ?? null
 
-  async function concluir(tr: Treino | null) {
+  // O relógio do treino começa quando o aluno abre o treino.
+  useEffect(() => {
+    setInicio(treino ? inicioDoTreino(treino.letra) : null)
+    setFim(null)
+  }, [treino?.letra])
+
+  async function concluir(tr: Treino | null, retorno?: Retorno) {
     setSalvando(true)
-    const erro = tr && perfil && !t.sugerida ? await marcarFeito(perfil.id, tr) : null
+    setAviso(null)
+    const erro = tr && perfil && !t.sugerida ? await marcarFeito(perfil.id, tr, retorno) : null
     setSalvando(false)
     if (erro) return setAviso(erro)
+    esquecerInicio()
+    setFim(null)
     marcarDia(diaLocal(new Date()))
     if (tr && t.sugerida) gravarUltimaSugerida(tr.letra)
     setAviso(tr ? `Treino ${tr.letra} concluído! Mandou bem. 💪` : 'Treino de hoje marcado! 💪')
@@ -102,6 +212,20 @@ export function TelaTreino({ perfil, abrir, onVoltar, onCamera, onCarga, onPerso
     t.recarregar()
     window.scrollTo(0, 0)
   }
+
+  if (treino && inicio && fim)
+    return (
+      <TreinoFinalizado
+        treino={treino}
+        inicio={inicio}
+        fim={fim}
+        salvando={salvando}
+        erro={aviso}
+        comPersonal={!t.sugerida}
+        onVoltar={() => setFim(null)}
+        onConcluir={(r) => concluir(treino, r)}
+      />
+    )
 
   if (treino)
     return (
@@ -125,8 +249,15 @@ export function TelaTreino({ perfil, abrir, onVoltar, onCamera, onCarga, onPerso
         <button className="botao-sec" onClick={onCarga}>
           <Dumbbell size={16} /> Anotar as cargas de hoje
         </button>
-        <button className="botao grande" onClick={() => concluir(treino)} disabled={salvando}>
-          <CheckCircle2 size={20} /> {salvando ? 'Guardando…' : 'Concluir treino'}
+        {inicio && <p className="dica-sec centro">Treino começou às {hora(inicio)}.</p>}
+        <button
+          className="botao grande"
+          onClick={() => {
+            setFim(new Date().toISOString())
+            window.scrollTo(0, 0)
+          }}
+        >
+          <CheckCircle2 size={20} /> Concluir treino
         </button>
       </div>
     )

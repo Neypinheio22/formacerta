@@ -152,7 +152,7 @@ export function Home({ history, onStart, onOpen, onEstudio, onExercicio, onCarga
             ? [{ titulo: 'Central de Inteligência', texto: aluno ? 'Minha análise e exercícios' : '🟢🟡🔴 de cada aluno', Icone: Brain, abrir: aluno ? onEvolucao : onAlunos }]
             : []),
           ...(aluno ? [{ titulo: 'Encontrar personal', texto: 'Profissional com CREF e WhatsApp', Icone: BadgeCheck, abrir: onPersonais }] : []),
-          { titulo: 'Relatório', texto: 'PDF com sua logo e CREF', Icone: FileText, abrir: onRelatorio, soPersonal: true },
+          { titulo: 'Relatório', texto: 'PDF com sua logo e registro', Icone: FileText, abrir: onRelatorio, soPersonal: true },
           { titulo: 'Modo estúdio', texto: 'Grave com 2 ou 3 celulares', Icone: Clapperboard, abrir: onEstudio, soPersonal: true },
         ]}
       />

@@ -34,7 +34,7 @@ export function Privacidade({ onVoltar }: { onVoltar: () => void }) {
         <h2>2. Quais dados guardamos</h2>
         <ul>
           <li>
-            <strong>Conta:</strong> nome, e-mail, tipo de conta e, para profissionais, o número de registro (CREF ou outro). A senha fica protegida e ninguém
+            <strong>Conta:</strong> nome, e-mail, tipo de conta e, para profissionais, o número de registro (CREF, CREFITO ou outro). A senha fica protegida e ninguém
             consegue lê-la.
           </li>
           <li>

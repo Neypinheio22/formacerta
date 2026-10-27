@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { carregarProfissional, lerLogo, salvarProfissional, type Profissional } from '../../relatorio/profissional'
+import { CONSELHOS, carregarProfissional, lerLogo, salvarProfissional, type Profissional } from '../../relatorio/profissional'
 
-/** Nome, registro (CREF), contato e logo do profissional, usados no relatório. */
+/** Nome, registro (CREF, CREFITO ou outro), contato e logo do profissional, usados no relatório. */
 export function PerfilProfissional({ onVoltar, textoVoltar = 'Início' }: { onVoltar: () => void; textoVoltar?: string }) {
   const [salvo, setSalvo] = useState(carregarProfissional)
   const [p, setP] = useState(salvo)
@@ -9,7 +9,7 @@ export function PerfilProfissional({ onVoltar, textoVoltar = 'Início' }: { onVo
   const [aviso, setAviso] = useState('')
   const mudou = JSON.stringify(p) !== JSON.stringify(salvo)
 
-  const campo = (chave: keyof Omit<Profissional, 'logo'>, rotulo: string, placeholder: string, extra: React.InputHTMLAttributes<HTMLInputElement> = {}) => (
+  const campo = (chave: keyof Omit<Profissional, 'logo' | 'conselho'>, rotulo: string, placeholder: string, extra: React.InputHTMLAttributes<HTMLInputElement> = {}) => (
     <label className="campo">
       {rotulo}
       <input value={p[chave]} onChange={(e) => setP({ ...p, [chave]: e.target.value })} placeholder={placeholder} {...extra} />
@@ -74,8 +74,19 @@ export function PerfilProfissional({ onVoltar, textoVoltar = 'Início' }: { onVo
 
       <section className="cartao formulario">
         {campo('nome', 'Nome completo', 'Ex.: Romildo Silva', { autoComplete: 'name' })}
-        {campo('profissao', 'Profissão', 'Ex.: Personal trainer')}
-        {campo('registro', 'Número de registro', 'Ex.: CREF 012345-G/SP')}
+        {campo('profissao', 'Profissão', 'Ex.: Personal trainer ou Fisioterapeuta')}
+        <label className="campo">
+          Conselho do registro
+          <select value={p.conselho} onChange={(e) => setP({ ...p, conselho: e.target.value })}>
+            {CONSELHOS.map((c) => (
+              <option key={c.sigla} value={c.sigla}>
+                {c.nome}
+              </option>
+            ))}
+            <option value="">Outro (escrevo no número)</option>
+          </select>
+        </label>
+        {campo('registro', 'Número de registro', p.conselho === 'CREFITO' ? 'Ex.: 123456-F' : p.conselho ? 'Ex.: 012345-G/SP' : 'Ex.: CRN 12345')}
         {campo('telefone', 'Telefone / WhatsApp', 'Ex.: (11) 98765-4321', { inputMode: 'tel', autoComplete: 'tel' })}
         {campo('email', 'E-mail', 'Ex.: contato@studio.com.br', { inputMode: 'email', autoComplete: 'email' })}
         {campo('local', 'Estúdio, academia ou cidade', 'Ex.: Studio Forma, São Paulo')}

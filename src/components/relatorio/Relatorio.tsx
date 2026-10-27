@@ -4,7 +4,7 @@ import { linkWhatsApp, telefoneGuardado } from '../../compartilhar/whatsapp'
 import { secao, nomeArquivo, nomeTeste, resumo, type ItemRelatorio, type Secao } from '../../relatorio/conteudo'
 import { useConta } from '../../nuvem/conta'
 import { baixarPdf, compartilharPdf, gerarPdf, svgParaImagem, type Imagem, type ModoRelatorio } from '../../relatorio/pdf'
-import { carregarProfissional, contato, perfilPreenchido } from '../../relatorio/profissional'
+import { carregarProfissional, contato, perfilPreenchido, registroCompleto } from '../../relatorio/profissional'
 import { loadAssessments } from '../../storage'
 import { TESTES } from '../../idoso/testes'
 import { CHAVE_IDOSO, type AvaliacaoIdoso } from '../../idoso/tipos'
@@ -156,7 +156,7 @@ export function Relatorio({ avaliadoInicial = '', marcados: marcadosIniciais = [
           <div className="escolha-modo" role="radiogroup" aria-label="Quem está enviando">
             <button role="radio" aria-checked={doPersonal} className={doPersonal ? 'ativo' : ''} onClick={() => setModo('personal')}>
               <strong>Enviar como personal</strong>
-              <span>Com a sua logo, nome e CREF</span>
+              <span>Com a sua logo, nome e registro</span>
             </button>
             <button role="radio" aria-checked={!doPersonal} className={!doPersonal ? 'ativo' : ''} onClick={() => setModo('aluno')}>
               <strong>Enviar como aluno</strong>
@@ -168,7 +168,7 @@ export function Relatorio({ avaliadoInicial = '', marcados: marcadosIniciais = [
 
       {doPersonal && !perfilPreenchido(profissional) && (
         <section className="cartao aviso-perfil">
-          <p>Seu nome e o número de registro (CREF) ainda não estão no perfil. Eles saem no topo e na assinatura do relatório.</p>
+          <p>Seu nome e o número de registro (CREF, CREFITO ou outro) ainda não estão no perfil. Eles saem no topo e na assinatura do relatório.</p>
           <button className="botao-sec" onClick={onPerfil}>
             Preencher perfil e logo
           </button>
@@ -243,7 +243,7 @@ export function Relatorio({ avaliadoInicial = '', marcados: marcadosIniciais = [
                 <div>
                   <strong className="folha-nome">{profissional.nome || 'Seu nome'}</strong>
                   {profissional.profissao && <span>{profissional.profissao}</span>}
-                  <span className="folha-registro">{profissional.registro || 'Número de registro (CREF)'}</span>
+                  <span className="folha-registro">{registroCompleto(profissional) || 'Número de registro'}</span>
                   {contato(profissional) && <span>{contato(profissional)}</span>}
                 </div>
               </header>

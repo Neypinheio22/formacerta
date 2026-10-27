@@ -5,9 +5,11 @@ export type Logo = { image: string; width: number; height: number }
 
 export type Profissional = {
   nome: string
-  /** Ex.: Personal trainer, Profissional de Educação Física. */
+  /** Ex.: Personal trainer, Fisioterapeuta. */
   profissao: string
-  /** Número do registro profissional, ex.: CREF 012345-G/SP. */
+  /** Conselho do registro: CREF (Educação Física), CREFITO (Fisioterapia) ou vazio (outro). */
+  conselho: string
+  /** Número do registro profissional, ex.: 012345-G/SP. */
   registro: string
   telefone: string
   email: string
@@ -18,7 +20,12 @@ export type Profissional = {
 
 const CHAVE = 'formacerta:profissional'
 
-export const PERFIL_VAZIO: Profissional = { nome: '', profissao: '', registro: '', telefone: '', email: '', local: '' }
+export const CONSELHOS = [
+  { sigla: 'CREF', nome: 'CREF (Educação Física)' },
+  { sigla: 'CREFITO', nome: 'CREFITO (Fisioterapia)' },
+] as const
+
+export const PERFIL_VAZIO: Profissional = { nome: '', profissao: '', conselho: 'CREF', registro: '', telefone: '', email: '', local: '' }
 
 export function carregarProfissional(): Profissional {
   try {
@@ -35,6 +42,14 @@ export function salvarProfissional(p: Profissional): boolean {
   } catch {
     return false
   }
+}
+
+/** Registro com o conselho na frente: "CREFITO 123456-F". Se o número já traz o conselho, fica como está. */
+export function registroCompleto(p: Pick<Profissional, 'conselho' | 'registro'>): string {
+  const r = p.registro.trim()
+  const c = (p.conselho ?? '').trim()
+  if (!r || !c || r.toUpperCase().startsWith(c.toUpperCase())) return r
+  return `${c} ${r}`
 }
 
 export const perfilPreenchido = (p: Profissional) => p.nome.trim() !== '' && p.registro.trim() !== ''
