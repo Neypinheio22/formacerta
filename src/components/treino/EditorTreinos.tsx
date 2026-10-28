@@ -1,16 +1,59 @@
-import { Copy, Pencil, Plus, Trash2, X } from 'lucide-react'
+import { CheckCircle2, Copy, Film, Pencil, Plus, Trash2, X } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { EXERCICIOS } from '../../movimento/exercicios'
 import type { Ficha } from '../../nuvem/fichas'
 import { apagarTreino, definirMetaSemana, exercicioVazio, listarTreinos, salvarTreino, type ExercicioTreino, type Treino } from '../../nuvem/treinos'
 import { SUGESTOES_EXERCICIO } from '../../treino/carga'
+import { acharExercicio, comoFazerDe, type ExercicioProprio } from '../../treino/comoFazer'
 import { linhasDe, linhaVazia, tipoDe, TIPOS_LINHA, type CampoLinha, type LinhaSerie, type TipoLinha } from '../../treino/linhas'
 import { proximaLetra } from '../../treino/semana'
 import { SERIE_SUGERIDA } from '../../treino/sugerida'
+import { FormExercicio, MeusExercicios, MidiaExercicio } from './ComoFazer'
+import { useExercicios } from './useExercicios'
 import { MateriaisEditor } from './Materiais'
 import { RetornosAluno } from './RetornosAluno'
 
-const SUGESTOES = [...new Set([...EXERCICIOS.map((e) => e.nome), ...SUGESTOES_EXERCICIO])].sort((a, b) => a.localeCompare(b, 'pt-BR'))
+const SUGESTOES = [...EXERCICIOS.map((e) => e.nome), ...SUGESTOES_EXERCICIO]
+
+type Biblioteca = { meuId: string; lista: ExercicioProprio[]; onMudou: () => void }
+
+/** Embaixo do nome do exercício: mostra a foto ou o vídeo que o aluno vai ver, ou deixa cadastrar. */
+function MidiaNaFicha({ nome, bib }: { nome: string; bib: Biblioteca }) {
+  const [aberto, setAberto] = useState<'ver' | 'cadastrar' | null>(null)
+  const ex = comoFazerDe(bib.lista, nome, bib.meuId)
+  if (!nome.trim()) return null
+  const proprio = acharExercicio(bib.lista, nome, bib.meuId)
+  const meu = proprio && proprio.profissional_id === bib.meuId ? proprio : undefined
+  if (aberto === 'cadastrar')
+    return (
+      <FormExercicio
+        meuId={bib.meuId}
+        admin={false}
+        antes={meu}
+        nomeInicial={nome.trim()}
+        onCancelar={() => setAberto(null)}
+        onPronto={() => {
+          setAberto('ver')
+          bib.onMudou()
+        }}
+      />
+    )
+  return (
+    <div className="midia-ficha">
+      {ex?.tipo ? (
+        <button type="button" className="link" onClick={() => setAberto(aberto ? null : 'ver')}>
+          <CheckCircle2 size={14} /> {meu?.tipo ? 'Com seu vídeo/foto' : 'Vídeo do app'} · {aberto ? 'esconder' : 'ver'}
+        </button>
+      ) : (
+        <span className="dica-sec">Sem foto ou vídeo: o aluno vê uma busca no YouTube.</span>
+      )}
+      <button type="button" className="link" onClick={() => setAberto('cadastrar')}>
+        <Film size={14} /> {meu?.tipo ? 'Trocar' : 'Pôr meu vídeo ou foto'}
+      </button>
+      {aberto === 'ver' && <MidiaExercicio nome={nome} ex={ex} />}
+    </div>
+  )
+}
 
 type Rascunho = { id?: string; letra: string; nome: string; exercicios: ExercicioTreino[] }
 
@@ -58,7 +101,7 @@ function EditorLinhas({ linhas, onMudar }: { linhas: LinhaSerie[]; onMudar: (l: 
   )
 }
 
-function FormTreino({ inicial, onSalvar, onCancelar }: { inicial: Rascunho; onSalvar: (r: Rascunho) => Promise<string | null>; onCancelar: () => void }) {
+function FormTreino({ inicial, bib, onSalvar, onCancelar }: { inicial: Rascunho; bib: Biblioteca; onSalvar: (r: Rascunho) => Promise<string | null>; onCancelar: () => void }) {
   // Treinos antigos (séries, repetições e dica) abrem já convertidos em linhas.
   const [r, setR] = useState<Rascunho>(() => ({ ...inicial, exercicios: inicial.exercicios.map((e) => ({ ...e, linhas: linhasDe(e) })) }))
   const [salvando, setSalvando] = useState(false)
@@ -83,7 +126,7 @@ function FormTreino({ inicial, onSalvar, onCancelar }: { inicial: Rascunho; onSa
       </label>
       <p className="dica-sec">Em cada exercício, adicione as linhas que quiser: escolha o tipo (repetições e carga, cadência, observações...) e toque em + Linha.</p>
       <datalist id="sugestoes-treino">
-        {SUGESTOES.map((s) => (
+        {[...new Set([...bib.lista.map((e) => e.nome), ...SUGESTOES])].sort((a, b) => a.localeCompare(b, 'pt-BR')).map((s) => (
           <option key={s} value={s} />
         ))}
       </datalist>
@@ -96,6 +139,7 @@ function FormTreino({ inicial, onSalvar, onCancelar }: { inicial: Rascunho; onSa
                 <X size={16} />
               </button>
             </div>
+            <MidiaNaFicha nome={ex.nome} bib={bib} />
             <EditorLinhas linhas={ex.linhas ?? []} onMudar={(linhas) => mudarEx(i, { linhas })} />
           </li>
         ))}
@@ -122,6 +166,8 @@ export function EditorTreinos({ ficha, meuId }: { ficha: Ficha; meuId: string })
   const [editando, setEditando] = useState<Rascunho | null>(null)
   const [meta, setMeta] = useState<number | null>(ficha.treinos_semana ?? null)
   const [erro, setErro] = useState<string | null>(null)
+  const exercicios = useExercicios()
+  const bib: Biblioteca = { meuId, lista: exercicios.lista, onMudou: exercicios.recarregar }
 
   const carregar = useCallback(async () => {
     const r = await listarTreinos(ficha.id)
@@ -159,6 +205,7 @@ export function EditorTreinos({ ficha, meuId }: { ficha: Ficha; meuId: string })
     return (
       <FormTreino
         inicial={editando}
+        bib={bib}
         onCancelar={() => setEditando(null)}
         onSalvar={async (r) => {
           const e = await salvarTreino(ficha.id, r)
@@ -228,6 +275,7 @@ export function EditorTreinos({ ficha, meuId }: { ficha: Ficha; meuId: string })
         {erro && <p className="mensagem erro">{erro}</p>}
       </section>
       <RetornosAluno ficha={ficha} treinos={treinos ?? []} />
+      <MeusExercicios meuId={meuId} admin={false} lista={exercicios.lista} onMudou={exercicios.recarregar} />
       <MateriaisEditor meuId={meuId} fichaId={ficha.id} nome={ficha.nome} />
     </>
   )
