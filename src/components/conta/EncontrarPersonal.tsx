@@ -14,7 +14,7 @@ function Cartao({ p, meuNome }: { p: ProfissionalHabilitado; meuNome: string }) 
         <div>
           <h2>{p.nome}</h2>
           <p className="personal-cref">
-            <BadgeCheck size={15} /> CREF {p.registro.replace(/^cref\s*/i, '')}
+            <BadgeCheck size={15} /> {/^crefito/i.test(p.registro) ? p.registro : `CREF ${p.registro.replace(/^cref\s*/i, '')}`}
           </p>
         </div>
       </div>

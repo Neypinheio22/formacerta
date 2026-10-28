@@ -92,7 +92,7 @@ export function Entrar() {
             </label>
             {papel === 'profissional' && (
               <label className="campo">
-                Número de registro (CREF ou outro)
+                Número de registro (CREF, CREFITO ou outro)
                 <input value={registro} onChange={(e) => setRegistro(e.target.value)} maxLength={40} placeholder="Ex.: 012345-G/CE" />
               </label>
             )}

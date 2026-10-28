@@ -1,9 +1,14 @@
 import { supabase } from './cliente'
 import { erroAmigavel } from './conta'
 import type { Ficha } from './fichas'
+import { limparLinha, linhasDe, linhaVazia, linhaVaziaDe, type LinhaSerie } from '../treino/linhas'
 
-/** Um exercício da ficha de treino, como o personal escreveu. */
-export type ExercicioTreino = { nome: string; series: string; reps: string; obs: string }
+/**
+ * Um exercício da ficha de treino, como o personal escreveu. Os treinos novos
+ * usam as linhas (série/rep, carga, intervalo, cadência...); séries,
+ * repetições e dica ficam para os treinos guardados antes delas.
+ */
+export type ExercicioTreino = { nome: string; series: string; reps: string; obs: string; linhas?: LinhaSerie[] }
 
 export type Treino = {
   id: string
@@ -14,9 +19,31 @@ export type Treino = {
   atualizado_em: string
 }
 
-export type TreinoFeito = { id: string; ficha_id: string; treino_id: string | null; letra: string; feito_em: string }
+/** O que o aluno conta ao terminar o treino. */
+export type Retorno = { inicio: string; fim: string; intensidade: string; comentario: string }
 
-export const exercicioVazio = (): ExercicioTreino => ({ nome: '', series: '3', reps: '10 a 12', obs: '' })
+export type TreinoFeito = { id: string; ficha_id: string; treino_id: string | null; letra: string; feito_em: string } & Partial<Retorno>
+
+export const INTENSIDADES = ['Muito leve', 'Leve', 'Moderada', 'Intensa', 'Muito intensa'] as const
+
+export const exercicioVazio = (): ExercicioTreino => ({ nome: '', series: '', reps: '', obs: '', linhas: [linhaVazia()] })
+
+/** Exercício pronto para guardar: só linhas preenchidas e séries/repetições copiadas da primeira linha. */
+export function limparExercicio(e: ExercicioTreino): ExercicioTreino {
+  const linhas = linhasDe(e)
+    .filter((l) => !linhaVaziaDe(l))
+    .slice(0, 20)
+    .map(limparLinha)
+  const serie = linhas.find((l) => l.serie)?.serie ?? ''
+  const [series, ...reps] = serie.split(/x|×/i)
+  return {
+    nome: e.nome.trim().slice(0, 80),
+    series: reps.length ? series.trim().slice(0, 10) : '',
+    reps: (reps.length ? reps.join('x') : series).trim().slice(0, 20),
+    obs: (linhas.find((l) => l.tipo === 'observacoes')?.texto ?? '').slice(0, 200),
+    linhas,
+  }
+}
 
 /** Ficha do aluno logado (a que o personal dele cuida), ou null. */
 export async function minhaFicha(meuId: string): Promise<Ficha | null> {
@@ -35,9 +62,7 @@ export async function salvarTreino(fichaId: string, t: { id?: string; letra: str
     ficha_id: fichaId,
     letra: t.letra,
     nome: t.nome.trim().slice(0, 60),
-    exercicios: t.exercicios
-      .filter((e) => e.nome.trim())
-      .map((e) => ({ nome: e.nome.trim().slice(0, 80), series: e.series.trim().slice(0, 10), reps: e.reps.trim().slice(0, 20), obs: e.obs.trim().slice(0, 200) })),
+    exercicios: t.exercicios.filter((e) => e.nome.trim()).map(limparExercicio),
     atualizado_em: new Date().toISOString(),
   }
   const { error } = t.id ? await supabase.from('treinos').update(linha).eq('id', t.id) : await supabase.from('treinos').insert(linha)
@@ -56,8 +81,13 @@ export async function listarFeitos(fichaId: string, dias = 45): Promise<TreinoFe
   return (data ?? []) as TreinoFeito[]
 }
 
-export async function marcarFeito(meuId: string, t: Treino) {
-  const { error } = await supabase.from('treinos_feitos').insert({ ficha_id: t.ficha_id, treino_id: t.id, letra: t.letra, feito_por: meuId })
+/** Guarda o treino concluído com início, fim, intensidade e comentário do aluno. */
+export async function marcarFeito(meuId: string, t: Treino, retorno?: Retorno) {
+  const base = { ficha_id: t.ficha_id, treino_id: t.id, letra: t.letra, feito_por: meuId }
+  const extra = retorno ? { inicio: retorno.inicio, fim: retorno.fim, intensidade: retorno.intensidade.slice(0, 30), comentario: retorno.comentario.trim().slice(0, 500) } : {}
+  let { error } = await supabase.from('treinos_feitos').insert({ ...base, ...extra })
+  // Banco ainda sem as colunas do retorno: guarda pelo menos o treino feito.
+  if (error && retorno && /column|coluna|schema cache/i.test(error.message)) ({ error } = await supabase.from('treinos_feitos').insert(base))
   return error ? erroAmigavel(error) : null
 }
 

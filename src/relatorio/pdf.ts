@@ -3,7 +3,7 @@
 import type { Status } from '../pose/types'
 import { dataCurta } from '../testes/formato'
 import type { Secao } from './conteudo'
-import { contato, type Profissional } from './profissional'
+import { contato, registroCompleto, type Profissional } from './profissional'
 
 export type Imagem = { image: string; width: number; height: number; legenda?: string }
 
@@ -124,7 +124,7 @@ export async function gerarPdf(dados: DadosRelatorio): Promise<Blob> {
     }
     linhaCabecalho(p.nome || 'Profissional', 14, 'bold', TEXTO)
     linhaCabecalho(p.profissao, 10, 'normal', CINZA)
-    linhaCabecalho(p.registro, 10, 'bold', TEXTO)
+    linhaCabecalho(registroCompleto(p), 10, 'bold', TEXTO)
     linhaCabecalho(contato(p), 9, 'normal', CINZA)
     y += Math.max(altCabecalho, yTexto - y) + 4
     doc.setDrawColor(VERDE[0], VERDE[1], VERDE[2])
@@ -287,7 +287,7 @@ export async function gerarPdf(dados: DadosRelatorio): Promise<Blob> {
     y += 5
     fonte(9)
     cor(CINZA)
-    doc.text(p.registro, A4.w / 2, y, { align: 'center' })
+    doc.text(registroCompleto(p), A4.w / 2, y, { align: 'center' })
   }
 
   // Rodapé em todas as páginas.
