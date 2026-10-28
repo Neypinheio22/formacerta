@@ -6,6 +6,7 @@ import { apagarTreino, definirMetaSemana, exercicioVazio, listarTreinos, salvarT
 import { SUGESTOES_EXERCICIO } from '../../treino/carga'
 import { acharExercicio, comoFazerDe, type ExercicioProprio } from '../../treino/comoFazer'
 import { linhasDe, linhaVazia, tipoDe, TIPOS_LINHA, type CampoLinha, type LinhaSerie, type TipoLinha } from '../../treino/linhas'
+import { EXERCICIOS_MOBILIDADE } from '../../treino/videosApp'
 import { proximaLetra } from '../../treino/semana'
 import { SERIE_SUGERIDA } from '../../treino/sugerida'
 import { FormExercicio, MeusExercicios, MidiaExercicio } from './ComoFazer'
@@ -13,7 +14,7 @@ import { useExercicios } from './useExercicios'
 import { MateriaisEditor } from './Materiais'
 import { RetornosAluno } from './RetornosAluno'
 
-const SUGESTOES = [...EXERCICIOS.map((e) => e.nome), ...SUGESTOES_EXERCICIO]
+const SUGESTOES = [...EXERCICIOS.map((e) => e.nome), ...SUGESTOES_EXERCICIO, ...EXERCICIOS_MOBILIDADE]
 
 type Biblioteca = { meuId: string; lista: ExercicioProprio[]; onMudou: () => void }
 

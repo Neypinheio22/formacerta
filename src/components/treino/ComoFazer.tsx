@@ -106,7 +106,7 @@ export function FormExercicio({ meuId, admin, antes, nomeInicial = '', onPronto,
         Grupo (opcional)
         <select value={grupo} onChange={(e) => setGrupo(e.target.value)}>
           <option value="">Sem grupo</option>
-          {[...GRUPOS, 'Peito', 'Glúteo', 'Panturrilha', 'Cardio', 'Alongamento'].map((g) => (
+          {[...GRUPOS, 'Peito', 'Glúteo', 'Panturrilha', 'Cardio', 'Alongamento', 'Mobilidade'].map((g) => (
             <option key={g} value={g}>
               {g}
             </option>
