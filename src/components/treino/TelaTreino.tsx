@@ -1,15 +1,18 @@
-import { BadgeCheck, Camera, CheckCircle2, Dumbbell, Medal, PlayCircle, TriangleAlert } from 'lucide-react'
+import { BadgeCheck, Camera, CheckCircle2, Dumbbell, Medal, PlayCircle, TriangleAlert, Video } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { EXERCICIOS } from '../../movimento/exercicios'
 import type { ExercicioId } from '../../movimento/tipos'
 import type { Perfil } from '../../nuvem/conta'
 import { INTENSIDADES, marcarDia, marcarFeito, type ExercicioTreino, type Retorno, type Treino } from '../../nuvem/treinos'
 import { numero } from '../../testes/formato'
+import { acharExercicio, type ExercicioProprio } from '../../treino/comoFazer'
 import { carregarSeries, doExercicio, proximaCarga, type Faixa } from '../../treino/carga'
 import { linhasDe, repsDe, resumoLinha } from '../../treino/linhas'
 import { hora, minutos, textoDuracao } from '../../treino/retorno'
 import { diaLocal, noCatalogo } from '../../treino/semana'
 import { SemanaCartao } from './CartoesAluno'
+import { MeusExercicios, MidiaExercicio } from './ComoFazer'
+import { useExercicios } from './useExercicios'
 import { ListaMateriais } from './Materiais'
 import { gravarUltimaSugerida, useMeuTreino } from './useMeuTreino'
 import { AVISO_SUGERIDA } from '../../treino/sugerida'
@@ -33,7 +36,8 @@ function faixaDe(reps: string): Faixa {
 
 const kg = (v: number) => `${numero(v, v % 1 ? 1 : 0)} kg`
 
-function LinhaExercicio({ ex, onCamera }: { ex: ExercicioTreino; onCamera: (id: ExercicioId) => void }) {
+function LinhaExercicio({ ex, comoFazer, onCamera }: { ex: ExercicioTreino; comoFazer?: ExercicioProprio; onCamera: (id: ExercicioId) => void }) {
+  const [vendo, setVendo] = useState(false)
   const naCamera = noCatalogo(EXERCICIOS, ex.nome)
   const series = useMemo(() => doExercicio(carregarSeries(), ex.nome), [ex.nome])
   const ultima = series[series.length - 1]
@@ -57,11 +61,15 @@ function LinhaExercicio({ ex, onCamera }: { ex: ExercicioTreino; onCamera: (id: 
           </span>
         )}
       </div>
+      <button className={`botao-sec camera-mini ${comoFazer?.tipo ? 'tem-midia' : ''}`} onClick={() => setVendo(!vendo)} aria-label={`Como fazer ${ex.nome}`} aria-expanded={vendo}>
+        <Video size={16} />
+      </button>
       {naCamera && (
         <button className="botao-sec camera-mini" onClick={() => onCamera(naCamera.id)} aria-label={`Corrigir ${ex.nome} com a câmera`}>
           <Camera size={16} />
         </button>
       )}
+      {vendo && <MidiaExercicio nome={ex.nome} ex={comoFazer} />}
     </li>
   )
 }
@@ -188,6 +196,8 @@ export function TelaTreino({ perfil, abrir, onVoltar, onCamera, onCarga, onPerso
   const [inicio, setInicio] = useState<string | null>(null)
   const [fim, setFim] = useState<string | null>(null)
   const aluno = perfil?.papel === 'aluno'
+  const exercicios = useExercicios(!!perfil)
+  const profissionalId = t.ficha?.profissional_id ?? perfil?.profissional_id ?? perfil?.id
 
   const treino = t.lista.find((x) => x.letra === aberto) ?? null
 
@@ -240,10 +250,10 @@ export function TelaTreino({ perfil, abrir, onVoltar, onCamera, onCarga, onPerso
           {treino.nome && ` · ${treino.nome}`}
         </h1>
         {t.sugerida && <AvisoSugerida temFicha={!!t.ficha} onPersonais={onPersonais} />}
-        <p className="dica-sec">Toque na câmera ao lado do exercício para o app contar as repetições e corrigir o movimento.</p>
+        <p className="dica-sec">Toque em <Video size={14} /> para ver como fazer o exercício e na câmera para o app contar as repetições e corrigir o movimento.</p>
         <ol className="lista-treino">
           {treino.exercicios.map((ex, i) => (
-            <LinhaExercicio key={i} ex={ex} onCamera={onCamera} />
+            <LinhaExercicio key={i} ex={ex} comoFazer={acharExercicio(exercicios.lista, ex.nome, profissionalId)} onCamera={onCamera} />
           ))}
         </ol>
         <button className="botao-sec" onClick={onCarga}>
@@ -300,6 +310,8 @@ export function TelaTreino({ perfil, abrir, onVoltar, onCamera, onCarga, onPerso
           <p className="dica-sec">Para montar os treinos A, B, C e mandar materiais, abra Alunos, escolha o aluno e toque na aba 🏋️ Treino.</p>
         </section>
       )}
+
+      {perfil && !aluno && <MeusExercicios meuId={perfil.id} admin={perfil.papel === 'admin'} lista={exercicios.lista} onMudou={exercicios.recarregar} />}
 
       <section className="grupo-atalhos">
         <h2 className="secao">Ferramentas</h2>
