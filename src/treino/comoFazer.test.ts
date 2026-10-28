@@ -83,7 +83,8 @@ describe('vídeos do app', () => {
     const { EXERCICIOS } = await import('../movimento/exercicios')
     const { SUGESTOES_EXERCICIO } = await import('./carga')
     const { SERIE_SUGERIDA } = await import('./sugerida')
-    const nomes = [...EXERCICIOS.map((e) => e.nome), ...SUGESTOES_EXERCICIO, ...SERIE_SUGERIDA.flatMap((t) => t.exercicios.map((e) => e.nome))]
+    const { EXERCICIOS_MOBILIDADE } = await import('./videosApp')
+    const nomes = [...EXERCICIOS_MOBILIDADE, 'Rotação interna/externa do quadril', 'Cat-Cow', ...EXERCICIOS.map((e) => e.nome), ...SUGESTOES_EXERCICIO, ...SERIE_SUGERIDA.flatMap((t) => t.exercicios.map((e) => e.nome))]
     expect(nomes.filter((n) => !videoDoApp(n))).toEqual([])
   })
 
