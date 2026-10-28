@@ -7,10 +7,12 @@ type Props = {
   textoSalvar: string
   onSalvar: (dados: DadosFicha) => Promise<string | null>
   onCancelar: () => void
+  /** O próprio aluno preenchendo: sem nome nem observações do profissional. */
+  doAluno?: boolean
 }
 
 /** Dados pessoais do aluno: criar ou editar a ficha. */
-export function FichaForm({ inicial, titulo, textoSalvar, onSalvar, onCancelar }: Props) {
+export function FichaForm({ inicial, titulo, textoSalvar, onSalvar, onCancelar, doAluno = false }: Props) {
   const [d, setD] = useState<DadosFicha>(inicial)
   const [aceito, setAceito] = useState(!!inicial.consentimento_em)
   const [erro, setErro] = useState<string | null>(null)
@@ -30,10 +32,14 @@ export function FichaForm({ inicial, titulo, textoSalvar, onSalvar, onCancelar }
   return (
     <form className="cartao destaque formulario" onSubmit={salvar}>
       <h2>{titulo}</h2>
-      <label className="campo">
-        Nome do aluno
-        <input value={d.nome} onChange={(e) => muda('nome', e.target.value)} maxLength={120} placeholder="Ex.: Maria Souza" />
-      </label>
+      {doAluno ? (
+        <p className="dica-sec">Com estes dados a avaliação fica completa: o app calcula o IMC e sabe o que é melhora para o seu objetivo. O seu personal vê o que você preencher.</p>
+      ) : (
+        <label className="campo">
+          Nome do aluno
+          <input value={d.nome} onChange={(e) => muda('nome', e.target.value)} maxLength={120} placeholder="Ex.: Maria Souza" />
+        </label>
+      )}
       <div className="tres-campos">
         <label className="campo">
           Nascimento
@@ -81,16 +87,23 @@ export function FichaForm({ inicial, titulo, textoSalvar, onSalvar, onCancelar }
         Saúde: doenças, dores, remédios e restrições
         <textarea value={d.saude} onChange={(e) => muda('saude', e.target.value)} rows={3} maxLength={2000} />
       </label>
-      <label className="campo">
-        Observações do profissional
-        <textarea value={d.observacoes} onChange={(e) => muda('observacoes', e.target.value)} rows={3} maxLength={2000} />
-      </label>
+      {!doAluno && (
+        <label className="campo">
+          Observações do profissional
+          <textarea value={d.observacoes} onChange={(e) => muda('observacoes', e.target.value)} rows={3} maxLength={2000} />
+        </label>
+      )}
       <label className="aceite">
         <input type="checkbox" checked={aceito} onChange={(e) => setAceito(e.target.checked)} />
-        <span>O aluno autorizou guardar estes dados e os números das avaliações (sem foto e sem vídeo) no FormaCerta, para acompanhar a evolução. Dá para apagar quando quiser.</span>
+        <span>
+          {doAluno
+            ? 'Autorizo guardar estes dados e os números das minhas avaliações (sem foto e sem vídeo) no FormaCerta, para acompanhar a minha evolução. Dá para apagar quando eu quiser.'
+            : 'O aluno autorizou guardar estes dados e os números das avaliações (sem foto e sem vídeo) no FormaCerta, para acompanhar a evolução. Dá para apagar quando quiser.'}
+        </span>
       </label>
+      {d.altura_cm !== null && (d.altura_cm < 50 || d.altura_cm > 250) && <p className="mensagem erro">A altura vai em centímetros, por exemplo 165.</p>}
       {erro && <p className="mensagem erro">{erro}</p>}
-      <button className="botao" type="submit" disabled={d.nome.trim() === '' || !aceito || salvando}>
+      <button className="botao" type="submit" disabled={d.nome.trim() === '' || !aceito || salvando || (d.altura_cm !== null && (d.altura_cm < 50 || d.altura_cm > 250))}>
         {salvando ? 'Salvando…' : textoSalvar}
       </button>
       <button className="botao-sec" type="button" onClick={onCancelar}>

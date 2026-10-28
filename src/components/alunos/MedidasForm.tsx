@@ -4,8 +4,16 @@ import type { Circunferencia } from '../../idoso/tipos'
 import { idadeDe, type Ficha } from '../../nuvem/fichas'
 import { enviarResultado } from '../../nuvem/resultados'
 import { lerNumero } from '../../testes/formato'
+import { ComoMedir } from './ComoMedir'
 
-type Props = { ficha: Ficha; meuId: string; onSalvo: () => void; onCancelar: () => void }
+type Props = {
+  ficha: Ficha
+  meuId: string
+  onSalvo: () => void
+  onCancelar: () => void
+  /** O próprio aluno anotando as medidas dele, em casa. */
+  doAluno?: boolean
+}
 
 const hoje = () => {
   const d = new Date()
@@ -21,8 +29,8 @@ function Campo({ rotulo, valor, onChange }: { rotulo: string; valor: string; onC
   )
 }
 
-/** O profissional anota peso, gordura, batimentos e perimetria do aluno. */
-export function MedidasForm({ ficha, meuId, onSalvo, onCancelar }: Props) {
+/** O profissional (ou o próprio aluno) anota peso, gordura, batimentos e perimetria. */
+export function MedidasForm({ ficha, meuId, onSalvo, onCancelar, doAluno = false }: Props) {
   const [data, setData] = useState(hoje)
   const [peso, setPeso] = useState('')
   const [gordura, setGordura] = useState('')
@@ -66,8 +74,12 @@ export function MedidasForm({ ficha, meuId, onSalvo, onCancelar }: Props) {
 
   return (
     <form className="cartao destaque formulario" onSubmit={salvar}>
-      <h2>Medidas do corpo</h2>
-      <p className="dica-sec">Preencha só o que mediu hoje. Cada medida entra no gráfico de evolução de {ficha.nome.split(' ')[0]}.</p>
+      <h2>{doAluno ? 'Minhas medidas de hoje' : 'Medidas do corpo'}</h2>
+      <p className="dica-sec">
+        {doAluno
+          ? 'Preencha só o que mediu hoje. Cada medida entra no seu gráfico de evolução, e o seu personal vê que foi você quem anotou.'
+          : `Preencha só o que mediu hoje. Cada medida entra no gráfico de evolução de ${ficha.nome.split(' ')[0]}.`}
+      </p>
       <label className="campo">
         Data
         <input type="date" value={data} max={hoje()} onChange={(e) => setData(e.target.value || hoje())} />
@@ -75,11 +87,13 @@ export function MedidasForm({ ficha, meuId, onSalvo, onCancelar }: Props) {
       <div className="tres-campos">
         <Campo rotulo="Peso (kg)" valor={peso} onChange={setPeso} />
         <Campo rotulo="Gordura (%)" valor={gordura} onChange={setGordura} />
-        <Campo rotulo="FC repouso" valor={fc} onChange={setFc} />
+        <Campo rotulo={doAluno ? 'Batimentos em repouso' : 'FC repouso'} valor={fc} onChange={setFc} />
       </div>
-      {!ficha.altura_cm && <p className="dica-sec">Coloque a altura na ficha para o app calcular o IMC.</p>}
-      <details className="perimetria">
-        <summary>Perimetria (circunferências em cm)</summary>
+      {doAluno && <p className="dica-sec">Gordura e batimentos só se a sua balança ou relógio mostrarem.</p>}
+      {!ficha.altura_cm && <p className="dica-sec">{doAluno ? 'Coloque a sua altura em "Meus dados"' : 'Coloque a altura na ficha'} para o app calcular o IMC.</p>}
+      <details className="perimetria" open={doAluno}>
+        <summary>{doAluno ? 'Medidas com fita métrica (cm)' : 'Perimetria (circunferências em cm)'}</summary>
+        {doAluno && <ComoMedir />}
         <div className="tres-campos">
           {PERIMETRIA.map((c) => (
             <Campo key={c.id} rotulo={c.nome} valor={circ[c.id] ?? ''} onChange={(v) => setCirc((x) => ({ ...x, [c.id]: v }))} />

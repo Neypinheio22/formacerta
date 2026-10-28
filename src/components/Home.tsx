@@ -5,6 +5,7 @@ import { useState } from 'react'
 import { FundoHex } from './FundoHex'
 import { Logo } from './Logo'
 import { CartaoReavaliacao } from './plano/Reavaliacoes'
+import { CartaoMeusDados } from './alunos/CartaoMeusDados'
 import { usePlanosLiberados } from './planos/usePlanosLiberados'
 import { AguaCartao, ProximoTreinoCartao, SemanaCartao } from './treino/CartoesAluno'
 import { useMeuTreino } from './treino/useMeuTreino'
@@ -97,6 +98,8 @@ export function Home({ history, onStart, onOpen, onEstudio, onExercicio, onCarga
         </header>
       )}
 
+      {aluno && perfil && <CartaoMeusDados meuId={perfil.id} onAbrir={onEvolucao} />}
+
       {aluno && (
         <>
           <SemanaCartao feitos={treino.feitosNaSemana} meta={treino.meta} podeMudar={!treino.metaDoPersonal && !treino.treinos.length} onMudar={treino.mudarMetaLocal} />
@@ -106,7 +109,7 @@ export function Home({ history, onStart, onOpen, onEstudio, onExercicio, onCarga
 
       {perfil && <VitrineCarrossel onAbrir={onVitrine} />}
 
-      {perfil && <CartaoReavaliacao perfil={perfil} onAbrir={onReavaliacoes} />}
+      {perfil && <CartaoReavaliacao perfil={perfil} onAbrir={aluno ? onEvolucao : onReavaliacoes} />}
 
       <section className="cartao destaque">
         <span className="etiqueta">

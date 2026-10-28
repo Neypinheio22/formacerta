@@ -17,6 +17,7 @@ const ROTULO: Record<string, string> = {
   flexibilidade: 'Teste de Flexibilidade',
   adams: 'Teste de Adams (coluna)',
   idoso: 'Avaliação funcional do idoso',
+  medidas: 'Peso e medidas do corpo',
 }
 
 type Linha = {

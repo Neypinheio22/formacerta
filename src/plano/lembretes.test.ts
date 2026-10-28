@@ -15,7 +15,14 @@ const hoje = new Date(2026, 10, 25, 9)
 describe('lembrete de reavaliação', () => {
   it('data de reavaliação pelo plano de ação (30 dias para "precisa melhorar")', () => {
     expect(dataReavaliacao(nuvem('flexibilidade', flexRuim, '2026-10-26T12:00:00Z'))).toBe('2026-11-25')
-    expect(dataReavaliacao(nuvem('medidas', { peso: 70 }, '2026-10-26T12:00:00Z'))).toBeNull()
+    expect(dataReavaliacao(nuvem('estrategia', { texto: 'x' }, '2026-10-26T12:00:00Z'))).toBeNull()
+  })
+
+  it('peso e medidas: lembrete todo mês, e medir de novo troca o lembrete', () => {
+    expect(dataReavaliacao(nuvem('medidas', { peso: 70 }, '2026-10-26T12:00:00Z'))).toBe('2026-11-25')
+    const ls = lembretes([nuvem('medidas', { peso: 70 }, '2026-09-01T12:00:00Z'), nuvem('medidas', { peso: 69 }, '2026-10-26T12:00:00Z')], [ficha], hoje)
+    expect(ls).toHaveLength(1)
+    expect(ls[0]).toMatchObject({ teste: 'Peso e medidas do corpo', situacao: 'hoje' })
   })
 
   it('vence hoje, com nome e telefone da ficha', () => {

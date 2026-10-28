@@ -4207,3 +4207,47 @@ ul.musculos.fortalecer li {
 .exercicio-treino > .como-fazer {
   flex: 1 1 100%;
 }
+
+/* Aluno preenche os próprios dados: onde passar a fita e o selo para o personal */
+.como-medir {
+  margin: 4px 0 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--borda-verde);
+  border-radius: 12px;
+}
+.como-medir summary {
+  color: var(--verde);
+}
+.como-medir-corpo {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  margin-top: 8px;
+}
+.como-medir-corpo svg {
+  flex: none;
+  color: var(--texto-sec);
+}
+.como-medir-corpo ul {
+  margin: 0;
+  padding-left: 16px;
+  font-size: 0.85rem;
+  color: var(--texto-sec);
+  display: grid;
+  gap: 4px;
+}
+.chip.selo-aluno {
+  display: table;
+  margin-top: 4px;
+  font-size: 0.7rem;
+  white-space: nowrap;
+}
+p.selo-aluno {
+  color: var(--verde);
+}
+@media (max-width: 380px) {
+  .como-medir-corpo {
+    flex-direction: column;
+    align-items: center;
+  }
+}
