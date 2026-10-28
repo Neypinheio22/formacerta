@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { acharExercicio, buscaYoutube, idYoutube, nomeChave, tipoDoArquivo, type ExercicioProprio } from './comoFazer'
+import { acharExercicio, buscaYoutube, comoFazerDe, videoDoApp, idYoutube, nomeChave, tipoDoArquivo, type ExercicioProprio } from './comoFazer'
 
 const ex = (p: Partial<ExercicioProprio>): ExercicioProprio => ({
   id: crypto.randomUUID(),
@@ -68,5 +68,33 @@ describe('buscaYoutube e tipoDoArquivo', () => {
     expect(tipoDoArquivo({ type: 'video/mp4' })).toBe('video')
     expect(tipoDoArquivo({ type: 'image/jpeg' })).toBe('imagem')
     expect(tipoDoArquivo({ type: 'application/pdf' })).toBeNull()
+  })
+})
+
+describe('vídeos do app', () => {
+  it('acha pelo nome, mesmo com parênteses ou sem acento', () => {
+    expect(videoDoApp('Rosca direta')).toMatch(/^https:\/\/www\.youtube\.com\/watch\?v=/)
+    expect(videoDoApp('Afundo (avanço)')).toBe(videoDoApp('afundo'))
+    expect(videoDoApp('ELEVACAO PELVICA (ponte)')).toBe(videoDoApp('Elevação pélvica'))
+    expect(videoDoApp('Exercício inventado')).toBeUndefined()
+  })
+
+  it('todos os exercícios do catálogo e da série sugerida têm vídeo', async () => {
+    const { EXERCICIOS } = await import('../movimento/exercicios')
+    const { SUGESTOES_EXERCICIO } = await import('./carga')
+    const { SERIE_SUGERIDA } = await import('./sugerida')
+    const nomes = [...EXERCICIOS.map((e) => e.nome), ...SUGESTOES_EXERCICIO, ...SERIE_SUGERIDA.flatMap((t) => t.exercicios.map((e) => e.nome))]
+    expect(nomes.filter((n) => !videoDoApp(n))).toEqual([])
+  })
+
+  it('vídeo do personal vale mais; sem ele, usa o do app e mantém o texto do personal', () => {
+    const meu = ex({ nome: 'Rosca direta', tipo: 'video', arquivo: 'r.mp4' })
+    expect(comoFazerDe([meu], 'Rosca direta', 'romildo')).toBe(meu)
+    const soTexto = ex({ nome: 'Rosca direta', descricao: 'Cotovelo parado' })
+    const r = comoFazerDe([soTexto], 'Rosca direta', 'romildo')
+    expect(r?.tipo).toBe('link')
+    expect(r?.link).toBe(videoDoApp('Rosca direta'))
+    expect(r?.descricao).toBe('Cotovelo parado')
+    expect(comoFazerDe([], 'Exercício inventado')).toBeUndefined()
   })
 })

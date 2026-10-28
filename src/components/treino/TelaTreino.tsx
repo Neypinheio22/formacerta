@@ -5,7 +5,7 @@ import type { ExercicioId } from '../../movimento/tipos'
 import type { Perfil } from '../../nuvem/conta'
 import { INTENSIDADES, marcarDia, marcarFeito, type ExercicioTreino, type Retorno, type Treino } from '../../nuvem/treinos'
 import { numero } from '../../testes/formato'
-import { acharExercicio, type ExercicioProprio } from '../../treino/comoFazer'
+import { comoFazerDe, type ExercicioProprio } from '../../treino/comoFazer'
 import { carregarSeries, doExercicio, proximaCarga, type Faixa } from '../../treino/carga'
 import { linhasDe, repsDe, resumoLinha } from '../../treino/linhas'
 import { hora, minutos, textoDuracao } from '../../treino/retorno'
@@ -253,7 +253,7 @@ export function TelaTreino({ perfil, abrir, onVoltar, onCamera, onCarga, onPerso
         <p className="dica-sec">Toque em <Video size={14} /> para ver como fazer o exercício e na câmera para o app contar as repetições e corrigir o movimento.</p>
         <ol className="lista-treino">
           {treino.exercicios.map((ex, i) => (
-            <LinhaExercicio key={i} ex={ex} comoFazer={acharExercicio(exercicios.lista, ex.nome, profissionalId)} onCamera={onCamera} />
+            <LinhaExercicio key={i} ex={ex} comoFazer={comoFazerDe(exercicios.lista, ex.nome, profissionalId)} onCamera={onCamera} />
           ))}
         </ol>
         <button className="botao-sec" onClick={onCarga}>

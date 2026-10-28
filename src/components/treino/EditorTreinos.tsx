@@ -4,7 +4,7 @@ import { EXERCICIOS } from '../../movimento/exercicios'
 import type { Ficha } from '../../nuvem/fichas'
 import { apagarTreino, definirMetaSemana, exercicioVazio, listarTreinos, salvarTreino, type ExercicioTreino, type Treino } from '../../nuvem/treinos'
 import { SUGESTOES_EXERCICIO } from '../../treino/carga'
-import { acharExercicio, type ExercicioProprio } from '../../treino/comoFazer'
+import { acharExercicio, comoFazerDe, type ExercicioProprio } from '../../treino/comoFazer'
 import { linhasDe, linhaVazia, tipoDe, TIPOS_LINHA, type CampoLinha, type LinhaSerie, type TipoLinha } from '../../treino/linhas'
 import { proximaLetra } from '../../treino/semana'
 import { SERIE_SUGERIDA } from '../../treino/sugerida'
@@ -20,9 +20,10 @@ type Biblioteca = { meuId: string; lista: ExercicioProprio[]; onMudou: () => voi
 /** Embaixo do nome do exercício: mostra a foto ou o vídeo que o aluno vai ver, ou deixa cadastrar. */
 function MidiaNaFicha({ nome, bib }: { nome: string; bib: Biblioteca }) {
   const [aberto, setAberto] = useState<'ver' | 'cadastrar' | null>(null)
-  const ex = acharExercicio(bib.lista, nome, bib.meuId)
+  const ex = comoFazerDe(bib.lista, nome, bib.meuId)
   if (!nome.trim()) return null
-  const meu = ex && ex.profissional_id === bib.meuId ? ex : undefined
+  const proprio = acharExercicio(bib.lista, nome, bib.meuId)
+  const meu = proprio && proprio.profissional_id === bib.meuId ? proprio : undefined
   if (aberto === 'cadastrar')
     return (
       <FormExercicio
@@ -41,7 +42,7 @@ function MidiaNaFicha({ nome, bib }: { nome: string; bib: Biblioteca }) {
     <div className="midia-ficha">
       {ex?.tipo ? (
         <button type="button" className="link" onClick={() => setAberto(aberto ? null : 'ver')}>
-          <CheckCircle2 size={14} /> {ex.do_app && !meu ? 'Foto/vídeo do app' : 'Com foto/vídeo'} · {aberto ? 'esconder' : 'ver'}
+          <CheckCircle2 size={14} /> {meu?.tipo ? 'Com seu vídeo/foto' : 'Vídeo do app'} · {aberto ? 'esconder' : 'ver'}
         </button>
       ) : (
         <span className="dica-sec">Sem foto ou vídeo: o aluno vê uma busca no YouTube.</span>
