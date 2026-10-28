@@ -39,9 +39,23 @@ export function situacaoDe(dias: number): Situacao {
   return dias <= DIAS_AVISO ? 'breve' : 'futura'
 }
 
+/** De quanto em quanto tempo o aluno se pesa e mede de novo. */
+export const DIAS_MEDIDAS = 30
+export const TESTE_MEDIDAS = 'Peso e medidas do corpo'
+
+/** Quando refazer: pelo plano de ação do teste, ou todo mês para as medidas do corpo. */
+function reavaliacao(r: ResultadoNuvem): { chave: string; teste: string; reavaliarEm: string } | null {
+  if (r.tipo === 'medidas') {
+    const d = new Date(r.feito_em)
+    d.setDate(d.getDate() + DIAS_MEDIDAS)
+    return { chave: 'medidas', teste: TESTE_MEDIDAS, reavaliarEm: d.toISOString() }
+  }
+  return planoDeNuvem(r)
+}
+
 /** Data de reavaliação de um resultado (AAAA-MM-DD), ou null se o teste não tem. */
 export function dataReavaliacao(r: ResultadoNuvem): string | null {
-  const p = planoDeNuvem(r)
+  const p = reavaliacao(r)
   return p ? diaLocal(new Date(p.reavaliarEm)) : null
 }
 
@@ -54,7 +68,7 @@ export function lembretes(resultados: ResultadoNuvem[], fichas: Ficha[] = [], ho
   const dia = diaLocal(hoje)
 
   for (const r of resultados) {
-    const p = planoDeNuvem(r)
+    const p = reavaliacao(r)
     if (!p) continue
     const ficha = (r.ficha_id && porFicha.get(r.ficha_id)) || (r.aluno_id && porAluno.get(r.aluno_id)) || null
     const pessoa = ficha ? `f:${ficha.id}` : r.aluno_id ? `a:${r.aluno_id}` : `n:${r.enviado_por}:${r.apelido.trim().toLocaleLowerCase('pt-BR')}`

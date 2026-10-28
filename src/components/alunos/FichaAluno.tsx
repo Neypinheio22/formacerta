@@ -1,6 +1,6 @@
 import { Pencil, Ruler, Trash2, UserPlus } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
-import { apagarFicha, editarFicha, idadeDe, listarFichas, rotuloObjetivo, type Ficha } from '../../nuvem/fichas'
+import { apagarFicha, editarFicha, fichaVazia, idadeDe, listarFichas, rotuloObjetivo, salvarMeusDados, type Ficha } from '../../nuvem/fichas'
 import { ROTULO_TIPO, apagarResultado, listarResultados, type ResultadoNuvem } from '../../nuvem/resultados'
 import { dataCurta } from '../../testes/formato'
 import { NovoAluno } from '../conta/NovoAluno'
@@ -22,12 +22,14 @@ type Props = {
   onVoltar: () => void
   /** A ficha mudou ou foi apagada: a lista de alunos precisa recarregar. */
   onMudou?: () => void
+  /** O próprio aluno vendo a ficha dele: preenche os dados pessoais e anota as medidas. */
+  souOAluno?: boolean
 }
 
 type Modo = 'ver' | 'editar' | 'medidas' | 'acesso'
 
 /** Ficha do aluno: dados pessoais, gráficos de evolução e todas as avaliações guardadas. */
-export function FichaAluno({ ficha, meuId, podeEditar, nome, textoVoltar, onVoltar, onMudou }: Props) {
+export function FichaAluno({ ficha, meuId, podeEditar, nome, textoVoltar, onVoltar, onMudou, souOAluno = false }: Props) {
   const [resultados, setResultados] = useState<ResultadoNuvem[] | null>(null)
   const [erro, setErro] = useState<string | null>(null)
   const [modo, setModo] = useState<Modo>('ver')
@@ -76,7 +78,27 @@ export function FichaAluno({ ficha, meuId, podeEditar, nome, textoVoltar, onVolt
         </button>
       </header>
 
-      {modo === 'editar' && dados && (
+      {modo === 'editar' && souOAluno && (
+        <FichaForm
+          inicial={dados ?? fichaVazia(nome)}
+          titulo="Meus dados"
+          textoSalvar="Salvar meus dados"
+          doAluno
+          onCancelar={() => setModo('ver')}
+          onSalvar={async (novos) => {
+            const e = await salvarMeusDados(novos)
+            if (!e) {
+              const { fichas } = await listarFichas()
+              setDados(fichas.find((f) => f.aluno_id === meuId) ?? dados)
+              setModo('ver')
+              onMudou?.()
+            }
+            return e
+          }}
+        />
+      )}
+
+      {modo === 'editar' && !souOAluno && dados && (
         <FichaForm
           inicial={dados}
           titulo={`Ficha de ${dados.nome}`}
@@ -98,6 +120,7 @@ export function FichaAluno({ ficha, meuId, podeEditar, nome, textoVoltar, onVolt
         <MedidasForm
           ficha={dados}
           meuId={meuId}
+          doAluno={souOAluno}
           onCancelar={() => setModo('ver')}
           onSalvo={() => {
             setModo('ver')
@@ -142,6 +165,9 @@ export function FichaAluno({ ficha, meuId, podeEditar, nome, textoVoltar, onVolt
                   <b>Observações:</b> {dados.observacoes}
                 </p>
               )}
+              {podeEditar && dados.aluno_atualizou_em && (
+                <p className="dica-sec selo-aluno">✏️ {dados.nome.split(' ')[0]} atualizou os próprios dados em {dataCurta(dados.aluno_atualizou_em)}.</p>
+              )}
               {podeEditar && (
                 <>
                   <div className="acoes-linha">
@@ -164,6 +190,23 @@ export function FichaAluno({ ficha, meuId, podeEditar, nome, textoVoltar, onVolt
             </>
           ) : (
             <p className="dica-sec">Os resultados que você guarda no app aparecem aqui, com a sua evolução.</p>
+          )}
+          {souOAluno && (
+            <>
+              {(!dados || !dados.altura_cm || !dados.nascimento || !dados.objetivo) && (
+                <p className="dica-sec">Preencha altura, nascimento e objetivo para a sua avaliação vir completa.</p>
+              )}
+              <div className="acoes-linha">
+                {dados && (
+                  <button className="botao" onClick={() => setModo('medidas')}>
+                    <Ruler size={18} /> Anotar medidas
+                  </button>
+                )}
+                <button className={dados ? 'botao-sec' : 'botao'} onClick={() => setModo('editar')}>
+                  <Pencil size={16} /> {dados ? 'Meus dados' : 'Preencher meus dados'}
+                </button>
+              </div>
+            </>
           )}
         </section>
       )}
@@ -201,10 +244,15 @@ export function FichaAluno({ ficha, meuId, podeEditar, nome, textoVoltar, onVolt
                 {resultados.map((r) => (
                   <li key={r.id}>
                     <span className="linha">
-                      <span>{ROTULO_TIPO[r.tipo]}</span>
+                      <span>
+                        {ROTULO_TIPO[r.tipo]}
+                        {r.tipo === 'medidas' && dados?.aluno_id && r.enviado_por === dados.aluno_id && (
+                          <span className="chip chip-neutro selo-aluno">{souOAluno ? 'anotado por você' : 'anotado pelo aluno'}</span>
+                        )}
+                      </span>
                       <span className="linha-fim">
                         <span className="nota">{dataCurta(r.feito_em)}</span>
-                        {podeEditar && (
+                        {(podeEditar || (souOAluno && r.enviado_por === meuId)) && (
                           <button className="icone-apagar" aria-label="Apagar avaliação" onClick={() => apagarAvaliacao(r)}>
                             <Trash2 size={16} />
                           </button>

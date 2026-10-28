@@ -16,7 +16,8 @@ export const rotuloObjetivo = (o: Objetivo) => OBJETIVOS.find((x) => x.id === o)
 /** Ficha do aluno no banco: dados pessoais e, ligadas a ela, todas as avaliações. */
 export type Ficha = {
   id: string
-  profissional_id: string
+  /** Null quando o aluno entrou sozinho e ainda não tem personal. */
+  profissional_id: string | null
   aluno_id: string | null
   nome: string
   /** AAAA-MM-DD */
@@ -30,6 +31,8 @@ export type Ficha = {
   consentimento_em: string | null
   /** Meta de treinos por semana escolhida pelo profissional (null: número de treinos da ficha). */
   treinos_semana?: number | null
+  /** Quando o próprio aluno mudou os dados pessoais pela conta dele. */
+  aluno_atualizou_em?: string | null
   criado_em: string
   atualizado_em: string
 }
@@ -78,6 +81,19 @@ export async function editarFicha(id: string, dados: DadosFicha) {
     .from('fichas')
     .update({ ...dados, nome: dados.nome.trim(), atualizado_em: new Date().toISOString() })
     .eq('id', id)
+  return error ? erroAmigavel(error) : null
+}
+
+/** Aluno: preenche os próprios dados pessoais. Cria a ficha se ainda não tiver. */
+export async function salvarMeusDados(d: Pick<DadosFicha, 'nascimento' | 'sexo' | 'altura_cm' | 'telefone' | 'objetivo' | 'saude'>) {
+  const { error } = await supabase.rpc('salvar_meus_dados', {
+    p_nascimento: d.nascimento,
+    p_sexo: d.sexo,
+    p_altura: d.altura_cm,
+    p_telefone: d.telefone.trim(),
+    p_objetivo: d.objetivo,
+    p_saude: d.saude.trim(),
+  })
   return error ? erroAmigavel(error) : null
 }
 

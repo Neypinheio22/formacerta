@@ -4,7 +4,7 @@ import { linkWhatsApp } from '../../compartilhar/whatsapp'
 import type { Perfil } from '../../nuvem/conta'
 import { listarFichas, type Ficha } from '../../nuvem/fichas'
 import { listarResultados } from '../../nuvem/resultados'
-import { lembretes, mensagemLembrete, pendentes, textoSituacao, type Lembrete } from '../../plano/lembretes'
+import { TESTE_MEDIDAS, lembretes, mensagemLembrete, pendentes, textoSituacao, type Lembrete } from '../../plano/lembretes'
 import { dataCurta } from '../../testes/formato'
 import { FichaAluno } from '../alunos/FichaAluno'
 
@@ -32,7 +32,7 @@ function porPessoa(ls: Lembrete[]) {
   return [...m.values()]
 }
 
-/** Cartão na tela inicial: quem está na hora de refazer os testes. */
+/** Cartão na tela inicial: quem está na hora de refazer os testes. O aluno abre a evolução dele. */
 export function CartaoReavaliacao({ perfil, onAbrir }: { perfil: Perfil; onAbrir: () => void }) {
   const [lista, setLista] = useState<Lembrete[] | null>(null)
 
@@ -65,6 +65,11 @@ export function CartaoReavaliacao({ perfil, onAbrir }: { perfil: Perfil; onAbrir
             ))}
           </ul>
           <p className="dica-sec">Refazer os testes mostra o quanto você evoluiu. Combine com o seu personal ou faça de novo aqui no app.</p>
+          {agora.some((l) => l.teste === TESTE_MEDIDAS) && (
+            <button className="botao" onClick={onAbrir}>
+              Anotar peso e medidas
+            </button>
+          )}
         </>
       ) : (
         <>
