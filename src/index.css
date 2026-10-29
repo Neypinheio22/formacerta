@@ -4251,3 +4251,12 @@ p.selo-aluno {
     align-items: center;
   }
 }
+
+/* Shorts do YouTube: vídeo em pé */
+.como-fazer-yt.vertical {
+  aspect-ratio: 9 / 16;
+  width: auto;
+  height: min(70vh, 560px);
+  max-width: 100%;
+  margin: 0 auto;
+}

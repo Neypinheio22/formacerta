@@ -34,7 +34,7 @@ export function MidiaExercicio({ nome, ex }: { nome: string; ex?: ExercicioPropr
       {url && ex?.tipo === 'video' && <video className="como-fazer-midia" src={url} controls playsInline preload="metadata" onError={setFalhou} />}
       {yt && (
         <iframe
-          className="como-fazer-midia como-fazer-yt"
+          className={`como-fazer-midia como-fazer-yt ${ex?.link?.includes('/shorts/') ? 'vertical' : ''}`}
           src={`https://www.youtube-nocookie.com/embed/${yt}?rel=0`}
           title={`Como fazer ${nome}`}
           allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; fullscreen"
