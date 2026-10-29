@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { faltaParaAparecer, filtrarProfissionais, listaEspecialidades, type ProfissionalHabilitado } from './profissionais'
+import { caminhoDaFoto, faltaParaAparecer, filtrarProfissionais, listaEspecialidades, type ProfissionalHabilitado } from './profissionais'
 
 const p = (nome: string, cidade: string, especialidade = ''): ProfissionalHabilitado => ({ id: nome, nome, registro: '000000-G/SP', cidade, especialidade, bio: '', whatsapp: '', liberado_desde: '' })
 const lista = [p('Romildo Souza', 'São Paulo', 'Idosos'), p('Ana Lima', 'Santos', 'Corrida'), p('João Prado', 'São Paulo', 'Hipertrofia')]
@@ -23,4 +23,14 @@ describe('o que falta para aparecer na lista', () => {
   it('administrador que atende como personal também aparece', () => expect(faltaParaAparecer({ ...pronto, papel: 'admin' }, contato)).toEqual([]))
   it('conta aguardando liberação', () => expect(faltaParaAparecer({ ...pronto, situacao: 'pendente' }, contato)[0]).toMatch(/liberada/))
   it('sem CREF e sem autorização', () => expect(faltaParaAparecer({ ...pronto, registro: ' ' }, { ...contato, aparecer_na_lista: false })).toHaveLength(2))
+})
+
+describe('caminhoDaFoto', () => {
+  it('tira o caminho do endereço público', () => {
+    expect(caminhoDaFoto('https://x.supabase.co/storage/v1/object/public/fotos-perfil/abc/123.jpg')).toBe('abc/123.jpg')
+    expect(caminhoDaFoto('https://x.supabase.co/storage/v1/object/public/fotos-perfil/abc/foto.jpg?v=9')).toBe('abc/foto.jpg')
+  })
+  it('sem foto: nada', () => {
+    expect(caminhoDaFoto('')).toBeNull()
+  })
 })
