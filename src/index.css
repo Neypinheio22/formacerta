@@ -4563,3 +4563,89 @@ p.selo-aluno {
   flex: none;
   margin-top: 3px;
 }
+
+/* Serviços e preços do personal */
+.personal-servicos {
+  display: grid;
+  gap: 6px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: rgba(54, 242, 148, 0.06);
+  border: 1px solid var(--borda-verde);
+}
+
+.personal-servicos h3 {
+  margin: 0;
+  font-size: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.personal-servicos h3 small {
+  color: var(--verde);
+  font-weight: 600;
+}
+
+.personal-servicos ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.personal-servicos li {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 0.9rem;
+}
+
+.personal-servicos li b {
+  color: var(--verde);
+  white-space: nowrap;
+}
+
+.meus-servicos .servicos-grupo {
+  display: grid;
+  gap: 8px;
+}
+
+.meus-servicos h3 {
+  margin: 8px 0 0;
+  font-size: 1rem;
+}
+
+.servico-linha {
+  display: grid;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid var(--borda);
+}
+
+.servico-linha.ligado {
+  border-color: var(--borda-verde);
+  background: rgba(54, 242, 148, 0.05);
+}
+
+.servico-linha .aceite span {
+  display: grid;
+  gap: 2px;
+}
+
+.servico-linha small {
+  color: var(--texto-sec);
+}
+
+.servico-proprio {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--borda-verde);
+}

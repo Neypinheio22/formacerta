@@ -49,6 +49,23 @@ export type Servico = {
   descricao: string
   preco: number
   ativo: boolean
+  /** Item da lista da plataforma (vazio = serviço próprio do personal). */
+  catalogo_id?: string | null
+  /** Cobrado por mês. */
+  mensal?: boolean
+}
+
+/** Trabalho que a plataforma oferece; cada personal liga e põe o preço dele. */
+export type ItemCatalogo = {
+  id: string
+  grupo: 'avaliacao' | 'treino'
+  nome: string
+  descricao: string
+  preco_min: number
+  preco_max: number
+  mensal: boolean
+  ordem: number
+  ativo: boolean
 }
 
 export type Pagamento = {
@@ -262,7 +279,18 @@ export async function listarServicos(): Promise<Servico[]> {
   return (data ?? []).map((s) => numeros(s as Servico, ['preco']))
 }
 
-export async function salvarServico(s: { id?: string; profissional_id: string; nome: string; descricao: string; preco: number; ativo: boolean }) {
+export async function listarCatalogo(): Promise<ItemCatalogo[]> {
+  const { data } = await supabase.from('catalogo_servicos').select('*').eq('ativo', true).order('ordem')
+  return (data ?? []).map((i) => numeros(i as ItemCatalogo, ['preco_min', 'preco_max']))
+}
+
+/** "R$ 120,00" ou "R$ 150,00/mês". */
+export const precoServico = (s: Pick<Servico, 'preco' | 'mensal'>) => `${emReais(s.preco)}${s.mensal ? '/mês' : ''}`
+
+/** Menor preço entre os serviços ligados (para "a partir de"). */
+export const aPartirDe = (lista: Servico[]) => (lista.length ? Math.min(...lista.map((s) => s.preco)) : null)
+
+export async function salvarServico(s: { id?: string; profissional_id: string; nome: string; descricao: string; preco: number; ativo: boolean; catalogo_id?: string | null; mensal?: boolean }) {
   const { error } = s.id ? await supabase.from('servicos').update(s).eq('id', s.id) : await supabase.from('servicos').insert(s)
   return error ? erroAmigavel(error) : null
 }

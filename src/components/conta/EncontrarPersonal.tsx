@@ -1,9 +1,11 @@
 import { BadgeCheck, ExternalLink, MapPin, MessageCircle, Search } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { abrirConversa, type Conversa } from '../../nuvem/chat'
+import { aPartirDe, listarServicos, precoServico, type Servico } from '../../nuvem/planos'
 import { CONSULTA_CONFEF, filtrarProfissionais, listaEspecialidades, listarProfissionais, type ProfissionalHabilitado } from '../../nuvem/profissionais'
 
-function Cartao({ p, abrindo, onConversar }: { p: ProfissionalHabilitado; abrindo: boolean; onConversar: () => void }) {
+function Cartao({ p, servicos, abrindo, onConversar }: { p: ProfissionalHabilitado; servicos: Servico[]; abrindo: boolean; onConversar: () => void }) {
+  const menor = aPartirDe(servicos)
   const primeiro = p.nome.split(' ')[0]
   const especialidades = listaEspecialidades(p.especialidade)
   return (
@@ -30,6 +32,22 @@ function Cartao({ p, abrindo, onConversar }: { p: ProfissionalHabilitado; abrind
         </ul>
       )}
       {p.bio && <p className="personal-bio">{p.bio}</p>}
+      {servicos.length > 0 && (
+        <div className="personal-servicos">
+          <h3>
+            Serviços <small>a partir de {precoServico({ preco: menor!, mensal: false })}</small>
+          </h3>
+          <ul>
+            {servicos.map((s) => (
+              <li key={s.id}>
+                <span>{s.nome}</span>
+                <b>{precoServico(s)}</b>
+              </li>
+            ))}
+          </ul>
+          <p className="dica-sec">Tire dúvidas e contrate pelo chat, com pagamento pelo app.</p>
+        </div>
+      )}
       <p className="personal-selo">✓ Cadastro conferido e liberado pelo FormaCerta</p>
       <div className="acoes-linha">
         <button className="botao" disabled={abrindo} onClick={onConversar}>
@@ -49,6 +67,7 @@ export function EncontrarPersonal({ meuId, meuNome, onVoltar, onConversa }: { me
   const [erro, setErro] = useState<string | null>(null)
   const [busca, setBusca] = useState('')
   const [abrindo, setAbrindo] = useState<string | null>(null)
+  const [servicos, setServicos] = useState<Servico[]>([])
 
   async function conversar(p: ProfissionalHabilitado) {
     setAbrindo(p.id)
@@ -59,6 +78,7 @@ export function EncontrarPersonal({ meuId, meuNome, onVoltar, onConversa }: { me
   }
 
   useEffect(() => {
+    listarServicos().then((s) => setServicos(s.filter((x) => x.ativo).sort((a, b) => a.preco - b.preco)))
     listarProfissionais().then((r) => {
       setLista(r.lista)
       setErro(r.erro)
@@ -91,7 +111,7 @@ export function EncontrarPersonal({ meuId, meuNome, onVoltar, onConversa }: { me
 
       <ul className="lista-personais">
         {visiveis.map((p) => (
-          <Cartao key={p.id} p={p} abrindo={abrindo === p.id} onConversar={() => conversar(p)} />
+          <Cartao key={p.id} p={p} servicos={servicos.filter((s) => s.profissional_id === p.id)} abrindo={abrindo === p.id} onConversar={() => conversar(p)} />
         ))}
       </ul>
 

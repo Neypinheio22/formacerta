@@ -2,7 +2,7 @@ import { EyeOff, Handshake, Lock, Plus, Send, ShoppingBag, X } from 'lucide-reac
 import { useEffect, useRef, useState } from 'react'
 import type { Perfil } from '../../nuvem/conta'
 import { MENSAGEM_MAXIMO, enviarMensagem, lerBloqueio, lerMensagens, marcarLida, outroLado, quando, temContato, type BloqueioChat, type Conversa as ConversaNuvem, type Mensagem } from '../../nuvem/chat'
-import { emReais, lerReais, listarServicos, salvarServico, type Servico } from '../../nuvem/planos'
+import { lerReais, precoServico, listarServicos, salvarServico, type Servico } from '../../nuvem/planos'
 import { usePlanosLiberados } from '../planos/usePlanosLiberados'
 
 type Props = {
@@ -22,7 +22,7 @@ function Proposta({ servico, podePagar, contratacaoLiberada, onPagar }: { servic
       </span>
       <strong>{servico.nome}</strong>
       {servico.descricao && <span className="dica-sec">{servico.descricao}</span>}
-      <b className="proposta-preco">{emReais(servico.preco)}</b>
+      <b className="proposta-preco">{precoServico(servico)}</b>
       {podePagar &&
         (contratacaoLiberada ? (
           <button className="botao" onClick={() => onPagar(servico)}>
@@ -162,7 +162,7 @@ export function Conversa({ perfil, conversa, onVoltar, onPagar }: Props) {
               {aVenda.map((s) => (
                 <button key={s.id} className="opcao" disabled={enviando} onClick={() => mandar(s.id, `Proposta: ${s.nome}`)}>
                   <strong>{s.nome}</strong>
-                  <span>{emReais(s.preco)}</span>
+                  <span>{precoServico(s)}</span>
                 </button>
               ))}
               <div className="linha-campos">
