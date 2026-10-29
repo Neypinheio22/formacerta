@@ -34,6 +34,8 @@ type Props = {
   pedido: Pedido
   onVoltar: () => void
   onPronto: () => void
+  /** Texto do botão no fim (padrão: "Ver meus planos"). */
+  textoPronto?: string
 }
 
 const FORMAS: { forma: Forma; icone: typeof QrCode; texto: string }[] = [
@@ -45,7 +47,7 @@ const FORMAS: { forma: Forma; icone: typeof QrCode; texto: string }[] = [
 type Fim = { tipo: 'assinatura'; assinatura: Assinatura | null } | { tipo: 'pedido' } | { tipo: 'pix'; pagamento: string; cobranca: Cobranca }
 
 /** Resumo do pedido e forma de pagamento. Com o Mercado Pago ligado gera o Pix ou abre a página dele; sem, só registra o pedido. */
-export function Pagamento({ pedido, onVoltar, onPronto }: Props) {
+export function Pagamento({ pedido, onVoltar, onPronto, textoPronto = 'Ver meus planos' }: Props) {
   const { perfil } = useConta()
   const [forma, setForma] = useState<Forma>(pedido.tipo === 'pendente' ? pedido.pagamento.forma : 'pix')
   const [config, setConfig] = useState<ConfigCobranca>(CONFIG_PADRAO)
@@ -99,8 +101,8 @@ export function Pagamento({ pedido, onVoltar, onPronto }: Props) {
     setEnviando(false)
   }
 
-  if (fim?.tipo === 'pix') return <PagarPix titulo={titulo} valor={valor} pagamento={fim.pagamento} cobranca={fim.cobranca} onPronto={onPronto} />
-  if (fim) return <Pronto fim={fim} titulo={titulo} mercadoPago={mercadoPago} onPronto={onPronto} />
+  if (fim?.tipo === 'pix') return <PagarPix titulo={titulo} valor={valor} pagamento={fim.pagamento} cobranca={fim.cobranca} textoPronto={textoPronto} onPronto={onPronto} />
+  if (fim) return <Pronto fim={fim} titulo={titulo} mercadoPago={mercadoPago} textoPronto={textoPronto} onPronto={onPronto} />
 
   return (
     <div className="tela">
@@ -164,7 +166,7 @@ export function Pagamento({ pedido, onVoltar, onPronto }: Props) {
 }
 
 /** QR Code e copia e cola. Confere sozinho a cada 5 segundos se o Pix caiu. */
-function PagarPix({ titulo, valor, pagamento, cobranca, onPronto }: { titulo: string; valor: number; pagamento: string; cobranca: Cobranca; onPronto: () => void }) {
+function PagarPix({ titulo, valor, pagamento, cobranca, textoPronto, onPronto }: { titulo: string; valor: number; pagamento: string; cobranca: Cobranca; textoPronto: string; onPronto: () => void }) {
   const [pago, setPago] = useState(false)
   const [copiado, setCopiado] = useState(false)
 
@@ -193,7 +195,7 @@ function PagarPix({ titulo, valor, pagamento, cobranca, onPronto }: { titulo: st
           <h1>Pagamento confirmado</h1>
           <p className="dica">{titulo} já está valendo. Obrigado!</p>
           <button className="botao grande" onClick={onPronto}>
-            Ver meus planos
+            {textoPronto}
           </button>
         </section>
       </div>
@@ -220,7 +222,7 @@ function PagarPix({ titulo, valor, pagamento, cobranca, onPronto }: { titulo: st
   )
 }
 
-function Pronto({ fim, titulo, mercadoPago, onPronto }: { fim: Exclude<Fim, { tipo: 'pix' }>; titulo: string; mercadoPago: boolean; onPronto: () => void }) {
+function Pronto({ fim, titulo, mercadoPago, textoPronto, onPronto }: { fim: Exclude<Fim, { tipo: 'pix' }>; titulo: string; mercadoPago: boolean; textoPronto: string; onPronto: () => void }) {
   let texto: string
   const a = fim.tipo === 'assinatura' ? fim.assinatura : null
   if (fim.tipo === 'pedido')
@@ -241,7 +243,7 @@ function Pronto({ fim, titulo, mercadoPago, onPronto }: { fim: Exclude<Fim, { ti
         <h1>{titulo}</h1>
         <p className="dica">{texto}</p>
         <button className="botao grande" onClick={onPronto}>
-          Ver meus planos
+          {textoPronto}
         </button>
       </section>
     </div>

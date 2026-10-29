@@ -87,12 +87,11 @@ export async function removerFotoPerfil(id: string) {
 }
 
 /** O que ainda falta para o profissional aparecer na lista dos alunos (vazio: já aparece). */
-export function faltaParaAparecer(p: Pick<Perfil, 'papel' | 'situacao' | 'registro'>, d: Pick<DadosContato, 'whatsapp' | 'aparecer_na_lista'>): string[] {
+export function faltaParaAparecer(p: Pick<Perfil, 'papel' | 'situacao' | 'registro'>, d: Pick<DadosContato, 'aparecer_na_lista'>): string[] {
   const falta: string[] = []
   if (p.papel === 'aluno') return ['Só contas de profissional aparecem na lista.']
   if (p.situacao !== 'liberado') falta.push('A conta ainda precisa ser liberada pelo administrador.')
   if (!p.registro.trim()) falta.push('Preencher e salvar o número do CREF.')
   if (!d.aparecer_na_lista) falta.push('Marcar a autorização para aparecer na lista.')
-  if (!d.whatsapp.replace(/\D/g, '')) falta.push('Colocar o WhatsApp (sem ele o aluno não tem como chamar).')
   return falta
 }
