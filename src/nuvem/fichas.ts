@@ -1,14 +1,31 @@
 import { supabase } from './cliente'
 import { erroAmigavel } from './conta'
 
-export type Objetivo = '' | 'emagrecer' | 'massa' | 'saude' | 'desempenho' | 'reabilitacao'
+export type Objetivo =
+  | ''
+  | 'emagrecer'
+  | 'massa'
+  | 'definir'
+  | 'saude'
+  | 'condicionamento'
+  | 'forca'
+  | 'postura'
+  | 'mobilidade'
+  | 'desempenho'
+  | 'reabilitacao'
 
-export const OBJETIVOS: { id: Objetivo; rotulo: string }[] = [
-  { id: 'emagrecer', rotulo: 'Emagrecer' },
-  { id: 'massa', rotulo: 'Ganhar massa muscular' },
-  { id: 'saude', rotulo: 'Saúde e qualidade de vida' },
-  { id: 'desempenho', rotulo: 'Desempenho no esporte' },
-  { id: 'reabilitacao', rotulo: 'Reabilitação ou dor' },
+/** Os objetivos mais procurados por quem começa a treinar, com uma linha de explicação. */
+export const OBJETIVOS: { id: Objetivo; rotulo: string; texto: string }[] = [
+  { id: 'emagrecer', rotulo: 'Emagrecer', texto: 'Perder peso e gordura, com treino e cardio.' },
+  { id: 'massa', rotulo: 'Ganhar massa muscular', texto: 'Aumentar os músculos (hipertrofia).' },
+  { id: 'definir', rotulo: 'Definir o corpo', texto: 'Perder gordura sem perder músculo.' },
+  { id: 'saude', rotulo: 'Saúde e qualidade de vida', texto: 'Sair do sedentarismo, mais disposição e menos estresse.' },
+  { id: 'condicionamento', rotulo: 'Condicionamento', texto: 'Mais fôlego e resistência no dia a dia.' },
+  { id: 'forca', rotulo: 'Força', texto: 'Levantar mais peso e ficar mais forte.' },
+  { id: 'postura', rotulo: 'Postura e dores', texto: 'Corrigir a postura e aliviar dores nas costas.' },
+  { id: 'mobilidade', rotulo: 'Mobilidade e flexibilidade', texto: 'Mexer o corpo com mais facilidade e amplitude.' },
+  { id: 'desempenho', rotulo: 'Desempenho no esporte', texto: 'Render mais na corrida, no futebol ou em outro esporte.' },
+  { id: 'reabilitacao', rotulo: 'Reabilitação', texto: 'Voltar a treinar depois de lesão ou cirurgia, com liberação médica.' },
 ]
 
 export const rotuloObjetivo = (o: Objetivo) => OBJETIVOS.find((x) => x.id === o)?.rotulo ?? ''

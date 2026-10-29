@@ -49,8 +49,8 @@ const PANTURRILHAS = new Set<string>(['panturrilhaE', 'panturrilhaD', 'panturril
 export function sentidoCorpo(id: string, objetivo: Objetivo): Sentido {
   if (id === 'peso' || id === 'imc') return objetivo === 'emagrecer' ? 'menor' : objetivo === 'massa' ? 'maior' : null
   if (id === 'gordura' || id === 'fcRepouso' || id === 'cintura' || id === 'abdomen') return 'menor'
-  if (id === 'quadril') return objetivo === 'emagrecer' ? 'menor' : null
-  if (MEMBROS.has(id)) return objetivo === 'massa' ? 'maior' : null
+  if (id === 'quadril') return objetivo === 'emagrecer' || objetivo === 'definir' ? 'menor' : null
+  if (MEMBROS.has(id)) return objetivo === 'massa' || objetivo === 'forca' ? 'maior' : null
   // Panturrilha fina indica perda de massa muscular, principalmente no idoso.
   if (PANTURRILHAS.has(id)) return objetivo === 'emagrecer' ? null : 'maior'
   return null

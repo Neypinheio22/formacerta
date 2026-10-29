@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { Perfil } from '../../nuvem/conta'
-import type { Ficha } from '../../nuvem/fichas'
+import { corpoDaFicha, perfilTreino, ajustarSerie, type PerfilTreino } from '../../corpo/corpo'
+import { idadeDe, type Ficha } from '../../nuvem/fichas'
+import { listarResultados, type ResultadoNuvem } from '../../nuvem/resultados'
 import { diasMarcados, listarFeitos, listarTreinos, minhaFicha, type Treino, type TreinoFeito } from '../../nuvem/treinos'
 import { carregarSeries } from '../../treino/carga'
 import { diasTreinadosNaSemana, proximoTreino } from '../../treino/semana'
@@ -51,6 +53,7 @@ export function useMeuTreino(perfil: Perfil | null) {
   const [ficha, setFicha] = useState<Ficha | null>(null)
   const [treinos, setTreinos] = useState<Treino[]>([])
   const [feitos, setFeitos] = useState<TreinoFeito[]>([])
+  const [medidas, setMedidas] = useState<ResultadoNuvem[]>([])
   const [carregando, setCarregando] = useState(true)
   const [metaLocal, setMetaLocal] = useState(lerMetaLocal)
   const [versao, setVersao] = useState(0)
@@ -61,9 +64,12 @@ export function useMeuTreino(perfil: Perfil | null) {
     let vivo = true
     async function buscar() {
       const f = perfil?.papel === 'aluno' ? await minhaFicha(perfil.id) : null
-      const [t, fe] = f ? await Promise.all([listarTreinos(f.id), listarFeitos(f.id)]) : [{ treinos: [] as Treino[] }, [] as TreinoFeito[]]
+      const [t, fe, m] = f
+        ? await Promise.all([listarTreinos(f.id), listarFeitos(f.id), listarResultados({ fichaId: f.id, tipo: 'medidas' })])
+        : [{ treinos: [] as Treino[] }, [] as TreinoFeito[], { lista: [] as ResultadoNuvem[] }]
       if (!vivo) return
       setFicha(f)
+      setMedidas(m.lista)
       setTreinos(t.treinos)
       setFeitos(fe)
       setCarregando(false)
@@ -80,7 +86,9 @@ export function useMeuTreino(perfil: Perfil | null) {
   const meta = metaDoPersonal ?? (treinos.length || metaLocal)
   // Sem treino do personal, o aluno segue a série sugerida pelo app (com aviso).
   const sugerida = perfil?.papel === 'aluno' && !carregando && !treinos.length
-  const lista = sugerida ? SERIE_SUGERIDA : treinos
+  // A série sugerida se ajusta ao corpo e ao objetivo do aluno (o treino do personal, não).
+  const ajuste: PerfilTreino | null = sugerida && ficha ? perfilTreino(corpoDaFicha(ficha, medidas, idadeDe(ficha.nascimento)), ficha.objetivo) : null
+  const lista = sugerida ? (ajuste ? ajustarSerie(SERIE_SUGERIDA, ajuste) : SERIE_SUGERIDA) : treinos
   const proximo = proximoTreino(lista, sugerida ? lerUltimaSugerida() : feitos[0]?.letra || null)
 
   function mudarMetaLocal(n: number) {
@@ -89,5 +97,5 @@ export function useMeuTreino(perfil: Perfil | null) {
     setMetaLocal(v)
   }
 
-  return { ficha, treinos, lista, sugerida, feitos, carregando, feitosNaSemana, meta, metaDoPersonal, proximo, mudarMetaLocal, recarregar }
+  return { ficha, treinos, lista, sugerida, ajuste, feitos, carregando, feitosNaSemana, meta, metaDoPersonal, proximo, mudarMetaLocal, recarregar }
 }

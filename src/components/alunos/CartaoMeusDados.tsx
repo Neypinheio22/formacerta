@@ -1,30 +1,60 @@
-import { ClipboardList } from 'lucide-react'
+import { ChevronRight, ClipboardList } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { listarFichas } from '../../nuvem/fichas'
+import { corpoDaFicha, type ItemCorpo } from '../../corpo/corpo'
+import { idadeDe, rotuloObjetivo, type Ficha } from '../../nuvem/fichas'
+import { listarResultados } from '../../nuvem/resultados'
+import { minhaFicha } from '../../nuvem/treinos'
 
-/** Tela inicial do aluno: convida a preencher altura, nascimento e objetivo enquanto faltar algum. */
+const BOLA: Record<ItemCorpo['status'], string> = { ok: '🟢', atencao: '🟡', alerta: '🔴' }
+
+/** Tela inicial do aluno: um só cartão "Meus dados", com o resumo do corpo ou o convite para preencher. */
 export function CartaoMeusDados({ meuId, onAbrir }: { meuId: string; onAbrir: () => void }) {
-  const [falta, setFalta] = useState(false)
+  const [estado, setEstado] = useState<{ ficha: Ficha | null; itens: ItemCorpo[] } | null>(null)
 
   useEffect(() => {
-    listarFichas().then((r) => {
-      if (r.erro) return
-      const f = r.fichas.find((x) => x.aluno_id === meuId)
-      setFalta(!f || !f.altura_cm || !f.nascimento || !f.objetivo)
+    let vivo = true
+    minhaFicha(meuId).then(async (f) => {
+      const m = f ? (await listarResultados({ fichaId: f.id, tipo: 'medidas' })).lista : []
+      if (vivo) setEstado({ ficha: f, itens: f ? corpoDaFicha(f, m, idadeDe(f.nascimento)) : [] })
     })
+    return () => {
+      vivo = false
+    }
   }, [meuId])
 
-  if (!falta) return null
+  if (!estado) return null
+  const f = estado.ficha
+  const falta = !f || !f.altura_cm || !f.nascimento || !f.sexo || !f.objetivo
+
   return (
-    <section className="cartao destaque">
+    <button className={`cartao cartao-meus-dados${falta ? ' destaque' : ''}`} onClick={onAbrir}>
       <span className="etiqueta">
         <ClipboardList size={14} /> Meus dados
       </span>
-      <h2>Complete os seus dados</h2>
-      <p className="dica-sec">Altura, peso, objetivo e medidas do corpo deixam a sua avaliação completa e mostram a sua evolução mês a mês.</p>
-      <button className="botao" onClick={onAbrir}>
-        Preencher agora
-      </button>
-    </section>
+      {falta ? (
+        <>
+          <h2>Complete os seus dados</h2>
+          <p className="dica-sec">Peso, altura, objetivo e medidas: a avaliação fica completa e os exercícios se ajustam a você.</p>
+        </>
+      ) : (
+        <>
+          <h2>{rotuloObjetivo(f.objetivo)}</h2>
+          {estado.itens.length > 0 ? (
+            <p className="resumo-corpo">
+              {estado.itens.map((i) => (
+                <span key={i.id}>
+                  {BOLA[i.status]} {i.rotulo} {i.faixa.toLowerCase()}
+                </span>
+              ))}
+            </p>
+          ) : (
+            <p className="dica-sec">Anote o seu peso para ver o seu corpo hoje.</p>
+          )}
+        </>
+      )}
+      <span className="cartao-seta">
+        {falta ? 'Preencher agora' : 'Ver e atualizar'} <ChevronRight size={16} />
+      </span>
+    </button>
   )
 }

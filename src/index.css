@@ -4563,3 +4563,175 @@ p.selo-aluno {
   flex: none;
   margin-top: 3px;
 }
+
+/* Meus dados: tópicos que abrem e fecham, objetivos e "Meu corpo hoje" */
+.topicos {
+  display: grid;
+  gap: 10px;
+}
+.topico {
+  padding: 0;
+  overflow: hidden;
+}
+.topico-cabeca {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 16px;
+  background: none;
+  border: 0;
+  color: var(--texto);
+  font: inherit;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+}
+.topico-num {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1.5px solid var(--borda-verde);
+  color: var(--verde);
+  font-size: 0.85rem;
+}
+.topico-num.feito {
+  background: var(--verde);
+  color: var(--fundo);
+  border-color: var(--verde);
+}
+.topico-titulo {
+  flex: 1;
+}
+.topico-titulo .dica-sec {
+  font-weight: 400;
+}
+.topico-seta {
+  color: var(--texto-sec);
+  transition: transform 0.2s;
+}
+.topico-cabeca.aberto .topico-seta {
+  transform: rotate(180deg);
+}
+.topico-corpo {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+  padding: 0 16px 16px;
+}
+.dois-campos {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 10px;
+}
+.topico-corpo input,
+.topico-corpo select {
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+.o-que-e summary,
+.ajuste-serie summary {
+  color: var(--verde);
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+.o-que-e p {
+  margin: 6px 0 0;
+}
+.lista-objetivos {
+  display: grid;
+  gap: 8px;
+}
+.objetivo {
+  display: grid;
+  gap: 2px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--borda);
+  background: var(--vidro);
+  color: var(--texto);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.objetivo span {
+  color: var(--texto-sec);
+  font-size: 0.85rem;
+}
+.objetivo.ativo {
+  border-color: var(--verde);
+  box-shadow: 0 0 0 1px var(--verde) inset;
+}
+.lista-corpo {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+.lista-corpo details {
+  border: 1px solid var(--borda);
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+.lista-corpo summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  list-style: none;
+}
+.lista-corpo summary::-webkit-details-marker {
+  display: none;
+}
+.corpo-valor {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 4px 8px;
+}
+.lista-corpo details p {
+  margin: 8px 0 0;
+}
+.nota-corpo {
+  margin-top: 10px;
+  font-size: 0.8rem;
+}
+.lista-motivos,
+.ajuste-serie ul {
+  margin: 8px 0 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 6px;
+  color: var(--texto-sec);
+}
+.cartao-meus-dados {
+  display: block;
+  width: 100%;
+  text-align: left;
+  color: var(--texto);
+  font: inherit;
+  cursor: pointer;
+}
+.resumo-corpo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  margin: 6px 0;
+  color: var(--texto-sec);
+  font-size: 0.9rem;
+}
+.cartao-seta {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--verde);
+  font-weight: 600;
+  margin-top: 6px;
+}
