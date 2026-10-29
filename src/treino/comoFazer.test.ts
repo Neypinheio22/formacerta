@@ -73,7 +73,7 @@ describe('buscaYoutube e tipoDoArquivo', () => {
 
 describe('vídeos do app', () => {
   it('acha pelo nome, mesmo com parênteses ou sem acento', () => {
-    expect(videoDoApp('Rosca direta')).toMatch(/^https:\/\/www\.youtube\.com\/watch\?v=/)
+    expect(videoDoApp('Rosca direta')).toMatch(/^https:\/\/www\.youtube\.com\/(watch\?v=|shorts\/)/)
     expect(videoDoApp('Afundo (avanço)')).toBe(videoDoApp('afundo'))
     expect(videoDoApp('ELEVACAO PELVICA (ponte)')).toBe(videoDoApp('Elevação pélvica'))
     expect(videoDoApp('Exercício inventado')).toBeUndefined()
@@ -97,5 +97,13 @@ describe('vídeos do app', () => {
     expect(r?.link).toBe(videoDoApp('Rosca direta'))
     expect(r?.descricao).toBe('Cotovelo parado')
     expect(comoFazerDe([], 'Exercício inventado')).toBeUndefined()
+  })
+})
+
+describe('vídeos curtos', () => {
+  it('Shorts viram vídeo embutido pelo código', async () => {
+    const { VIDEOS_APP } = await import('./videosApp')
+    for (const link of Object.values(VIDEOS_APP)) expect(idYoutube(link)).toBeTruthy()
+    expect(Object.values(VIDEOS_APP).filter((l) => l.includes('/shorts/')).length).toBeGreaterThan(30)
   })
 })
