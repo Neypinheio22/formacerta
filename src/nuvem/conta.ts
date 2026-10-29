@@ -24,6 +24,7 @@ export type Perfil = {
   cidade?: string
   especialidade?: string
   bio?: string
+  foto_url?: string
   aparecer_na_lista?: boolean
 }
 
