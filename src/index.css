@@ -4260,3 +4260,60 @@ p.selo-aluno {
   max-width: 100%;
   margin: 0 auto;
 }
+
+/* Foto do personal */
+.personal-foto {
+  flex: none;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid rgba(54, 242, 148, 0.5);
+}
+
+.personal-inicial.grande {
+  width: 72px;
+  height: 72px;
+  font-size: 1.6rem;
+}
+
+.foto-perfil {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.foto-perfil img {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid rgba(54, 242, 148, 0.5);
+}
+
+.foto-perfil > div {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.escolher-foto {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: auto;
+  padding: 10px 16px;
+  cursor: pointer;
+}
+
+.aviso-lista {
+  background: rgba(250, 204, 21, 0.08);
+  border: 1px solid rgba(250, 204, 21, 0.4);
+  color: var(--texto);
+}
+
+.aviso-lista ul {
+  margin: 6px 0 0;
+  padding-left: 18px;
+}

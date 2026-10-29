@@ -10,7 +10,7 @@ function Cartao({ p, meuNome }: { p: ProfissionalHabilitado; meuNome: string }) 
   return (
     <li className="cartao personal-cartao">
       <div className="personal-topo">
-        <span className="personal-inicial">{primeiro.charAt(0).toUpperCase()}</span>
+        {p.foto_url ? <img className="personal-foto" src={p.foto_url} alt={`Foto de ${p.nome}`} loading="lazy" /> : <span className="personal-inicial">{primeiro.charAt(0).toUpperCase()}</span>}
         <div>
           <h2>{p.nome}</h2>
           <p className="personal-cref">
