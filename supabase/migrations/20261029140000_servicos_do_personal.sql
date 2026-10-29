@@ -144,3 +144,134 @@ $$;
 
 revoke execute on function public.enviar_mensagem from public, anon;
 grant execute on function public.enviar_mensagem to authenticated;
+
+-- ============================================================
+-- Preço sugerido pelo FormaCerta. Cada serviço da lista tem um preço da
+-- plataforma; o personal só liga ou desliga. Para cobrar outro valor (ou criar
+-- um serviço novo) ele manda um pedido e o administrador aprova.
+-- ============================================================
+
+alter table public.catalogo_servicos add column if not exists preco_sugerido numeric(10, 2);
+update public.catalogo_servicos c set preco_sugerido = v.preco
+from (values
+  ('avaliacao-postural', 120), ('avaliacao-completa', 200), ('avaliacao-idoso', 220), ('analise-corrida', 120),
+  ('reavaliacao', 80), ('ficha-treino', 120), ('acompanhamento-online', 150), ('aula-presencial', 90),
+  ('pacote-presencial', 600), ('correcao-postural', 130)
+) as v (id, preco)
+where c.id = v.id and c.preco_sugerido is null;
+update public.catalogo_servicos set preco_sugerido = round((preco_min + preco_max) / 2) where preco_sugerido is null;
+
+-- Valor diferente do sugerido que o administrador aprovou.
+alter table public.servicos add column if not exists preco_aprovado boolean not null default false;
+
+create table if not exists public.pedidos_preco (
+  id uuid primary key default gen_random_uuid(),
+  profissional_id uuid not null references public.perfis (id) on delete cascade,
+  -- Vazio = serviço novo (fora da lista).
+  catalogo_id text references public.catalogo_servicos (id) on delete cascade,
+  nome text not null check (char_length(nome) between 1 and 80),
+  mensal boolean not null default false,
+  valor numeric(10, 2) not null check (valor >= 5 and valor <= 5000),
+  motivo text not null default '' check (char_length(motivo) <= 300),
+  situacao text not null default 'pendente' check (situacao in ('pendente', 'aprovado', 'recusado')),
+  resposta text not null default '' check (char_length(resposta) <= 300),
+  criado_em timestamptz not null default now(),
+  decidido_em timestamptz
+);
+
+create index if not exists pedidos_preco_situacao_idx on public.pedidos_preco (situacao, criado_em desc);
+
+alter table public.pedidos_preco enable row level security;
+drop policy if exists "ver pedidos de preço" on public.pedidos_preco;
+create policy "ver pedidos de preço" on public.pedidos_preco for select to authenticated
+using (profissional_id = (select auth.uid()) or public.eh_admin());
+drop policy if exists "pedir preço" on public.pedidos_preco;
+create policy "pedir preço" on public.pedidos_preco for insert to authenticated
+with check (profissional_id = (select auth.uid()) and situacao = 'pendente' and (public.eh_profissional() or public.eh_admin()));
+drop policy if exists "desistir do pedido" on public.pedidos_preco;
+create policy "desistir do pedido" on public.pedidos_preco for delete to authenticated
+using (profissional_id = (select auth.uid()) and situacao = 'pendente');
+revoke update on public.pedidos_preco from authenticated, anon;
+
+-- Trava: fora o administrador, ninguém escolhe preço. Serviço da lista entra com
+-- o preço sugerido; depois o personal só liga, desliga ou muda a descrição.
+create or replace function public.travar_preco_servico() returns trigger
+language plpgsql security definer set search_path = '' as $$
+declare
+  c public.catalogo_servicos;
+begin
+  if public.eh_admin() then return new; end if;
+  if tg_op = 'INSERT' then
+    if new.catalogo_id is null then raise exception 'Serviço novo passa pela aprovação do FormaCerta'; end if;
+    select * into c from public.catalogo_servicos where id = new.catalogo_id and ativo;
+    if c.id is null then raise exception 'Serviço não encontrado'; end if;
+    new.nome := c.nome;
+    new.mensal := c.mensal;
+    new.preco := c.preco_sugerido;
+    new.preco_aprovado := false;
+  else
+    new.profissional_id := old.profissional_id;
+    new.catalogo_id := old.catalogo_id;
+    new.nome := old.nome;
+    new.mensal := old.mensal;
+    new.preco := old.preco;
+    new.preco_aprovado := old.preco_aprovado;
+  end if;
+  return new;
+end
+$$;
+
+drop trigger if exists travar_preco on public.servicos;
+create trigger travar_preco before insert or update on public.servicos
+for each row execute function public.travar_preco_servico();
+
+-- Quem já tinha colocado preço próprio volta para o sugerido.
+update public.servicos s set preco = c.preco_sugerido, nome = c.nome, mensal = c.mensal
+from public.catalogo_servicos c
+where s.catalogo_id = c.id and not s.preco_aprovado and s.preco is distinct from c.preco_sugerido;
+
+-- Administrador aprova ou recusa o pedido.
+create or replace function public.admin_decidir_preco(pedido uuid, aprovar boolean, resposta text default '') returns void
+language plpgsql security definer set search_path = '' as $$
+declare
+  p public.pedidos_preco;
+  c public.catalogo_servicos;
+begin
+  if not public.eh_admin() then raise exception 'Só o administrador pode fazer isso'; end if;
+  select * into p from public.pedidos_preco where id = pedido and situacao = 'pendente';
+  if p.id is null then raise exception 'Pedido não encontrado'; end if;
+
+  if aprovar then
+    if p.catalogo_id is not null then
+      select * into c from public.catalogo_servicos where id = p.catalogo_id;
+      insert into public.servicos (profissional_id, catalogo_id, nome, descricao, preco, mensal, ativo, preco_aprovado)
+      values (p.profissional_id, c.id, c.nome, c.descricao, p.valor, c.mensal, true, p.valor <> c.preco_sugerido)
+      on conflict (profissional_id, catalogo_id) where catalogo_id is not null
+      do update set preco = excluded.preco, preco_aprovado = excluded.preco_aprovado, ativo = true;
+    else
+      insert into public.servicos (profissional_id, nome, descricao, preco, mensal, ativo, preco_aprovado)
+      values (p.profissional_id, p.nome, '', p.valor, p.mensal, true, true);
+    end if;
+  end if;
+
+  update public.pedidos_preco
+  set situacao = case when aprovar then 'aprovado' else 'recusado' end,
+      resposta = left(coalesce(admin_decidir_preco.resposta, ''), 300),
+      decidido_em = now()
+  where id = p.id;
+end
+$$;
+
+-- Administrador muda o preço sugerido; quem segue o sugerido acompanha.
+create or replace function public.admin_mudar_sugerido(item text, valor numeric) returns void
+language plpgsql security definer set search_path = '' as $$
+begin
+  if not public.eh_admin() then raise exception 'Só o administrador pode fazer isso'; end if;
+  if valor < 5 or valor > 5000 then raise exception 'Preço entre R$ 5 e R$ 5.000'; end if;
+  update public.catalogo_servicos set preco_sugerido = valor where id = item;
+  update public.servicos set preco = valor where catalogo_id = item and not preco_aprovado;
+end
+$$;
+
+revoke execute on function public.admin_decidir_preco, public.admin_mudar_sugerido from public, anon;
+grant execute on function public.admin_decidir_preco, public.admin_mudar_sugerido to authenticated;

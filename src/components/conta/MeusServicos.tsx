@@ -1,37 +1,79 @@
-import { Plus, Store, Trash2 } from 'lucide-react'
+import { Clock, Plus, Store, Trash2 } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
-import { apagarServico, emReais, lerReais, listarCatalogo, listarServicos, precoServico, salvarServico, type ItemCatalogo, type Servico } from '../../nuvem/planos'
-
-type Linha = { ligado: boolean; preco: string }
+import {
+  apagarServico,
+  desistirPedido,
+  emReais,
+  lerReais,
+  listarCatalogo,
+  listarPedidosPreco,
+  listarServicos,
+  pedirPreco,
+  precoServico,
+  salvarServico,
+  type ItemCatalogo,
+  type PedidoPreco,
+  type Servico,
+} from '../../nuvem/planos'
 
 const GRUPOS: { grupo: ItemCatalogo['grupo']; titulo: string }[] = [
   { grupo: 'avaliacao', titulo: 'Avaliações' },
   { grupo: 'treino', titulo: 'Treino e acompanhamento' },
 ]
 
-/** O personal liga os trabalhos da lista do FormaCerta que ele faz e põe o preço dele. */
+type Pedindo = { catalogo_id: string | null; nome: string; mensal: boolean; valor: string; motivo: string }
+
+/** Formulário curto para pedir outro valor (ou um serviço novo) ao FormaCerta. */
+function PedirValor({ pedido, novo, onMudar, onEnviar, onCancelar }: { pedido: Pedindo; novo: boolean; onMudar: (p: Pedindo) => void; onEnviar: () => void; onCancelar: () => void }) {
+  return (
+    <div className="pedir-valor">
+      {novo && (
+        <label className="campo">
+          Nome do serviço
+          <input value={pedido.nome} maxLength={80} placeholder="Ex.: Treino para gestantes" onChange={(e) => onMudar({ ...pedido, nome: e.target.value })} />
+        </label>
+      )}
+      <label className="campo">
+        Valor que você quer cobrar{pedido.mensal ? ' por mês' : ''} (R$)
+        <input inputMode="decimal" value={pedido.valor} placeholder="150" onChange={(e) => onMudar({ ...pedido, valor: e.target.value })} />
+      </label>
+      {novo && (
+        <label className="aceite">
+          <input type="checkbox" checked={pedido.mensal} onChange={(e) => onMudar({ ...pedido, mensal: e.target.checked })} />
+          <span>Cobrado por mês</span>
+        </label>
+      )}
+      <label className="campo">
+        Por quê? (opcional)
+        <input value={pedido.motivo} maxLength={300} placeholder="Ex.: especialização, atendimento em casa" onChange={(e) => onMudar({ ...pedido, motivo: e.target.value })} />
+      </label>
+      <div className="acoes-linha">
+        <button className="botao" onClick={onEnviar}>
+          Enviar para o FormaCerta
+        </button>
+        <button className="link" onClick={onCancelar}>
+          Cancelar
+        </button>
+      </div>
+    </div>
+  )
+}
+
+/** O personal liga os serviços da lista do FormaCerta. O preço é o sugerido; outro valor passa pela aprovação do administrador. */
 export function MeusServicos({ meuId }: { meuId: string }) {
   const [catalogo, setCatalogo] = useState<ItemCatalogo[] | null>(null)
   const [meus, setMeus] = useState<Servico[]>([])
-  const [linhas, setLinhas] = useState<Record<string, Linha>>({})
-  const [novo, setNovo] = useState({ nome: '', preco: '', mensal: false })
-  const [salvando, setSalvando] = useState(false)
+  const [pedidos, setPedidos] = useState<PedidoPreco[]>([])
+  const [pedindo, setPedindo] = useState<Pedindo | null>(null)
+  const [mudando, setMudando] = useState<string | null>(null)
   const [erro, setErro] = useState<string | null>(null)
-  const [ok, setOk] = useState(false)
+  const [ok, setOk] = useState<string | null>(null)
 
   const carregar = useCallback(async () => {
-    const [c, s] = await Promise.all([listarCatalogo(), listarServicos()])
-    const doPersonal = s.filter((x) => x.profissional_id === meuId)
+    const [c, s, p] = await Promise.all([listarCatalogo(), listarServicos(), listarPedidosPreco()])
     setCatalogo(c)
-    setMeus(doPersonal)
-    setLinhas(
-      Object.fromEntries(
-        c.map((i) => {
-          const m = doPersonal.find((x) => x.catalogo_id === i.id)
-          return [i.id, { ligado: !!m?.ativo, preco: m ? String(m.preco).replace('.', ',') : '' }]
-        }),
-      ),
-    )
+    setMeus(s.filter((x) => x.profissional_id === meuId))
+    setPedidos(p.filter((x) => x.profissional_id === meuId))
   }, [meuId])
 
   useEffect(() => {
@@ -42,60 +84,39 @@ export function MeusServicos({ meuId }: { meuId: string }) {
   if (!catalogo?.length) return null
 
   const proprios = meus.filter((s) => !s.catalogo_id)
-  const mudar = (id: string, l: Partial<Linha>) => {
-    setOk(false)
-    setLinhas((ls) => ({ ...ls, [id]: { ...ls[id], ...l } }))
-  }
+  const pendentes = pedidos.filter((p) => p.situacao === 'pendente')
+  const respondidos = pedidos.filter((p) => p.situacao !== 'pendente').slice(0, 3)
 
-  async function salvar() {
-    setSalvando(true)
+  async function ligar(item: ItemCatalogo, ligado: boolean) {
+    setMudando(item.id)
     setErro(null)
-    for (const item of catalogo!) {
-      const l = linhas[item.id]
-      const atual = meus.find((s) => s.catalogo_id === item.id)
-      const preco = lerReais(l.preco)
-      if (l.ligado && (!preco || preco < 5)) {
-        setSalvando(false)
-        return setErro(`Coloque o seu preço em "${item.nome}" (a partir de R$ 5,00).`)
-      }
-      if (!l.ligado && !atual?.ativo) continue
-      if (!l.ligado) {
-        const e = await salvarServico({ ...atual!, ativo: false })
-        if (e) return falhou(e)
-        continue
-      }
-      if (atual && atual.ativo && atual.preco === preco) continue
-      const e = await salvarServico({
-        ...(atual ? { id: atual.id } : {}),
-        profissional_id: meuId,
-        nome: item.nome,
-        descricao: item.descricao,
-        preco: preco!,
-        ativo: true,
-        catalogo_id: item.id,
-        mensal: item.mensal,
-      })
-      if (e) return falhou(e)
-    }
+    setOk(null)
+    const atual = meus.find((s) => s.catalogo_id === item.id)
+    const e = atual
+      ? await salvarServico({ ...atual, ativo: ligado })
+      : await salvarServico({ profissional_id: meuId, nome: item.nome, descricao: item.descricao, preco: item.preco_sugerido, ativo: true, catalogo_id: item.id, mensal: item.mensal })
+    if (e) setErro(e)
     await carregar()
-    setSalvando(false)
-    setOk(true)
+    setMudando(null)
   }
 
-  function falhou(e: string) {
-    setSalvando(false)
-    setErro(e)
-  }
-
-  async function adicionarProprio() {
-    const preco = lerReais(novo.preco)
-    if (!novo.nome.trim()) return setErro('Escreva o nome do serviço.')
-    if (!preco || preco < 5) return setErro('Coloque um preço a partir de R$ 5,00.')
-    const e = await salvarServico({ profissional_id: meuId, nome: novo.nome.trim().slice(0, 80), descricao: '', preco, ativo: true, mensal: novo.mensal })
+  async function enviarPedido() {
+    if (!pedindo) return
+    const valor = lerReais(pedindo.valor)
+    if (!pedindo.nome.trim()) return setErro('Escreva o nome do serviço.')
+    if (!valor || valor < 5) return setErro('Coloque um valor a partir de R$ 5,00.')
+    const e = await pedirPreco({ profissional_id: meuId, catalogo_id: pedindo.catalogo_id, nome: pedindo.nome.trim().slice(0, 80), mensal: pedindo.mensal, valor, motivo: pedindo.motivo.trim() })
     if (e) return setErro(e)
-    setNovo({ nome: '', preco: '', mensal: false })
+    setPedindo(null)
     setErro(null)
+    setOk('Pedido enviado. O FormaCerta confere e o novo valor aparece aqui quando for aprovado.')
     carregar()
+  }
+
+  async function desistir(p: PedidoPreco) {
+    const e = await desistirPedido(p.id)
+    if (e) setErro(e)
+    else carregar()
   }
 
   async function tirarProprio(s: Servico) {
@@ -105,13 +126,20 @@ export function MeusServicos({ meuId }: { meuId: string }) {
     else carregar()
   }
 
+  const formulario = (catalogo_id: string | null) =>
+    pedindo && pedindo.catalogo_id === catalogo_id ? (
+      <PedirValor pedido={pedindo} novo={catalogo_id === null} onMudar={setPedindo} onEnviar={enviarPedido} onCancelar={() => setPedindo(null)} />
+    ) : null
+
   return (
     <section className="cartao formulario meus-servicos">
       <span className="etiqueta">
         <Store size={14} /> Seus serviços no app
       </span>
-      <h2>Meus serviços e preços</h2>
-      <p className="dica-sec">Ligue o que você faz e coloque o seu preço. Quando o aluno abre a conversa com você, recebe uma saudação com estes serviços; ao tocar num deles ele vê o valor e você recebe o interesse no chat. O pagamento é pelo app. A faixa ao lado é o preço comum no mercado.</p>
+      <h2>Meus serviços</h2>
+      <p className="dica-sec">
+        Ligue o que você faz. Cada serviço já vem com o <b>preço do FormaCerta</b>. Quer cobrar um valor diferente? Toque em <b>Pedir outro valor</b> e a gente confere. O aluno vê seus serviços quando abre a conversa com você no chat.
+      </p>
 
       {GRUPOS.map(({ grupo, titulo }) => (
         <div key={grupo} className="servicos-grupo">
@@ -119,39 +147,45 @@ export function MeusServicos({ meuId }: { meuId: string }) {
           {catalogo
             .filter((i) => i.grupo === grupo)
             .map((i) => {
-              const l = linhas[i.id] ?? { ligado: false, preco: '' }
+              const meu = meus.find((s) => s.catalogo_id === i.id)
+              const ligado = !!meu?.ativo
+              const pendente = pendentes.find((p) => p.catalogo_id === i.id)
+              const preco = meu?.preco_aprovado ? meu : { preco: i.preco_sugerido, mensal: i.mensal }
               return (
-                <div key={i.id} className={`servico-linha ${l.ligado ? 'ligado' : ''}`}>
+                <div key={i.id} className={`servico-linha ${ligado ? 'ligado' : ''}`}>
                   <label className="aceite">
-                    <input type="checkbox" checked={l.ligado} onChange={(e) => mudar(i.id, { ligado: e.target.checked })} />
+                    <input type="checkbox" checked={ligado} disabled={mudando === i.id} onChange={(e) => ligar(i, e.target.checked)} />
                     <span>
                       <b>{i.nome}</b>
                       <small>
-                        {emReais(i.preco_min)} a {emReais(i.preco_max)}
-                        {i.mensal ? ' por mês' : ''}
+                        {meu?.preco_aprovado ? 'Seu valor aprovado' : 'Preço FormaCerta'}: <b className="verde">{precoServico(preco)}</b>
                       </small>
                     </span>
                   </label>
-                  {l.ligado && (
-                    <label className="campo servico-preco">
-                      Seu preço{i.mensal ? ' por mês' : ''} (R$)
-                      <input inputMode="decimal" value={l.preco} placeholder={String(Math.round((i.preco_min + i.preco_max) / 2))} onChange={(e) => mudar(i.id, { preco: e.target.value })} />
-                    </label>
+                  {pendente ? (
+                    <p className="dica-sec pedido-pendente">
+                      <Clock size={13} /> Você pediu {precoServico({ preco: pendente.valor, mensal: i.mensal })}. Aguardando o FormaCerta.{' '}
+                      <button className="link" onClick={() => desistir(pendente)}>
+                        Desistir
+                      </button>
+                    </p>
+                  ) : (
+                    ligado &&
+                    !pedindo && (
+                      <button className="link pedir-link" onClick={() => setPedindo({ catalogo_id: i.id, nome: i.nome, mensal: i.mensal, valor: '', motivo: '' })}>
+                        Pedir outro valor
+                      </button>
+                    )
                   )}
+                  {formulario(i.id)}
                 </div>
               )
             })}
         </div>
       ))}
 
-      <button className="botao" disabled={salvando} onClick={salvar}>
-        {salvando ? 'Salvando…' : 'Salvar serviços'}
-      </button>
-      {ok && <p className="mensagem ok">Serviços salvos. Já aparecem no chat para os alunos.</p>}
-
       <div className="servicos-grupo">
-        <h3>Serviço próprio</h3>
-        <p className="dica-sec">Faz algo que não está na lista? Crie aqui.</p>
+        <h3>Serviço fora da lista</h3>
         {proprios.map((s) => (
           <div key={s.id} className="servico-proprio">
             <span>
@@ -162,25 +196,37 @@ export function MeusServicos({ meuId }: { meuId: string }) {
             </button>
           </div>
         ))}
-        <div className="linha-campos">
-          <label className="campo">
-            Nome
-            <input value={novo.nome} maxLength={80} placeholder="Ex.: Treino para gestantes" onChange={(e) => setNovo({ ...novo, nome: e.target.value })} />
-          </label>
-          <label className="campo">
-            Preço (R$)
-            <input inputMode="decimal" value={novo.preco} placeholder="150" onChange={(e) => setNovo({ ...novo, preco: e.target.value })} />
-          </label>
-        </div>
-        <label className="aceite">
-          <input type="checkbox" checked={novo.mensal} onChange={(e) => setNovo({ ...novo, mensal: e.target.checked })} />
-          <span>Cobrado por mês</span>
-        </label>
-        <button className="botao-sec" onClick={adicionarProprio}>
-          <Plus size={16} /> Adicionar serviço
-        </button>
+        {pendentes
+          .filter((p) => !p.catalogo_id)
+          .map((p) => (
+            <p key={p.id} className="dica-sec pedido-pendente">
+              <Clock size={13} /> {p.nome} · {precoServico({ preco: p.valor, mensal: p.mensal })}: aguardando o FormaCerta.{' '}
+              <button className="link" onClick={() => desistir(p)}>
+                Desistir
+              </button>
+            </p>
+          ))}
+        {formulario(null) ??
+          (!pedindo && (
+            <button className="botao-sec" onClick={() => setPedindo({ catalogo_id: null, nome: '', mensal: false, valor: '', motivo: '' })}>
+              <Plus size={16} /> Pedir um serviço novo
+            </button>
+          ))}
       </div>
 
+      {respondidos.length > 0 && (
+        <div className="servicos-grupo">
+          <h3>Respostas do FormaCerta</h3>
+          {respondidos.map((p) => (
+            <p key={p.id} className={`mensagem ${p.situacao === 'aprovado' ? 'ok' : 'aviso'}`}>
+              {p.nome} por {emReais(p.valor)}: {p.situacao === 'aprovado' ? 'aprovado' : 'não aprovado'}
+              {p.resposta ? `. ${p.resposta}` : ''}
+            </p>
+          ))}
+        </div>
+      )}
+
+      {ok && <p className="mensagem ok">{ok}</p>}
       {erro && <p className="mensagem erro">{erro}</p>}
     </section>
   )

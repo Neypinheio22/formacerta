@@ -1,8 +1,8 @@
-import { EyeOff, Handshake, Lock, Plus, Send, ShoppingBag, Sparkles, X } from 'lucide-react'
+import { EyeOff, Handshake, Lock, Send, ShoppingBag, Sparkles, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import type { Perfil } from '../../nuvem/conta'
 import { MENSAGEM_MAXIMO, enviarMensagem, lerBloqueio, lerMensagens, marcarLida, outroLado, quando, temContato, type BloqueioChat, type Conversa as ConversaNuvem, type Mensagem } from '../../nuvem/chat'
-import { lerReais, precoServico, listarServicos, salvarServico, type Servico } from '../../nuvem/planos'
+import { precoServico, listarServicos, type Servico } from '../../nuvem/planos'
 import { usePlanosLiberados } from '../planos/usePlanosLiberados'
 
 type Props = {
@@ -45,8 +45,6 @@ export function Conversa({ perfil, conversa, onVoltar, onPagar }: Props) {
   const [erro, setErro] = useState<string | null>(null)
   const [painel, setPainel] = useState(false)
   const [escolheu, setEscolheu] = useState(false)
-  const [novoNome, setNovoNome] = useState('')
-  const [novoPreco, setNovoPreco] = useState('')
   const fim = useRef<HTMLDivElement>(null)
   const contratacaoLiberada = usePlanosLiberados(perfil)
 
@@ -100,20 +98,6 @@ export function Conversa({ perfil, conversa, onVoltar, onPagar }: Props) {
     setEscolheu(true)
   }
 
-  async function criarEMandar() {
-    const preco = lerReais(novoPreco)
-    if (!novoNome.trim()) return setErro('Escreva o que você está oferecendo.')
-    if (!preco || preco < 5) return setErro('Coloque um preço a partir de R$ 5,00.')
-    const e = await salvarServico({ profissional_id: perfil.id, nome: novoNome.trim().slice(0, 80), descricao: '', preco, ativo: true })
-    if (e) return setErro(e)
-    const lista = await listarServicos()
-    setServicos(lista)
-    const novo = [...lista].reverse().find((s) => s.profissional_id === perfil.id && s.nome === novoNome.trim().slice(0, 80))
-    setNovoNome('')
-    setNovoPreco('')
-    if (novo) await mandar(novo.id, `Proposta: ${novo.nome}`)
-  }
-
   const avisoBloqueio =
     bloqueio === 'nunca'
       ? null
@@ -160,19 +144,7 @@ export function Conversa({ perfil, conversa, onVoltar, onPagar }: Props) {
                   <span>{precoServico(s)}</span>
                 </button>
               ))}
-              <div className="linha-campos">
-                <label className="campo">
-                  Novo serviço
-                  <input value={novoNome} maxLength={80} placeholder="Ex.: Treino mensal online" onChange={(e) => setNovoNome(e.target.value)} />
-                </label>
-                <label className="campo">
-                  Preço (R$)
-                  <input inputMode="decimal" value={novoPreco} placeholder="150" onChange={(e) => setNovoPreco(e.target.value)} />
-                </label>
-              </div>
-              <button className="botao" disabled={enviando} onClick={criarEMandar}>
-                <Plus size={16} /> Criar e mandar
-              </button>
+              <p className="dica-sec">{aVenda.length ? 'Para outro valor ou um serviço novo, peça em Conta → Meus serviços.' : 'Ligue seus serviços em Conta → Meus serviços para mandar propostas.'}</p>
             </>
           )}
         </section>

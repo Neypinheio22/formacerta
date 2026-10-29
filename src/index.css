@@ -4632,3 +4632,43 @@ p.selo-aluno {
   align-items: center;
   gap: 4px;
 }
+
+.pedir-link {
+  justify-self: start;
+  font-size: 0.85rem;
+}
+
+.pedir-valor {
+  display: grid;
+  gap: 8px;
+}
+
+.pedido-pendente {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+  color: var(--laranja);
+}
+
+.pedido-admin {
+  display: grid;
+  gap: 6px;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid var(--borda-verde);
+}
+
+.preco-sugerido {
+  align-items: end;
+}
+
+.lista-simples {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 4px;
+  color: var(--texto-sec);
+  font-size: 0.9rem;
+}
