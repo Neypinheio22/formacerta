@@ -287,9 +287,6 @@ export async function listarCatalogo(): Promise<ItemCatalogo[]> {
 /** "R$ 120,00" ou "R$ 150,00/mês". */
 export const precoServico = (s: Pick<Servico, 'preco' | 'mensal'>) => `${emReais(s.preco)}${s.mensal ? '/mês' : ''}`
 
-/** Menor preço entre os serviços ligados (para "a partir de"). */
-export const aPartirDe = (lista: Servico[]) => (lista.length ? Math.min(...lista.map((s) => s.preco)) : null)
-
 export async function salvarServico(s: { id?: string; profissional_id: string; nome: string; descricao: string; preco: number; ativo: boolean; catalogo_id?: string | null; mensal?: boolean }) {
   const { error } = s.id ? await supabase.from('servicos').update(s).eq('id', s.id) : await supabase.from('servicos').insert(s)
   return error ? erroAmigavel(error) : null

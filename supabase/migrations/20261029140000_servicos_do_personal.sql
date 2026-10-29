@@ -92,3 +92,52 @@ grant execute on function public.comprar_avaliacao to authenticated;
 drop policy if exists "criar serviço" on public.servicos;
 create policy "criar serviço" on public.servicos for insert to authenticated
 with check (profissional_id = (select auth.uid()) and (public.eh_profissional() or public.eh_admin()));
+
+-- No chat, o aluno toca num serviço do menu e o personal já recebe o interesse
+-- (com o serviço anexado). O personal continua mandando propostas.
+create or replace function public.enviar_mensagem(conversa uuid, texto text, servico uuid default null) returns uuid
+language plpgsql security definer set search_path = '' as $$
+declare
+  eu uuid := (select auth.uid());
+  c public.conversas;
+  modo text;
+  limpo text := btrim(coalesce(texto, ''));
+  final text;
+  id_mensagem uuid;
+begin
+  select * into c from public.conversas where id = conversa;
+  if c.id is null or eu not in (c.aluno_id, c.profissional_id) then raise exception 'Conversa não encontrada'; end if;
+  if limpo = '' and servico is null then raise exception 'Escreva a mensagem'; end if;
+  if char_length(limpo) > 1000 then raise exception 'Mensagem muito longa (até 1000 letras)'; end if;
+  if servico is not null and not exists (
+    select 1 from public.servicos s where s.id = servico and s.profissional_id = c.profissional_id and s.ativo
+  ) then
+    raise exception 'Serviço inválido';
+  end if;
+
+  select chat_bloqueio into modo from public.config_cobranca;
+  if modo = 'sempre' or (coalesce(modo, 'ate_contratar') = 'ate_contratar' and not exists (
+    select 1 from public.pagamentos pg
+    where pg.pagador_id = c.aluno_id and pg.recebedor_id = c.profissional_id and pg.situacao = 'pago'
+  )) then
+    final := public.ocultar_contato(limpo);
+  else
+    final := limpo;
+  end if;
+
+  insert into public.mensagens (conversa_id, autor_id, texto, servico_id, oculto)
+  values (c.id, eu, final, servico, final <> limpo)
+  returning id into id_mensagem;
+
+  update public.conversas
+  set ultima_em = now(),
+      ultima_previa = left(case when final = '' then 'Serviço enviado' else final end, 120),
+      lida_aluno_em = case when eu = c.aluno_id then now() else lida_aluno_em end,
+      lida_profissional_em = case when eu = c.profissional_id then now() else lida_profissional_em end
+  where id = c.id;
+  return id_mensagem;
+end
+$$;
+
+revoke execute on function public.enviar_mensagem from public, anon;
+grant execute on function public.enviar_mensagem to authenticated;

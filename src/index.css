@@ -4564,50 +4564,7 @@ p.selo-aluno {
   margin-top: 3px;
 }
 
-/* Serviços e preços do personal */
-.personal-servicos {
-  display: grid;
-  gap: 6px;
-  padding: 12px 14px;
-  border-radius: 16px;
-  background: rgba(54, 242, 148, 0.06);
-  border: 1px solid var(--borda-verde);
-}
-
-.personal-servicos h3 {
-  margin: 0;
-  font-size: 1rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 8px;
-}
-
-.personal-servicos h3 small {
-  color: var(--verde);
-  font-weight: 600;
-}
-
-.personal-servicos ul {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: 4px;
-}
-
-.personal-servicos li {
-  display: flex;
-  justify-content: space-between;
-  gap: 10px;
-  font-size: 0.9rem;
-}
-
-.personal-servicos li b {
-  color: var(--verde);
-  white-space: nowrap;
-}
-
+/* Serviços do personal */
 .meus-servicos .servicos-grupo {
   display: grid;
   gap: 8px;
@@ -4648,4 +4605,30 @@ p.selo-aluno {
   padding: 8px 12px;
   border-radius: 12px;
   border: 1px solid var(--borda-verde);
+}
+
+.saudacao-chat {
+  max-width: 92%;
+}
+
+.menu-servicos {
+  display: grid;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.menu-servicos .etiqueta {
+  justify-self: start;
+}
+
+.menu-servicos .opcao {
+  padding: 10px 12px;
+  text-align: left;
+  font-weight: 600;
+}
+
+.saudacao-chat .balao-hora {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }

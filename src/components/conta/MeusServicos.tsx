@@ -111,7 +111,7 @@ export function MeusServicos({ meuId }: { meuId: string }) {
         <Store size={14} /> Seus serviços no app
       </span>
       <h2>Meus serviços e preços</h2>
-      <p className="dica-sec">Ligue o que você faz e coloque o seu preço. Os alunos veem no seu perfil e contratam pelo chat, com pagamento pelo app. A faixa ao lado é o preço comum no mercado.</p>
+      <p className="dica-sec">Ligue o que você faz e coloque o seu preço. Quando o aluno abre a conversa com você, recebe uma saudação com estes serviços; ao tocar num deles ele vê o valor e você recebe o interesse no chat. O pagamento é pelo app. A faixa ao lado é o preço comum no mercado.</p>
 
       {GRUPOS.map(({ grupo, titulo }) => (
         <div key={grupo} className="servicos-grupo">
@@ -147,7 +147,7 @@ export function MeusServicos({ meuId }: { meuId: string }) {
       <button className="botao" disabled={salvando} onClick={salvar}>
         {salvando ? 'Salvando…' : 'Salvar serviços'}
       </button>
-      {ok && <p className="mensagem ok">Serviços salvos. Já aparecem para os alunos.</p>}
+      {ok && <p className="mensagem ok">Serviços salvos. Já aparecem no chat para os alunos.</p>}
 
       <div className="servicos-grupo">
         <h3>Serviço próprio</h3>
