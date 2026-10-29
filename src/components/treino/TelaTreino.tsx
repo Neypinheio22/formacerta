@@ -169,13 +169,23 @@ function TreinoFinalizado({ treino, inicio, fim, salvando, erro, comPersonal, on
 }
 
 /** Aviso fixo da série sugerida: quem monta o treino é o personal. */
-function AvisoSugerida({ temFicha, onPersonais }: { temFicha: boolean; onPersonais: () => void }) {
+function AvisoSugerida({ temFicha, motivos = [], onPersonais }: { temFicha: boolean; motivos?: string[]; onPersonais: () => void }) {
   return (
     <section className="cartao aviso-sugerida">
       <p>
         <TriangleAlert size={18} /> <b>Série sugerida, não é o seu treino personalizado.</b>
       </p>
       <p className="dica-sec">{AVISO_SUGERIDA}</p>
+      {motivos.length > 0 && (
+        <details className="ajuste-serie">
+          <summary>Ajustada para você pelos seus dados</summary>
+          <ul>
+            {motivos.map((m) => (
+              <li key={m}>{m}</li>
+            ))}
+          </ul>
+        </details>
+      )}
       {temFicha ? (
         <p className="dica-sec">Seu personal já tem a sua ficha: assim que ele montar os treinos, eles aparecem aqui no lugar desta série.</p>
       ) : (
@@ -249,7 +259,7 @@ export function TelaTreino({ perfil, abrir, onVoltar, onCamera, onCarga, onPerso
           Treino <span className="verde">{treino.letra}</span>
           {treino.nome && ` · ${treino.nome}`}
         </h1>
-        {t.sugerida && <AvisoSugerida temFicha={!!t.ficha} onPersonais={onPersonais} />}
+        {t.sugerida && <AvisoSugerida temFicha={!!t.ficha?.profissional_id} motivos={t.ajuste?.motivos} onPersonais={onPersonais} />}
         <p className="dica-sec">Toque em <Video size={14} /> para ver como fazer o exercício e na câmera para o app contar as repetições e corrigir o movimento.</p>
         <ol className="lista-treino">
           {treino.exercicios.map((ex, i) => (
@@ -286,7 +296,7 @@ export function TelaTreino({ perfil, abrir, onVoltar, onCamera, onCarga, onPerso
 
       {t.carregando && aluno && <p className="carregando">Carregando sua ficha…</p>}
 
-      {t.sugerida && <AvisoSugerida temFicha={!!t.ficha} onPersonais={onPersonais} />}
+      {t.sugerida && <AvisoSugerida temFicha={!!t.ficha?.profissional_id} motivos={t.ajuste?.motivos} onPersonais={onPersonais} />}
 
       {t.lista.length > 0 && (
         <div className="grade-treinos">

@@ -27,6 +27,7 @@ type Props = {
   onAlunos: () => void
   onReavaliacoes: () => void
   onEvolucao: () => void
+  onMeusDados: () => void
   onVitrine: () => void
   onPlanos: () => void
   onRelatorio: () => void
@@ -57,7 +58,7 @@ function Grupo({ titulo, atalhos, personal }: { titulo: string; atalhos: Atalho[
   )
 }
 
-export function Home({ history, onStart, onOpen, onEstudio, onExercicio, onCarga, onCorrida, onFlexibilidade, onAdams, onIdoso, perfil, onAdmin, onAlunos, onReavaliacoes, onEvolucao, onVitrine, onPlanos, onRelatorio, onTreino, onPersonais }: Props) {
+export function Home({ history, onStart, onOpen, onEstudio, onExercicio, onCarga, onCorrida, onFlexibilidade, onAdams, onIdoso, perfil, onAdmin, onAlunos, onReavaliacoes, onEvolucao, onMeusDados, onVitrine, onPlanos, onRelatorio, onTreino, onPersonais }: Props) {
   const verPlanos = usePlanosLiberados(perfil)
   const [todoHistorico, setTodoHistorico] = useState(false)
   // O aluno só vê o que ele mesmo usa; as ferramentas de avaliar e atender alunos ficam para o personal.
@@ -98,7 +99,7 @@ export function Home({ history, onStart, onOpen, onEstudio, onExercicio, onCarga
         </header>
       )}
 
-      {aluno && perfil && <CartaoMeusDados meuId={perfil.id} onAbrir={onEvolucao} />}
+      {aluno && perfil && <CartaoMeusDados meuId={perfil.id} onAbrir={onMeusDados} />}
 
       {aluno && (
         <>

@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { AssessmentResult } from './components/AssessmentResult'
 import { CorridaArquivo } from './components/corrida/CorridaArquivo'
 import { CorridaInicio } from './components/corrida/CorridaInicio'
@@ -15,6 +15,8 @@ import { Admin } from './components/conta/Admin'
 import { Reavaliacoes } from './components/plano/Reavaliacoes'
 import { MeusAlunos } from './components/conta/MeusAlunos'
 import { MinhaEvolucao } from './components/alunos/MinhaEvolucao'
+import { MeusDados } from './components/corpo/MeusDados'
+import { minhaFicha } from './nuvem/treinos'
 import { MinhaConta } from './components/conta/MinhaConta'
 import { Portao } from './components/conta/Portao'
 import { BarraInferior, type Aba } from './components/BarraInferior'
@@ -65,6 +67,7 @@ type Screen =
   | { name: 'alunos' }
   | { name: 'reavaliacoes' }
   | { name: 'evolucao' }
+  | { name: 'meus-dados'; depois?: Screen }
   | { name: 'conta' }
   | { name: 'vitrine' }
   | { name: 'planos' }
@@ -95,11 +98,29 @@ function Telas({ inicial }: { inicial: Screen }) {
   const [screen, setScreen] = useState<Screen>(inicial)
   const { perfil } = useConta()
   const [history, setHistory] = useState(loadAssessments)
+  const [dadosOk, setDadosOk] = useState(true)
+  const [versaoDados, setVersaoDados] = useState(0)
+
+  // Aluno sem altura, nascimento, sexo ou objetivo: antes da avaliação o app pede os dados.
+  useEffect(() => {
+    if (perfil?.papel !== 'aluno') return setDadosOk(true)
+    minhaFicha(perfil.id).then((f) => setDadosOk(!!(f?.altura_cm && f.nascimento && f.sexo && f.objetivo)))
+  }, [perfil?.id, perfil?.papel, versaoDados])
 
   const go = useCallback((s: Screen) => {
     setScreen(s)
     window.scrollTo(0, 0)
   }, [])
+  /** Abre o teste, passando antes por "Meus dados" se faltar o básico (uma vez por visita). */
+  const comDados = (s: Screen) => {
+    let pulou = false
+    try {
+      pulou = sessionStorage.getItem('formacerta:pulou-dados') === '1'
+    } catch {
+      // Sem acesso ao aparelho: pergunta de novo, sem problema.
+    }
+    go(dadosOk || pulou ? s : { name: 'meus-dados', depois: s })
+  }
   const verResultado = useCallback((resultado: ResultadoExercicio) => go({ name: 'exercicio-resultado', resultado }), [go])
   const verCorrida = useCallback((resultado: ResultadoCorrida) => go({ name: 'corrida-resultado', resultado }), [go])
 
@@ -246,6 +267,30 @@ function Telas({ inicial }: { inicial: Screen }) {
 
     if (screen.name === 'evolucao' && perfil) return <MinhaEvolucao meuId={perfil.id} nome={perfil.nome || perfil.email} onVoltar={() => go({ name: 'inicio' })} />
 
+    if (screen.name === 'meus-dados' && perfil) {
+      const depois = screen.depois
+      return (
+        <MeusDados
+          meuId={perfil.id}
+          nome={perfil.nome || perfil.email}
+          modo={depois ? 'antes' : 'editar'}
+          textoPronto={depois ? 'Começar a avaliação' : 'Voltar ao início'}
+          onVoltar={() => go({ name: 'inicio' })}
+          onPronto={() => {
+            if (depois) {
+              try {
+                sessionStorage.setItem('formacerta:pulou-dados', '1')
+              } catch {
+                // Sem acesso ao aparelho: pode perguntar de novo.
+              }
+            }
+            setVersaoDados((v) => v + 1)
+            go(depois ?? { name: 'inicio' })
+          }}
+        />
+      )
+    }
+
     if (screen.name === 'vitrine') return <Vitrine onVoltar={() => go({ name: 'inicio' })} />
 
     if (screen.name === 'conta') return <MinhaConta onVoltar={() => go({ name: 'inicio' })} onPlanos={() => go({ name: 'planos' })} />
@@ -260,20 +305,21 @@ function Telas({ inicial }: { inicial: Screen }) {
     return (
       <Home
         history={history}
-        onStart={() => go({ name: 'avaliacao' })}
+        onStart={() => comDados({ name: 'avaliacao' })}
         onOpen={(a) => go({ name: 'resultado', assessment: a })}
         onEstudio={() => go({ name: 'estudio' })}
-        onExercicio={() => go({ name: 'exercicio' })}
+        onExercicio={() => comDados({ name: 'exercicio' })}
         onCarga={() => go({ name: 'carga' })}
-        onCorrida={() => go({ name: 'corrida' })}
-        onFlexibilidade={() => go({ name: 'flexibilidade' })}
-        onAdams={() => go({ name: 'adams' })}
+        onCorrida={() => comDados({ name: 'corrida' })}
+        onFlexibilidade={() => comDados({ name: 'flexibilidade' })}
+        onAdams={() => comDados({ name: 'adams' })}
         onIdoso={() => go({ name: 'idoso' })}
         perfil={perfil}
         onAdmin={() => go({ name: 'admin' })}
         onAlunos={() => go({ name: 'alunos' })}
         onReavaliacoes={() => go({ name: 'reavaliacoes' })}
         onEvolucao={() => go({ name: 'evolucao' })}
+        onMeusDados={() => go({ name: 'meus-dados' })}
         onVitrine={() => go({ name: 'vitrine' })}
         onPlanos={() => go({ name: 'planos' })}
         onRelatorio={() => go({ name: 'relatorio', voltar: screen })}

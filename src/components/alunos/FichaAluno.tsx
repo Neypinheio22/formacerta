@@ -6,6 +6,8 @@ import { dataCurta } from '../../testes/formato'
 import { NovoAluno } from '../conta/NovoAluno'
 import { FichaForm } from './FichaForm'
 import { MedidasForm } from './MedidasForm'
+import { corpoDaFicha } from '../../corpo/corpo'
+import { MeuCorpoCartao } from '../corpo/MeuCorpoCartao'
 import { PainelEvolucao } from './PainelEvolucao'
 import { CentralInteligencia } from '../plano/CentralInteligencia'
 import { EditorTreinos } from '../treino/EditorTreinos'
@@ -216,6 +218,7 @@ export function FichaAluno({ ficha, meuId, podeEditar, nome, textoVoltar, onVolt
 
       {modo === 'ver' && resultados && (
         <>
+          {dados && <MeuCorpoCartao itens={corpoDaFicha(dados, resultados, idade)} titulo={souOAluno ? 'Meu corpo hoje' : 'Corpo hoje'} />}
           <div className="seletor-comparar abas-ficha" role="tablist">
             <button role="tab" aria-selected={aba === 'analise'} className={aba === 'analise' ? 'ativo' : ''} onClick={() => setAba('analise')}>
               🧠 Central IA
