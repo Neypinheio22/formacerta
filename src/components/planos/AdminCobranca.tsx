@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { ROTULO_BLOQUEIO, lerBloqueio, salvarBloqueio, type BloqueioChat } from '../../nuvem/chat'
 import { ROTULO_PAPEL, type Perfil } from '../../nuvem/conta'
 import {
   CONFIG_PADRAO,
@@ -27,8 +28,10 @@ export function AdminPlanos({ perfis }: { perfis: Perfil[] }) {
   const [config, setConfig] = useState<ConfigCobranca>(CONFIG_PADRAO)
   const [erro, setErro] = useState<string | null>(null)
   const [ok, setOk] = useState<string | null>(null)
+  const [bloqueio, setBloqueio] = useState<BloqueioChat>('ate_contratar')
 
   useEffect(() => {
+    lerBloqueio().then(setBloqueio)
     listarPlanos().then((r) => {
       setPlanos(r.planos)
       setErro(r.erro)
@@ -41,6 +44,12 @@ export function AdminPlanos({ perfis }: { perfis: Perfil[] }) {
     const e = await salvarConfig({ gateway })
     setErro(e)
     if (!e) setConfig({ ...config, gateway })
+  }
+
+  async function mudarBloqueio(b: BloqueioChat) {
+    const e = await salvarBloqueio(b)
+    setErro(e)
+    if (!e) setBloqueio(b)
   }
 
   async function gravarConfig() {
@@ -67,6 +76,24 @@ export function AdminPlanos({ perfis }: { perfis: Perfil[] }) {
           {config.gateway === 'mercadopago'
             ? 'Ligado: o app gera o Pix ou abre a página do Mercado Pago, e o plano libera sozinho quando o pagamento cai. Com o token de teste (TEST-) nenhum dinheiro de verdade passa.'
             : 'Manual: os pedidos ficam registrados e você confirma à mão na aba Pagamentos. Antes de ligar o Mercado Pago, cole o token MP_ACCESS_TOKEN nos segredos do Supabase.'}
+        </p>
+      </section>
+
+      <section className="cartao formulario">
+        <h2>Telefone e e-mail no chat</h2>
+        <div className="escolha">
+          {(Object.keys(ROTULO_BLOQUEIO) as BloqueioChat[]).map((b) => (
+            <button key={b} className={bloqueio === b ? 'ativo' : ''} onClick={() => mudarBloqueio(b)}>
+              {ROTULO_BLOQUEIO[b]}
+            </button>
+          ))}
+        </div>
+        <p className="dica-sec">
+          {bloqueio === 'ate_contratar'
+            ? 'Telefone, e-mail, links e "me chama no zap" ficam ocultos até o aluno ter um pagamento confirmado para aquele personal.'
+            : bloqueio === 'sempre'
+              ? 'Telefone, e-mail e links ficam ocultos sempre, mesmo depois de contratar.'
+              : 'Nada fica oculto: aluno e personal podem trocar contato no chat.'}
         </p>
       </section>
 

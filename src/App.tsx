@@ -20,6 +20,9 @@ import { Portao } from './components/conta/Portao'
 import { BarraInferior, type Aba } from './components/BarraInferior'
 import { Home } from './components/Home'
 import { EncontrarPersonal } from './components/conta/EncontrarPersonal'
+import { Conversa } from './components/chat/Conversa'
+import { Conversas } from './components/chat/Conversas'
+import type { Conversa as ConversaNuvem } from './nuvem/chat'
 import { TelaTreino } from './components/treino/TelaTreino'
 import { Vitrine } from './components/vitrine/Vitrine'
 import { Pagamento, type Pedido } from './components/planos/Pagamento'
@@ -65,7 +68,9 @@ type Screen =
   | { name: 'conta' }
   | { name: 'vitrine' }
   | { name: 'planos' }
-  | { name: 'pagamento'; pedido: Pedido }
+  | { name: 'pagamento'; pedido: Pedido; voltar?: Screen }
+  | { name: 'conversas' }
+  | { name: 'conversa'; conversa: ConversaNuvem; voltar: Screen }
   | { name: 'perfil'; voltar: Screen }
   | { name: 'relatorio'; avaliado?: string; marcados?: string[]; voltar: Screen }
 
@@ -98,7 +103,7 @@ function Telas({ inicial }: { inicial: Screen }) {
   const verResultado = useCallback((resultado: ResultadoExercicio) => go({ name: 'exercicio-resultado', resultado }), [go])
   const verCorrida = useCallback((resultado: ResultadoCorrida) => go({ name: 'corrida-resultado', resultado }), [go])
 
-  const aba: Aba | null = (['inicio', 'treino', 'evolucao', 'alunos', 'conta'] as const).find((a) => a === screen.name) ?? null
+  const aba: Aba | null = (['inicio', 'treino', 'conversas', 'evolucao', 'alunos', 'conta'] as const).find((a) => a === screen.name) ?? null
   const conteudo = desenhar()
   if (!perfil || !aba) return conteudo
   return (
@@ -189,7 +194,13 @@ function Telas({ inicial }: { inicial: Screen }) {
     if (screen.name === 'corrida-resultado') {
       return <CorridaResultado resultado={screen.resultado} onVoltar={() => go({ name: 'inicio' })} onOutraVista={(vista) => go({ name: 'corrida', vista })} />
     }
-    if (screen.name === 'personais') return <EncontrarPersonal meuNome={perfil?.nome ?? ''} onVoltar={() => go(screen.voltar)} />
+    if (screen.name === 'personais') return <EncontrarPersonal meuId={perfil?.id ?? ''} meuNome={perfil?.nome ?? ''} onVoltar={() => go(screen.voltar)} onConversa={(conversa) => go({ name: 'conversa', conversa, voltar: { name: 'conversas' } })} />
+
+    if (screen.name === 'conversas' && perfil)
+      return <Conversas perfil={perfil} onAbrir={(conversa) => go({ name: 'conversa', conversa, voltar: screen })} onPersonais={() => go({ name: 'personais', voltar: screen })} />
+
+    if (screen.name === 'conversa' && perfil)
+      return <Conversa perfil={perfil} conversa={screen.conversa} onVoltar={() => go(screen.voltar)} onPagar={(servico) => go({ name: 'pagamento', pedido: { tipo: 'avaliacao', servico }, voltar: screen })} />
 
     if (screen.name === 'treino')
       return (
@@ -241,7 +252,10 @@ function Telas({ inicial }: { inicial: Screen }) {
 
     if (screen.name === 'planos') return <Planos onVoltar={() => go({ name: 'inicio' })} onPagar={(pedido) => go({ name: 'pagamento', pedido })} />
 
-    if (screen.name === 'pagamento') return <Pagamento pedido={screen.pedido} onVoltar={() => go({ name: 'planos' })} onPronto={() => go({ name: 'planos' })} />
+    if (screen.name === 'pagamento') {
+      const voltar = screen.voltar ?? { name: 'planos' }
+      return <Pagamento pedido={screen.pedido} textoPronto={screen.voltar ? 'Voltar para a conversa' : undefined} onVoltar={() => go(voltar)} onPronto={() => go(voltar)} />
+    }
 
     return (
       <Home

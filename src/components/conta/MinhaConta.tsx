@@ -51,7 +51,7 @@ export function MinhaConta({ onVoltar, onPlanos }: { onVoltar: () => void; onPla
 
   async function salvarDadosContato() {
     if (contato.aparecer_na_lista && !registro.trim()) return setErro('Preencha o número do CREF acima para aparecer na lista.')
-    if (contato.aparecer_na_lista && !telefoneValido(contato.whatsapp)) return setErro('Coloque o WhatsApp com DDD para os alunos chamarem você.')
+    if (contato.whatsapp.trim() && !telefoneValido(contato.whatsapp)) return setErro('Confira o WhatsApp: coloque o DDD e o número.')
     // O CREF digitado acima vale também aqui, mesmo sem tocar no outro "Salvar".
     const mudouPerfil = nome.trim() !== perfil!.nome || registro.trim() !== perfil!.registro
     const erro = (mudouPerfil && (await salvarMeuPerfil(perfil!.id, { nome: nome.trim(), registro: registro.trim() }))) || (await salvarContato(perfil!.id, contato))
@@ -143,7 +143,7 @@ export function MinhaConta({ onVoltar, onPlanos }: { onVoltar: () => void; onPla
       {perfil.papel !== 'aluno' && 'aparecer_na_lista' in perfil && (
         <section className="cartao formulario">
           <h2>Aparecer para os alunos</h2>
-          <p className="dica-sec">Alunos sem personal procuram um profissional habilitado em "Encontrar personal" e chamam no seu WhatsApp. Só aparecem foto, nome, CREF, cidade, especialidades, biografia e WhatsApp.</p>
+          <p className="dica-sec">Alunos sem personal procuram um profissional habilitado em "Encontrar personal" e falam com você pelo chat do app, onde também contratam seus serviços. Aparecem foto, nome, CREF, cidade, especialidades e biografia.</p>
           <div className="foto-perfil">
             {foto ? <img src={foto} alt="Sua foto" /> : <span className="personal-inicial grande">{(nome || perfil.email).charAt(0).toUpperCase()}</span>}
             <div>
@@ -159,7 +159,7 @@ export function MinhaConta({ onVoltar, onPlanos }: { onVoltar: () => void; onPla
             </div>
           </div>
           <label className="campo">
-            WhatsApp com DDD
+            WhatsApp com DDD (opcional, não aparece para os alunos)
             <input inputMode="tel" autoComplete="tel" value={contato.whatsapp} maxLength={20} placeholder="(11) 98765-4321" onChange={(e) => setContato({ ...contato, whatsapp: e.target.value })} />
           </label>
           <label className="campo">
@@ -189,7 +189,7 @@ export function MinhaConta({ onVoltar, onPlanos }: { onVoltar: () => void; onPla
           </label>
           {contatoSalvo && <p className="mensagem ok">Dados guardados.</p>}
           {(() => {
-            const falta = faltaParaAparecer(perfil, { whatsapp: perfil.whatsapp ?? '', aparecer_na_lista: !!perfil.aparecer_na_lista })
+            const falta = faltaParaAparecer(perfil, { aparecer_na_lista: !!perfil.aparecer_na_lista })
             return falta.length === 0 ? (
               <p className="mensagem ok">✓ Você aparece para os alunos em "Encontrar personal".</p>
             ) : (

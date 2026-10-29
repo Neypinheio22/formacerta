@@ -1,12 +1,11 @@
 import { BadgeCheck, ExternalLink, MapPin, MessageCircle, Search } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { linkWhatsApp, telefoneValido } from '../../compartilhar/whatsapp'
+import { abrirConversa, type Conversa } from '../../nuvem/chat'
 import { CONSULTA_CONFEF, filtrarProfissionais, listaEspecialidades, listarProfissionais, type ProfissionalHabilitado } from '../../nuvem/profissionais'
 
-function Cartao({ p, meuNome }: { p: ProfissionalHabilitado; meuNome: string }) {
+function Cartao({ p, abrindo, onConversar }: { p: ProfissionalHabilitado; abrindo: boolean; onConversar: () => void }) {
   const primeiro = p.nome.split(' ')[0]
   const especialidades = listaEspecialidades(p.especialidade)
-  const mensagem = `Olá, ${primeiro}! Encontrei você no app FormaCerta${meuNome ? `, sou ${meuNome}` : ''}. Gostaria de saber sobre acompanhamento e montagem do meu treino.`
   return (
     <li className="cartao personal-cartao">
       <div className="personal-topo">
@@ -33,13 +32,9 @@ function Cartao({ p, meuNome }: { p: ProfissionalHabilitado; meuNome: string }) 
       {p.bio && <p className="personal-bio">{p.bio}</p>}
       <p className="personal-selo">✓ Cadastro conferido e liberado pelo FormaCerta</p>
       <div className="acoes-linha">
-        {telefoneValido(p.whatsapp) ? (
-          <a className="botao botao-whatsapp" href={linkWhatsApp(mensagem, p.whatsapp)} target="_blank" rel="noopener noreferrer">
-            <MessageCircle size={18} /> WhatsApp
-          </a>
-        ) : (
-          <span className="dica-sec">WhatsApp não informado</span>
-        )}
+        <button className="botao" disabled={abrindo} onClick={onConversar}>
+          <MessageCircle size={18} /> {abrindo ? 'Abrindo…' : 'Conversar'}
+        </button>
         <a className="botao-sec" href={CONSULTA_CONFEF} target="_blank" rel="noopener noreferrer">
           <ExternalLink size={16} /> Conferir CREF
         </a>
@@ -48,11 +43,20 @@ function Cartao({ p, meuNome }: { p: ProfissionalHabilitado; meuNome: string }) 
   )
 }
 
-/** Aluno encontra um profissional de Educação Física habilitado e chama no WhatsApp. */
-export function EncontrarPersonal({ meuNome, onVoltar }: { meuNome: string; onVoltar: () => void }) {
+/** Aluno encontra um profissional de Educação Física habilitado e conversa com ele pelo chat do app. */
+export function EncontrarPersonal({ meuId, meuNome, onVoltar, onConversa }: { meuId: string; meuNome: string; onVoltar: () => void; onConversa: (c: Conversa) => void }) {
   const [lista, setLista] = useState<ProfissionalHabilitado[] | null>(null)
   const [erro, setErro] = useState<string | null>(null)
   const [busca, setBusca] = useState('')
+  const [abrindo, setAbrindo] = useState<string | null>(null)
+
+  async function conversar(p: ProfissionalHabilitado) {
+    setAbrindo(p.id)
+    const { id, erro: e } = await abrirConversa(p.id)
+    setAbrindo(null)
+    if (e || !id) return setErro(e ?? 'Não deu para abrir a conversa.')
+    onConversa({ id, aluno_id: meuId, profissional_id: p.id, aluno_nome: meuNome, profissional_nome: p.nome, profissional_foto: p.foto_url ?? '', ultima_em: new Date().toISOString(), ultima_previa: '', nao_lidas: 0 })
+  }
 
   useEffect(() => {
     listarProfissionais().then((r) => {
@@ -87,11 +91,11 @@ export function EncontrarPersonal({ meuNome, onVoltar }: { meuNome: string; onVo
 
       <ul className="lista-personais">
         {visiveis.map((p) => (
-          <Cartao key={p.id} p={p} meuNome={meuNome} />
+          <Cartao key={p.id} p={p} abrindo={abrindo === p.id} onConversar={() => conversar(p)} />
         ))}
       </ul>
 
-      <p className="dica-sec rodape-lista">O FormaCerta mostra o contato que o profissional autorizou. A contratação e o valor são combinados direto com ele.</p>
+      <p className="dica-sec rodape-lista">Converse pelo chat e contrate pelo app: o pagamento fica protegido e o histórico guardado no FormaCerta.</p>
     </div>
   )
 }
