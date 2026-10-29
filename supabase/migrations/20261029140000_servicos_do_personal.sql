@@ -2,7 +2,7 @@
 -- avaliações até acompanhamento) e cada profissional liga os que faz e põe o
 -- próprio preço. Aparecem no perfil de "Encontrar personal" e no Contratar do chat.
 
-create table public.catalogo_servicos (
+create table if not exists public.catalogo_servicos (
   id text primary key,
   grupo text not null check (grupo in ('avaliacao', 'treino')),
   nome text not null,
@@ -16,7 +16,9 @@ create table public.catalogo_servicos (
 );
 
 alter table public.catalogo_servicos enable row level security;
+drop policy if exists "ver catálogo" on public.catalogo_servicos;
 create policy "ver catálogo" on public.catalogo_servicos for select to authenticated using (true);
+drop policy if exists "admin muda catálogo" on public.catalogo_servicos;
 create policy "admin muda catálogo" on public.catalogo_servicos for all to authenticated
 using (public.eh_admin()) with check (public.eh_admin());
 
@@ -43,7 +45,7 @@ create unique index if not exists servicos_um_por_catalogo on public.servicos (p
 drop trigger if exists planos_liberados_servico on public.servicos;
 
 -- O aluno vê os serviços ligados dos profissionais que aparecem na lista.
-create function public.aparece_na_lista(profissional uuid) returns boolean
+create or replace function public.aparece_na_lista(profissional uuid) returns boolean
 language sql stable security definer set search_path = '' as $$
   select exists (
     select 1 from public.perfis p
@@ -55,6 +57,7 @@ $$;
 revoke execute on function public.aparece_na_lista from public, anon;
 grant execute on function public.aparece_na_lista to authenticated;
 
+drop policy if exists "ver serviços da lista" on public.servicos;
 create policy "ver serviços da lista" on public.servicos for select to authenticated
 using (ativo and public.eh_liberado() and public.aparece_na_lista(profissional_id));
 
