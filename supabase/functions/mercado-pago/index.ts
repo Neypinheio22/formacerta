@@ -3,7 +3,7 @@
 // boleto. O token do Mercado Pago fica só aqui, no segredo MP_ACCESS_TOKEN.
 import { createClient } from 'npm:@supabase/supabase-js@2'
 
-const APP = 'https://neypinheio22.github.io/formacerta/'
+const APP = Deno.env.get('APP_URL') ?? 'https://formacerta.app.br/'
 const MP = 'https://api.mercadopago.com'
 
 const cors = {

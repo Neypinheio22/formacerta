@@ -74,3 +74,5 @@ As regras de análise ficam em `src/pose/analysis.ts` (postura) e `src/movimento
 ## Publicação
 
 Cada alteração na branch `main` é publicada no GitHub Pages pelo workflow `.github/workflows/deploy.yml`. Na primeira vez, ative em **Settings → Pages → Source: GitHub Actions**.
+
+Endereço do app: **https://formacerta.app.br** (domínio próprio, arquivo `public/CNAME`). O endereço antigo `neypinheio22.github.io/formacerta` passa a redirecionar para ele. As funções do Supabase usam o segredo `APP_URL` quando existir; sem ele, usam `https://formacerta.app.br/`.
