@@ -1,22 +1,23 @@
-import { CheckCircle2, Copy, Film, Pencil, Plus, Trash2, X } from 'lucide-react'
-import { useCallback, useEffect, useState } from 'react'
+import { CheckCircle2, ClipboardList, Film, Plus, Trash2, X } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { EXERCICIOS } from '../../movimento/exercicios'
 import type { Ficha } from '../../nuvem/fichas'
-import { apagarTreino, definirMetaSemana, exercicioVazio, listarTreinos, salvarTreino, type ExercicioTreino, type Treino } from '../../nuvem/treinos'
+import { listarRotinas, listarTreinosDasRotinas, type Rotina } from '../../nuvem/rotinas'
+import { definirMetaSemana, exercicioVazio, type ExercicioTreino, type Treino } from '../../nuvem/treinos'
 import { SUGESTOES_EXERCICIO } from '../../treino/carga'
 import { acharExercicio, comoFazerDe, type ExercicioProprio } from '../../treino/comoFazer'
-import { linhasDe, linhaVazia, tipoDe, TIPOS_LINHA, type CampoLinha, type LinhaSerie, type TipoLinha } from '../../treino/linhas'
+import { linhaVazia, tipoDe, TIPOS_LINHA, type CampoLinha, type LinhaSerie, type TipoLinha } from '../../treino/linhas'
 import { EXERCICIOS_MOBILIDADE } from '../../treino/videosApp'
-import { proximaLetra } from '../../treino/semana'
-import { SERIE_SUGERIDA } from '../../treino/sugerida'
+import { andamento, dataDia, rotinaAtual } from '../../treino/rotinas'
 import { FormExercicio, MeusExercicios, MidiaExercicio } from './ComoFazer'
 import { useExercicios } from './useExercicios'
 import { MateriaisEditor } from './Materiais'
 import { RetornosAluno } from './RetornosAluno'
+import { IconeDaRotina } from './IconeRotina'
 
 const SUGESTOES = [...EXERCICIOS.map((e) => e.nome), ...SUGESTOES_EXERCICIO, ...EXERCICIOS_MOBILIDADE]
 
-type Biblioteca = { meuId: string; lista: ExercicioProprio[]; onMudou: () => void }
+export type Biblioteca = { meuId: string; lista: ExercicioProprio[]; onMudou: () => void }
 
 /** Embaixo do nome do exercício: mostra a foto ou o vídeo que o aluno vai ver, ou deixa cadastrar. */
 function MidiaNaFicha({ nome, bib }: { nome: string; bib: Biblioteca }) {
@@ -55,8 +56,6 @@ function MidiaNaFicha({ nome, bib }: { nome: string; bib: Biblioteca }) {
     </div>
   )
 }
-
-type Rascunho = { id?: string; letra: string; nome: string; exercicios: ExercicioTreino[] }
 
 /** Linhas do exercício: cada uma com os campos do tipo escolhido (série/rep, carga, intervalo...). */
 function EditorLinhas({ linhas, onMudar }: { linhas: LinhaSerie[]; onMudar: (l: LinhaSerie[]) => void }) {
@@ -102,29 +101,11 @@ function EditorLinhas({ linhas, onMudar }: { linhas: LinhaSerie[]; onMudar: (l: 
   )
 }
 
-function FormTreino({ inicial, bib, onSalvar, onCancelar }: { inicial: Rascunho; bib: Biblioteca; onSalvar: (r: Rascunho) => Promise<string | null>; onCancelar: () => void }) {
-  // Treinos antigos (séries, repetições e dica) abrem já convertidos em linhas.
-  const [r, setR] = useState<Rascunho>(() => ({ ...inicial, exercicios: inicial.exercicios.map((e) => ({ ...e, linhas: linhasDe(e) })) }))
-  const [salvando, setSalvando] = useState(false)
-  const [erro, setErro] = useState<string | null>(null)
-
-  const mudarEx = (i: number, mudancas: Partial<ExercicioTreino>) => setR((x) => ({ ...x, exercicios: x.exercicios.map((e, j) => (j === i ? { ...e, ...mudancas } : e)) }))
-
-  async function salvar(e: React.FormEvent) {
-    e.preventDefault()
-    setSalvando(true)
-    const erro = await onSalvar(r)
-    setSalvando(false)
-    setErro(erro)
-  }
-
+/** Lista de exercícios de um treino, com sugestões, foto/vídeo e linhas de cada um. */
+export function EditorExercicios({ exercicios, bib, onMudar }: { exercicios: ExercicioTreino[]; bib: Biblioteca; onMudar: (e: ExercicioTreino[]) => void }) {
+  const mudarEx = (i: number, mudancas: Partial<ExercicioTreino>) => onMudar(exercicios.map((e, j) => (j === i ? { ...e, ...mudancas } : e)))
   return (
-    <form className="cartao destaque formulario" onSubmit={salvar}>
-      <h2>Treino {r.letra}</h2>
-      <label className="campo">
-        Nome do treino
-        <input value={r.nome} onChange={(e) => setR({ ...r, nome: e.target.value })} maxLength={60} placeholder="Ex.: Pernas, Superiores, Glúteo" />
-      </label>
+    <>
       <p className="dica-sec">Em cada exercício, adicione as linhas que quiser: escolha o tipo (repetições e carga, cadência, observações...) e toque em + Linha.</p>
       <datalist id="sugestoes-treino">
         {[...new Set([...bib.lista.map((e) => e.nome), ...SUGESTOES])].sort((a, b) => a.localeCompare(b, 'pt-BR')).map((s) => (
@@ -132,11 +113,11 @@ function FormTreino({ inicial, bib, onSalvar, onCancelar }: { inicial: Rascunho;
         ))}
       </datalist>
       <ol className="exercicios-editor">
-        {r.exercicios.map((ex, i) => (
+        {exercicios.map((ex, i) => (
           <li key={i}>
             <div className="exercicio-linha">
               <input list="sugestoes-treino" value={ex.nome} onChange={(e) => mudarEx(i, { nome: e.target.value })} maxLength={80} placeholder="Exercício" aria-label="Exercício" />
-              <button type="button" className="icone-apagar" aria-label="Tirar exercício" onClick={() => setR({ ...r, exercicios: r.exercicios.filter((_, j) => j !== i) })}>
+              <button type="button" className="icone-apagar" aria-label="Tirar exercício" onClick={() => onMudar(exercicios.filter((_, j) => j !== i))}>
                 <X size={16} />
               </button>
             </div>
@@ -145,40 +126,38 @@ function FormTreino({ inicial, bib, onSalvar, onCancelar }: { inicial: Rascunho;
           </li>
         ))}
       </ol>
-      {r.exercicios.length < 30 && (
-        <button type="button" className="botao-sec" onClick={() => setR({ ...r, exercicios: [...r.exercicios, exercicioVazio()] })}>
+      {exercicios.length < 30 && (
+        <button type="button" className="botao-sec" onClick={() => onMudar([...exercicios, exercicioVazio()])}>
           <Plus size={16} /> Exercício
         </button>
       )}
-      {erro && <p className="mensagem erro">{erro}</p>}
-      <button className="botao" type="submit" disabled={salvando || !r.exercicios.some((e) => e.nome.trim())}>
-        {salvando ? 'Guardando…' : `Guardar treino ${r.letra}`}
-      </button>
-      <button className="botao-sec" type="button" onClick={onCancelar}>
-        Cancelar
-      </button>
-    </form>
+    </>
   )
 }
 
-/** Aba Treino da ficha (personal): monta os treinos A, B, C..., a meta da semana e os materiais. */
-export function EditorTreinos({ ficha, meuId }: { ficha: Ficha; meuId: string }) {
-  const [treinos, setTreinos] = useState<Treino[] | null>(null)
-  const [editando, setEditando] = useState<Rascunho | null>(null)
+/** Aba Treino da ficha (personal): rotina atual, meta da semana, retorno dos treinos e materiais. */
+export function EditorTreinos({ ficha, meuId, onAbrirRotinas }: { ficha: Ficha; meuId: string; onAbrirRotinas: () => void }) {
+  const [rotinas, setRotinas] = useState<Rotina[] | null>(null)
+  const [treinos, setTreinos] = useState<Treino[]>([])
+  const [faltaSql, setFaltaSql] = useState(false)
   const [meta, setMeta] = useState<number | null>(ficha.treinos_semana ?? null)
   const [erro, setErro] = useState<string | null>(null)
   const exercicios = useExercicios()
-  const bib: Biblioteca = { meuId, lista: exercicios.lista, onMudou: exercicios.recarregar }
-
-  const carregar = useCallback(async () => {
-    const r = await listarTreinos(ficha.id)
-    setTreinos(r.treinos)
-    setErro(r.erro)
-  }, [ficha.id])
 
   useEffect(() => {
-    carregar()
-  }, [carregar])
+    let vivo = true
+    listarRotinas(ficha.id).then(async (r) => {
+      const t = await listarTreinosDasRotinas(r.rotinas.map((x) => x.id))
+      if (!vivo) return
+      setRotinas(r.rotinas)
+      setTreinos(t)
+      setFaltaSql(r.semTabela)
+      setErro(r.semTabela ? null : r.erro)
+    })
+    return () => {
+      vivo = false
+    }
+  }, [ficha.id])
 
   async function mudarMeta(v: string) {
     const n = v ? Number(v) : null
@@ -187,85 +166,41 @@ export function EditorTreinos({ ficha, meuId }: { ficha: Ficha; meuId: string })
     else setMeta(n)
   }
 
-  async function usarSugerida() {
-    for (const t of SERIE_SUGERIDA) {
-      const e = await salvarTreino(ficha.id, { letra: t.letra, nome: t.nome, exercicios: t.exercicios })
-      if (e) return setErro(e)
-    }
-    carregar()
-  }
-
-  async function apagar(t: Treino) {
-    if (!confirm(`Apagar o treino ${t.letra}${t.nome ? ` (${t.nome})` : ''}?`)) return
-    const e = await apagarTreino(t.id)
-    if (e) setErro(e)
-    else carregar()
-  }
-
-  if (editando)
-    return (
-      <FormTreino
-        inicial={editando}
-        bib={bib}
-        onCancelar={() => setEditando(null)}
-        onSalvar={async (r) => {
-          const e = await salvarTreino(ficha.id, r)
-          if (!e) {
-            setEditando(null)
-            carregar()
-          }
-          return e
-        }}
-      />
-    )
-
-  const livre = treinos ? proximaLetra(treinos.map((t) => t.letra)) : null
+  const atual = rotinas ? rotinaAtual(rotinas) : null
+  const treinosAtual = treinos.filter((t) => t.rotina_id === atual?.id)
   const primeiro = ficha.nome.split(' ')[0]
+  const guardadas = rotinas?.filter((r) => r.situacao !== 'excluida').length ?? 0
 
   return (
     <>
       <section className="cartao">
-        <h2>Ficha de treino</h2>
-        <p className="dica-sec">{primeiro} vê o próximo treino na tela inicial e marca quando concluir.</p>
-        {treinos === null && <p className="carregando">Carregando treinos…</p>}
-        {treinos?.length === 0 && (
-          <>
-            <p className="dica-sec">Nenhum treino ainda. Enquanto isso, {primeiro} vê a série sugerida pelo app, com o aviso para procurar um personal. Comece pelo treino A ou use a série sugerida como base e ajuste.</p>
-            <button className="botao-sec" onClick={usarSugerida}>
-              <Copy size={16} /> Usar a série sugerida como base
-            </button>
-          </>
+        <h2>Rotinas de treino</h2>
+        <p className="dica-sec">{primeiro} segue a rotina que está valendo, vê o próximo treino na tela inicial e marca quando concluir. As rotinas antigas ficam guardadas.</p>
+        {faltaSql && <p className="mensagem erro">Falta rodar no Supabase o arquivo rotinas-de-treino.sql para as rotinas funcionarem.</p>}
+        {rotinas === null && <p className="carregando">Carregando rotinas…</p>}
+        {rotinas && !atual && !faltaSql && <p className="dica-sec">Nenhuma rotina valendo. Enquanto isso, {primeiro} vê a série sugerida pelo app, com o aviso para procurar um personal.</p>}
+        {atual && (
+          <button className="rotina-resumo" onClick={onAbrirRotinas}>
+            <IconeDaRotina id={atual.icone} />
+            <span>
+              <strong>{atual.nome}</strong>
+              <small>
+                {treinosAtual.map((t) => t.letra).join(' ') || 'Sem treinos'}
+                {atual.fim && ` · até ${dataDia(atual.fim)}`}
+              </small>
+            </span>
+            <span className={`chip chip-${andamento(atual).tom}`}>{andamento(atual).rotulo}</span>
+          </button>
         )}
-        {treinos && treinos.length > 0 && (
-          <ul className="historico">
-            {treinos.map((t) => (
-              <li key={t.id}>
-                <span className="linha">
-                  <span>
-                    <b className="verde">{t.letra}</b> {t.nome || 'Sem nome'} · {t.exercicios.length} exercício{t.exercicios.length === 1 ? '' : 's'}
-                  </span>
-                  <span className="linha-fim">
-                    <button className="icone-apagar" aria-label={`Editar treino ${t.letra}`} onClick={() => setEditando({ id: t.id, letra: t.letra, nome: t.nome, exercicios: t.exercicios })}>
-                      <Pencil size={16} />
-                    </button>
-                    <button className="icone-apagar" aria-label={`Apagar treino ${t.letra}`} onClick={() => apagar(t)}>
-                      <Trash2 size={16} />
-                    </button>
-                  </span>
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-        {livre && treinos && (
-          <button className="botao" onClick={() => setEditando({ letra: livre, nome: '', exercicios: [exercicioVazio()] })}>
-            <Plus size={18} /> Treino {livre}
+        {!faltaSql && (
+          <button className="botao" onClick={onAbrirRotinas}>
+            <ClipboardList size={18} /> {guardadas > 1 ? `Ver as ${guardadas} rotinas` : atual ? 'Gerenciar rotinas' : 'Criar rotina'}
           </button>
         )}
         <label className="campo">
           Meta de treinos por semana
           <select value={meta ?? ''} onChange={(e) => mudarMeta(e.target.value)}>
-            <option value="">Igual ao número de treinos ({treinos?.length || 3})</option>
+            <option value="">Igual ao número de treinos ({treinosAtual.length || 3})</option>
             {[1, 2, 3, 4, 5, 6, 7].map((n) => (
               <option key={n} value={n}>
                 {n} por semana
@@ -275,7 +210,7 @@ export function EditorTreinos({ ficha, meuId }: { ficha: Ficha; meuId: string })
         </label>
         {erro && <p className="mensagem erro">{erro}</p>}
       </section>
-      <RetornosAluno ficha={ficha} treinos={treinos ?? []} />
+      <RetornosAluno ficha={ficha} treinos={treinos} />
       <MeusExercicios meuId={meuId} admin={false} lista={exercicios.lista} onMudou={exercicios.recarregar} />
       <MateriaisEditor meuId={meuId} fichaId={ficha.id} nome={ficha.nome} />
     </>

@@ -4735,3 +4735,368 @@ p.selo-aluno {
   font-weight: 600;
   margin-top: 6px;
 }
+
+/* Rotinas de treino do aluno (pedido do Romildo) */
+.rotinas-topo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.rotinas-topo .voltar {
+  font-size: 1.5rem;
+  color: var(--texto);
+  padding: 4px 6px 4px 0;
+}
+
+.rotinas-topo h1 {
+  margin: 0;
+  font-size: 1.2rem;
+  line-height: 1.2;
+}
+
+.rotinas-topo .personal-inicial,
+.rotinas-foto {
+  width: 52px;
+  height: 52px;
+  flex: none;
+}
+
+.rotinas-foto {
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid rgba(54, 242, 148, 0.5);
+}
+
+.rotinas-filtros {
+  margin-top: 0;
+}
+
+.botao-sec.ativo {
+  border-color: var(--verde);
+  color: var(--verde);
+}
+
+.rotinas-lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.rotina-cartao {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 16px 10px 16px 16px;
+}
+
+.rotina-cartao.atual {
+  border-color: rgba(54, 242, 148, 0.55);
+}
+
+.rotina-corpo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  background: none;
+  border: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  padding: 0;
+}
+
+.rotina-corpo:disabled {
+  opacity: 0.75;
+}
+
+.rotina-icone {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: rgba(54, 242, 148, 0.14);
+  border: 1px solid rgba(54, 242, 148, 0.4);
+  color: var(--verde);
+}
+
+.rotina-info {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.rotina-info strong {
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  overflow-wrap: anywhere;
+}
+
+.rotina-info small {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--texto-sec);
+  font-size: 0.8rem;
+}
+
+.rotina-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.menu-pontos {
+  position: relative;
+  flex: none;
+}
+
+.menu-pontos-lista {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  z-index: 20;
+  min-width: 170px;
+  display: flex;
+  flex-direction: column;
+  padding: 6px;
+  background: var(--cartao);
+  border: 1px solid var(--borda-verde);
+  border-radius: 14px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.55);
+}
+
+.menu-pontos-lista button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: none;
+  border: none;
+  color: var(--texto);
+  font: inherit;
+  font-size: 0.92rem;
+  padding: 10px 12px;
+  border-radius: 10px;
+  text-align: left;
+}
+
+.menu-pontos-lista button:hover,
+.menu-pontos-lista button:focus-visible {
+  background: rgba(54, 242, 148, 0.1);
+}
+
+.menu-pontos-lista button.perigo {
+  color: var(--vermelho);
+}
+
+.rotina-form fieldset,
+.formulario fieldset.campo {
+  border: none;
+  margin: 0;
+  padding: 0;
+}
+
+.rotina-form legend,
+.formulario fieldset.campo legend {
+  padding: 0;
+  margin-bottom: 6px;
+}
+
+.rotina-form input[type='date'] {
+  color-scheme: dark;
+  min-width: 0;
+}
+
+.atalhos-data {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.chip-botao {
+  background: var(--cartao);
+  border: 1px solid var(--borda);
+  border-radius: 999px;
+  color: var(--texto-sec);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 7px 12px;
+}
+
+.chip-botao.ativo {
+  background: rgba(54, 242, 148, 0.15);
+  border-color: var(--verde);
+  color: var(--verde);
+}
+
+.icones-rotina {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(88px, 1fr));
+  gap: 6px;
+}
+
+.icones-rotina button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  background: var(--cartao);
+  border: 1px solid var(--borda);
+  border-radius: 14px;
+  color: var(--texto-sec);
+  padding: 10px 4px;
+  font: inherit;
+}
+
+.icones-rotina button small {
+  font-size: 0.7rem;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.icones-rotina button.ativo {
+  border-color: var(--verde);
+  color: var(--verde);
+  background: rgba(54, 242, 148, 0.1);
+}
+
+.divisoes {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+  margin: 10px 0;
+}
+
+.divisoes button {
+  background: var(--cartao);
+  border: 1px solid var(--borda);
+  border-radius: 12px;
+  color: var(--texto);
+  font: inherit;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  padding: 10px 0;
+}
+
+.divisoes button.ativo {
+  background: var(--verde);
+  border-color: var(--verde);
+  color: #02140b;
+}
+
+.abas-letra button {
+  font-weight: 800;
+}
+
+.abas-letra small {
+  font-weight: 500;
+  opacity: 0.8;
+}
+
+.rotina-resumo {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 10px 0;
+  padding: 12px;
+  background: var(--cartao);
+  border: 1px solid rgba(54, 242, 148, 0.4);
+  border-radius: 16px;
+  color: var(--texto);
+  font: inherit;
+  text-align: left;
+}
+
+.rotina-resumo > span:nth-child(2) {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.rotina-resumo small {
+  color: var(--texto-sec);
+  font-size: 0.8rem;
+}
+
+.rotina-do-aluno {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+}
+
+.rotina-do-aluno .rotina-icone {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+}
+
+.rotina-do-aluno span:last-child {
+  display: flex;
+  flex-direction: column;
+}
+
+.rotina-do-aluno small {
+  color: var(--texto-sec);
+  font-size: 0.8rem;
+}
+
+.lista-aerobico {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.lista-aerobico li {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  border: 1px solid var(--borda);
+  border-radius: 12px;
+}
+
+.lista-aerobico span,
+.lista-aerobico small {
+  color: var(--texto-sec);
+  font-size: 0.85rem;
+}
+
+.rotinas-filtros .botao-sec {
+  white-space: nowrap;
+  font-size: 0.9rem;
+  padding-left: 8px;
+  padding-right: 8px;
+}
+
+.menu-pontos-lista button.perigo {
+  align-self: stretch;
+  justify-content: flex-start;
+  width: auto;
+  margin: 0;
+  border: none;
+  background: none;
+}
+
+.rotina-form .linha-campos > .campo {
+  min-width: 0;
+}
+
+.rotina-form input[type='date'] {
+  width: 100%;
+}

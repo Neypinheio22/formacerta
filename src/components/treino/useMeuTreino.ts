@@ -3,8 +3,10 @@ import type { Perfil } from '../../nuvem/conta'
 import { corpoDaFicha, perfilTreino, ajustarSerie, type PerfilTreino } from '../../corpo/corpo'
 import { idadeDe, type Ficha } from '../../nuvem/fichas'
 import { listarResultados, type ResultadoNuvem } from '../../nuvem/resultados'
+import { listarAerobicos, listarRotinas, listarTreinosDasRotinas, type Aerobico, type Rotina } from '../../nuvem/rotinas'
 import { diasMarcados, listarFeitos, listarTreinos, minhaFicha, type Treino, type TreinoFeito } from '../../nuvem/treinos'
 import { carregarSeries } from '../../treino/carga'
+import { rotinaAtual } from '../../treino/rotinas'
 import { diasTreinadosNaSemana, proximoTreino } from '../../treino/semana'
 import { SERIE_SUGERIDA } from '../../treino/sugerida'
 
@@ -44,6 +46,19 @@ export function gravarMetaLocal(n: number) {
   }
 }
 
+/** Treinos da rotina que vale hoje. Banco sem as rotinas (SQL não rodado): todos os treinos da ficha. */
+async function treinosDaRotina(fichaId: string): Promise<{ treinos: Treino[]; rotina: Rotina | null }> {
+  const r = await listarRotinas(fichaId)
+  if (r.semTabela) return { treinos: (await listarTreinos(fichaId)).treinos, rotina: null }
+  const atual = rotinaAtual(r.rotinas)
+  return { treinos: atual ? await listarTreinosDasRotinas([atual.id]) : [], rotina: atual }
+}
+
+/** Letra do último treino feito nesta rotina. Rotina nova começa pelo A. */
+function ultimoDaRotina(feitos: TreinoFeito[], treinos: Treino[]): string | null {
+  return feitos.find((f) => treinos.some((t) => t.id === f.treino_id))?.letra ?? null
+}
+
 /**
  * Ficha de treino do aluno logado, treinos feitos e a meta da semana. Conta
  * como dia treinado: treino concluído na ficha, dia marcado no aparelho ou
@@ -52,6 +67,8 @@ export function gravarMetaLocal(n: number) {
 export function useMeuTreino(perfil: Perfil | null) {
   const [ficha, setFicha] = useState<Ficha | null>(null)
   const [treinos, setTreinos] = useState<Treino[]>([])
+  const [rotina, setRotina] = useState<Rotina | null>(null)
+  const [aerobicos, setAerobicos] = useState<Aerobico[]>([])
   const [feitos, setFeitos] = useState<TreinoFeito[]>([])
   const [medidas, setMedidas] = useState<ResultadoNuvem[]>([])
   const [carregando, setCarregando] = useState(true)
@@ -64,11 +81,13 @@ export function useMeuTreino(perfil: Perfil | null) {
     let vivo = true
     async function buscar() {
       const f = perfil?.papel === 'aluno' ? await minhaFicha(perfil.id) : null
-      const [t, fe, m] = f
-        ? await Promise.all([listarTreinos(f.id), listarFeitos(f.id), listarResultados({ fichaId: f.id, tipo: 'medidas' })])
-        : [{ treinos: [] as Treino[] }, [] as TreinoFeito[], { lista: [] as ResultadoNuvem[] }]
+      const [t, fe, m, ae] = f
+        ? await Promise.all([treinosDaRotina(f.id), listarFeitos(f.id), listarResultados({ fichaId: f.id, tipo: 'medidas' }), listarAerobicos(f.id)])
+        : [{ treinos: [] as Treino[], rotina: null }, [] as TreinoFeito[], { lista: [] as ResultadoNuvem[] }, { lista: [] as Aerobico[] }]
       if (!vivo) return
       setFicha(f)
+      setRotina(t.rotina)
+      setAerobicos(ae.lista.filter((a) => a.situacao === 'ativa'))
       setMedidas(m.lista)
       setTreinos(t.treinos)
       setFeitos(fe)
@@ -89,7 +108,7 @@ export function useMeuTreino(perfil: Perfil | null) {
   // A série sugerida se ajusta ao corpo e ao objetivo do aluno (o treino do personal, não).
   const ajuste: PerfilTreino | null = sugerida && ficha ? perfilTreino(corpoDaFicha(ficha, medidas, idadeDe(ficha.nascimento)), ficha.objetivo) : null
   const lista = sugerida ? (ajuste ? ajustarSerie(SERIE_SUGERIDA, ajuste) : SERIE_SUGERIDA) : treinos
-  const proximo = proximoTreino(lista, sugerida ? lerUltimaSugerida() : feitos[0]?.letra || null)
+  const proximo = proximoTreino(lista, sugerida ? lerUltimaSugerida() : ultimoDaRotina(feitos, treinos))
 
   function mudarMetaLocal(n: number) {
     const v = Math.min(7, Math.max(1, n))
@@ -97,5 +116,5 @@ export function useMeuTreino(perfil: Perfil | null) {
     setMetaLocal(v)
   }
 
-  return { ficha, treinos, lista, sugerida, ajuste, feitos, carregando, feitosNaSemana, meta, metaDoPersonal, proximo, mudarMetaLocal, recarregar }
+  return { ficha, treinos, rotina, aerobicos, lista, sugerida, ajuste, feitos, carregando, feitosNaSemana, meta, metaDoPersonal, proximo, mudarMetaLocal, recarregar }
 }
