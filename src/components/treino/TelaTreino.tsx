@@ -1,4 +1,4 @@
-import { BadgeCheck, Camera, CheckCircle2, Dumbbell, Medal, PlayCircle, TriangleAlert, Video } from 'lucide-react'
+import { BadgeCheck, Camera, CheckCircle2, Dumbbell, HeartPulse, Medal, PlayCircle, TriangleAlert, Video } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { EXERCICIOS } from '../../movimento/exercicios'
 import type { ExercicioId } from '../../movimento/tipos'
@@ -16,6 +16,8 @@ import { useExercicios } from './useExercicios'
 import { ListaMateriais } from './Materiais'
 import { gravarUltimaSugerida, useMeuTreino } from './useMeuTreino'
 import { AVISO_SUGERIDA } from '../../treino/sugerida'
+import { dataDia, iconePadrao, resumoAerobico, rotuloNivel } from '../../treino/rotinas'
+import { IconeDaRotina } from './IconeRotina'
 
 type Props = {
   perfil: Perfil | null
@@ -298,6 +300,16 @@ export function TelaTreino({ perfil, abrir, onVoltar, onCamera, onCarga, onPerso
 
       {t.sugerida && <AvisoSugerida temFicha={!!t.ficha?.profissional_id} motivos={t.ajuste?.motivos} onPersonais={onPersonais} />}
 
+      {t.rotina && !t.sugerida && (
+        <p className="rotina-do-aluno">
+          <IconeDaRotina id={t.rotina.icone || iconePadrao(t.rotina.objetivo)} size={18} />
+          <span>
+            <strong>{t.rotina.nome}</strong>
+            <small>{[t.rotina.objetivo, rotuloNivel(t.rotina.nivel), t.rotina.fim && `até ${dataDia(t.rotina.fim)}`].filter(Boolean).join(' · ')}</small>
+          </span>
+        </p>
+      )}
+
       {t.lista.length > 0 && (
         <div className="grade-treinos">
           {t.lista.map((x) => (
@@ -314,10 +326,27 @@ export function TelaTreino({ perfil, abrir, onVoltar, onCamera, onCarga, onPerso
         </div>
       )}
 
+      {aluno && t.aerobicos.length > 0 && (
+        <section className="cartao">
+          <h2>
+            <HeartPulse size={18} /> Aeróbico
+          </h2>
+          <ul className="lista-aerobico">
+            {t.aerobicos.map((a) => (
+              <li key={a.id}>
+                <strong>{a.tipo}</strong>
+                <span>{resumoAerobico({ ...a, tipo: '' })}</span>
+                {a.observacoes && <small>{a.observacoes}</small>}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       {!aluno && (
         <section className="cartao">
-          <h2>Ficha de treino dos alunos</h2>
-          <p className="dica-sec">Para montar os treinos A, B, C e mandar materiais, abra Alunos, escolha o aluno e toque na aba 🏋️ Treino.</p>
+          <h2>Rotinas de treino dos alunos</h2>
+          <p className="dica-sec">Para criar rotinas (treinos A a E), aeróbico e mandar materiais, abra Alunos, escolha o aluno e toque na aba 🏋️ Treino.</p>
         </section>
       )}
 
