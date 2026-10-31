@@ -16,7 +16,7 @@ import { useExercicios } from './useExercicios'
 import { ListaMateriais } from './Materiais'
 import { gravarUltimaSugerida, useMeuTreino } from './useMeuTreino'
 import { AVISO_SUGERIDA } from '../../treino/sugerida'
-import { dataDia, iconePadrao, resumoAerobico, rotuloNivel } from '../../treino/rotinas'
+import { dataDia, resumoAerobico, rotuloNivel, rotuloTipo } from '../../treino/rotinas'
 import { IconeDaRotina } from './IconeRotina'
 
 type Props = {
@@ -302,10 +302,10 @@ export function TelaTreino({ perfil, abrir, onVoltar, onCamera, onCarga, onPerso
 
       {t.rotina && !t.sugerida && (
         <p className="rotina-do-aluno">
-          <IconeDaRotina id={t.rotina.icone || iconePadrao(t.rotina.objetivo)} size={18} />
+          <IconeDaRotina id={t.rotina.icone} objetivo={t.rotina.objetivo} size={18} />
           <span>
             <strong>{t.rotina.nome}</strong>
-            <small>{[t.rotina.objetivo, rotuloNivel(t.rotina.nivel), t.rotina.fim && `até ${dataDia(t.rotina.fim)}`].filter(Boolean).join(' · ')}</small>
+            <small>{[rotuloTipo(t.rotina.icone, t.rotina.objetivo), t.rotina.objetivo, rotuloNivel(t.rotina.nivel), t.rotina.fim && `até ${dataDia(t.rotina.fim)}`].filter(Boolean).join(' · ')}</small>
           </span>
         </p>
       )}

@@ -181,7 +181,7 @@ export function EditorTreinos({ ficha, meuId, onAbrirRotinas }: { ficha: Ficha; 
         {rotinas && !atual && !faltaSql && <p className="dica-sec">Nenhuma rotina valendo. Enquanto isso, {primeiro} vê a série sugerida pelo app, com o aviso para procurar um personal.</p>}
         {atual && (
           <button className="rotina-resumo" onClick={onAbrirRotinas}>
-            <IconeDaRotina id={atual.icone} />
+            <IconeDaRotina id={atual.icone} objetivo={atual.objetivo} />
             <span>
               <strong>{atual.nome}</strong>
               <small>
