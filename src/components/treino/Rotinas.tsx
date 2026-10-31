@@ -4,7 +4,7 @@ import type { Ficha } from '../../nuvem/fichas'
 import { fotoDoAluno, listarRotinas, listarTreinosDasRotinas, mudarSituacao, salvarRotina, type DadosRotina, type Rotina, type TreinoRascunho } from '../../nuvem/rotinas'
 import { comLinhas, exercicioVazio, type Treino } from '../../nuvem/treinos'
 import { dataCurta } from '../../testes/formato'
-import { andamento, dataDia, DIVISOES, iconePadrao, ICONES_ROTINA, NIVEIS, nomeSugerido, OBJETIVOS_ROTINA, ordenarRotinas, rotinaAtual, rotuloNivel, somarSemanas, type Nivel, type Situacao } from '../../treino/rotinas'
+import { andamento, dataDia, DIVISOES, ICONES_ROTINA, NIVEIS, nomeSugerido, OBJETIVOS_ROTINA, ordenarRotinas, rotinaAtual, rotuloNivel, rotuloTipo, somarSemanas, tipoDaRotina, type Nivel, type Situacao } from '../../treino/rotinas'
 import { diaLocal } from '../../treino/semana'
 import { SERIE_SUGERIDA } from '../../treino/sugerida'
 import { AbaAerobico } from './Aerobico'
@@ -94,13 +94,14 @@ function CartaoRotina({ r, treinos, atual, onAbrir, onAcao }: { r: Rotina; trein
   return (
     <li className={`cartao rotina-cartao ${atual ? 'atual' : ''}`}>
       <button className="rotina-corpo" onClick={onAbrir} disabled={r.situacao === 'excluida'}>
-        <IconeDaRotina id={r.icone || iconePadrao(r.objetivo)} />
+        <IconeDaRotina id={r.icone} objetivo={r.objetivo} />
         <span className="rotina-info">
           <strong>{r.nome}</strong>
           <small>
             <CalendarDays size={13} /> {r.inicio ? dataDia(r.inicio) : 'Sem início'} até {r.fim ? dataDia(r.fim) : 'sem data'}
           </small>
           <span className="rotina-chips">
+            <span className="chip chip-neutro">{rotuloTipo(r.icone, r.objetivo)}</span>
             {r.objetivo && <span className="chip chip-neutro">{r.objetivo}</span>}
             {r.nivel && <span className="chip chip-neutro">{rotuloNivel(r.nivel)}</span>}
             <span className={`chip chip-${a.tom}`}>{atual ? `Valendo · ${a.rotulo.toLowerCase()}` : a.rotulo}</span>
@@ -195,10 +196,10 @@ function FormRotina({ inicial, bib, nomeAluno, onSalvar, onCancelar }: { inicial
           </div>
         </fieldset>
         <fieldset className="campo">
-          <legend>Ícone do cartão</legend>
+          <legend>Tipo de exercício</legend>
           <div className="icones-rotina">
             {ICONES_ROTINA.map((i) => {
-              const escolhido = (dados.icone || iconePadrao(dados.objetivo)) === i.id
+              const escolhido = tipoDaRotina(dados.icone, dados.objetivo) === i.id
               return (
                 <button key={i.id} type="button" className={escolhido ? 'ativo' : ''} aria-pressed={escolhido} title={i.rotulo} onClick={() => setDados({ ...dados, icone: i.id })}>
                   <DesenhoIcone id={i.id} />

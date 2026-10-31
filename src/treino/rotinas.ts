@@ -40,31 +40,38 @@ export const NIVEIS: { id: Exclude<Nivel, ''>; rotulo: string }[] = [
 
 export const rotuloNivel = (n: string) => NIVEIS.find((x) => x.id === n)?.rotulo ?? ''
 
-/** Ícones do cartão: grupo muscular ou objetivo. O desenho de cada um fica na tela. */
+/** Tipo de exercício da rotina, que também escolhe o ícone do cartão. O desenho de cada um fica na tela. */
 export const ICONES_ROTINA = [
   { id: 'geral', rotulo: 'Corpo todo' },
   { id: 'superiores', rotulo: 'Superiores' },
-  { id: 'pernas', rotulo: 'Pernas e glúteo' },
-  { id: 'core', rotulo: 'Abdômen e core' },
-  { id: 'forca', rotulo: 'Força' },
-  { id: 'emagrecer', rotulo: 'Emagrecimento' },
-  { id: 'cardio', rotulo: 'Condicionamento' },
+  { id: 'pernas', rotulo: 'Inferiores' },
+  { id: 'core', rotulo: 'Abdômen' },
+  { id: 'cardio', rotulo: 'Cardio' },
   { id: 'mobilidade', rotulo: 'Mobilidade' },
   { id: 'reabilitacao', rotulo: 'Reabilitação' },
 ] as const
 
 export type IconeRotina = (typeof ICONES_ROTINA)[number]['id']
 
-/** Ícone que combina com o objetivo, quando o personal não escolhe um. */
+// Ícones que saíram da lista (30/10): as rotinas guardadas com eles caem num equivalente.
+const ICONES_ANTIGOS: Record<string, IconeRotina> = { forca: 'geral', emagrecer: 'cardio' }
+
+/** Tipo que combina com o objetivo, quando o personal não escolhe um. */
 export function iconePadrao(objetivo: string): IconeRotina {
   const o = objetivo.toLowerCase()
-  if (o.includes('emagrec') || o.includes('defini')) return 'emagrecer'
-  if (o.includes('condicion') || o.includes('resist') || o.includes('esport')) return 'cardio'
-  if (o.includes('força')) return 'forca'
+  if (o.includes('emagrec') || o.includes('defini') || o.includes('condicion') || o.includes('resist') || o.includes('esport')) return 'cardio'
   if (o.includes('mobil') || o.includes('postura')) return 'mobilidade'
   if (o.includes('reabil')) return 'reabilitacao'
   return 'geral'
 }
+
+/** Tipo da rotina: o escolhido (trocando os antigos pelo equivalente) ou o que combina com o objetivo. */
+export function tipoDaRotina(icone: string, objetivo = ''): IconeRotina {
+  if (ICONES_ROTINA.some((i) => i.id === icone)) return icone as IconeRotina
+  return ICONES_ANTIGOS[icone] ?? iconePadrao(objetivo)
+}
+
+export const rotuloTipo = (icone: string, objetivo = '') => ICONES_ROTINA.find((i) => i.id === tipoDaRotina(icone, objetivo))!.rotulo
 
 /** Divisões prontas: AB, ABC, ABCD, ABCDE. */
 export const DIVISOES = ['A', 'AB', 'ABC', 'ABCD', 'ABCDE'] as const
