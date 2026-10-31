@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { andamento, iconePadrao, nomeSugerido, ordenarRotinas, resumoAerobico, rotinaAtual, somarSemanas, type RotinaBase } from './rotinas'
+import { andamento, iconePadrao, rotuloTipo, tipoDaRotina, nomeSugerido, ordenarRotinas, resumoAerobico, rotinaAtual, somarSemanas, type RotinaBase } from './rotinas'
 
 const hoje = new Date(2026, 9, 30, 10)
 
@@ -53,9 +53,18 @@ describe('outros', () => {
   })
 
   it('ícone pelo objetivo', () => {
-    expect(iconePadrao('Emagrecimento')).toBe('emagrecer')
+    expect(iconePadrao('Emagrecimento')).toBe('cardio')
     expect(iconePadrao('Condicionamento físico')).toBe('cardio')
     expect(iconePadrao('Hipertrofia')).toBe('geral')
+  })
+
+  it('ícones antigos caem num equivalente', () => {
+    expect(tipoDaRotina('forca')).toBe('geral')
+    expect(tipoDaRotina('emagrecer')).toBe('cardio')
+    expect(tipoDaRotina('pernas')).toBe('pernas')
+    expect(tipoDaRotina('', 'Reabilitação')).toBe('reabilitacao')
+    expect(rotuloTipo('pernas')).toBe('Inferiores')
+    expect(rotuloTipo('core')).toBe('Abdômen')
   })
 
   it('atual no topo da lista', () => {
