@@ -4564,6 +4564,40 @@ p.selo-aluno {
   margin-top: 3px;
 }
 
+/* Serviços do personal */
+.meus-servicos .servicos-grupo {
+  display: grid;
+  gap: 8px;
+}
+
+.meus-servicos h3 {
+  margin: 8px 0 0;
+  font-size: 1rem;
+}
+
+.servico-linha {
+  display: grid;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid var(--borda);
+}
+
+.servico-linha.ligado {
+  border-color: var(--borda-verde);
+  background: rgba(54, 242, 148, 0.05);
+}
+
+.servico-linha .aceite span {
+  display: grid;
+  gap: 2px;
+}
+
+.servico-linha small {
+  color: var(--texto-sec);
+}
+
+.servico-proprio {
 /* Meus dados: tópicos que abrem e fecham, objetivos e "Meu corpo hoje" */
 .topicos {
   display: grid;
@@ -4683,6 +4717,76 @@ p.selo-aluno {
   justify-content: space-between;
   align-items: center;
   gap: 8px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--borda-verde);
+}
+
+.saudacao-chat {
+  max-width: 92%;
+}
+
+.menu-servicos {
+  display: grid;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.menu-servicos .etiqueta {
+  justify-self: start;
+}
+
+.menu-servicos .opcao {
+  padding: 10px 12px;
+  text-align: left;
+  font-weight: 600;
+}
+
+.saudacao-chat .balao-hora {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.pedir-link {
+  justify-self: start;
+  font-size: 0.85rem;
+}
+
+.pedir-valor {
+  display: grid;
+  gap: 8px;
+}
+
+.pedido-pendente {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+  color: var(--laranja);
+}
+
+.pedido-admin {
+  display: grid;
+  gap: 6px;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid var(--borda-verde);
+}
+
+.preco-sugerido {
+  align-items: end;
+}
+
+.lista-simples {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 4px;
+  color: var(--texto-sec);
+  font-size: 0.9rem;
+}
   cursor: pointer;
   list-style: none;
 }

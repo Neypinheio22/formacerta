@@ -3,9 +3,10 @@ import { ROTULO_PAPEL, ROTULO_SITUACAO, useConta, type Perfil, type Situacao } f
 import { definirSituacao, excluirConta, listarPerfis } from '../../nuvem/gestao'
 import { ModerarVitrine } from '../vitrine/ModerarVitrine'
 import { AdminPagamentos, AdminPlanos } from '../planos/AdminCobranca'
+import { AdminPrecos } from '../planos/AdminPrecos'
 import { ROTULO_TIPO, listarResultados, type ResultadoNuvem, type TipoResultado } from '../../nuvem/resultados'
 
-type Aba = 'aguardando' | 'profissionais' | 'alunos' | 'resultados' | 'vitrine' | 'planos' | 'pagamentos'
+type Aba = 'aguardando' | 'profissionais' | 'alunos' | 'resultados' | 'vitrine' | 'planos' | 'precos' | 'pagamentos'
 
 /** Tela do administrador: libera, bloqueia e exclui profissionais e alunos. */
 export function Admin({ onVoltar }: { onVoltar: () => void }) {
@@ -98,6 +99,9 @@ export function Admin({ onVoltar }: { onVoltar: () => void }) {
         <button className={aba === 'planos' ? 'ativo' : ''} onClick={() => setAba('planos')}>
           Planos
         </button>
+        <button className={aba === 'precos' ? 'ativo' : ''} onClick={() => setAba('precos')}>
+          Preços
+        </button>
         <button className={aba === 'pagamentos' ? 'ativo' : ''} onClick={() => setAba('pagamentos')}>
           Pagamentos
         </button>
@@ -157,6 +161,8 @@ export function Admin({ onVoltar }: { onVoltar: () => void }) {
       {!carregando && aba === 'vitrine' && <ModerarVitrine nomePorId={nomePorId} />}
 
       {!carregando && aba === 'planos' && <AdminPlanos perfis={perfis} />}
+
+      {!carregando && aba === 'precos' && <AdminPrecos nomePorId={nomePorId} />}
 
       {!carregando && aba === 'pagamentos' && <AdminPagamentos nomePorId={nomePorId} />}
     </div>

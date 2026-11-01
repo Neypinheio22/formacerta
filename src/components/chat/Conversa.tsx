@@ -1,8 +1,8 @@
-import { EyeOff, Handshake, Lock, Plus, Send, ShoppingBag, X } from 'lucide-react'
+import { EyeOff, Handshake, Lock, Send, ShoppingBag, Sparkles, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import type { Perfil } from '../../nuvem/conta'
 import { MENSAGEM_MAXIMO, enviarMensagem, lerBloqueio, lerMensagens, marcarLida, outroLado, quando, temContato, type BloqueioChat, type Conversa as ConversaNuvem, type Mensagem } from '../../nuvem/chat'
-import { emReais, lerReais, listarServicos, salvarServico, type Servico } from '../../nuvem/planos'
+import { precoServico, listarServicos, type Servico } from '../../nuvem/planos'
 import { usePlanosLiberados } from '../planos/usePlanosLiberados'
 
 type Props = {
@@ -12,17 +12,17 @@ type Props = {
   onPagar: (s: Servico) => void
 }
 
-/** Proposta do personal dentro do chat: o aluno paga pelo app. */
-function Proposta({ servico, podePagar, contratacaoLiberada, onPagar }: { servico: Servico | undefined; podePagar: boolean; contratacaoLiberada: boolean; onPagar: (s: Servico) => void }) {
-  if (!servico || !servico.ativo) return <p className="proposta encerrada">Proposta encerrada</p>
+/** Serviço dentro do chat: proposta do personal ou interesse do aluno. O aluno paga pelo app. */
+function Proposta({ servico, interesse = false, podePagar, contratacaoLiberada, onPagar }: { servico: Servico | undefined; interesse?: boolean; podePagar: boolean; contratacaoLiberada: boolean; onPagar: (s: Servico) => void }) {
+  if (!servico || !servico.ativo) return <p className="proposta encerrada">{interesse ? 'Serviço não está mais disponível' : 'Proposta encerrada'}</p>
   return (
     <div className="proposta">
       <span className="etiqueta">
-        <Handshake size={14} /> Proposta
+        <Handshake size={14} /> {interesse ? 'Interesse' : 'Proposta'}
       </span>
       <strong>{servico.nome}</strong>
       {servico.descricao && <span className="dica-sec">{servico.descricao}</span>}
-      <b className="proposta-preco">{emReais(servico.preco)}</b>
+      <b className="proposta-preco">{precoServico(servico)}</b>
       {podePagar &&
         (contratacaoLiberada ? (
           <button className="botao" onClick={() => onPagar(servico)}>
@@ -44,8 +44,7 @@ export function Conversa({ perfil, conversa, onVoltar, onPagar }: Props) {
   const [enviando, setEnviando] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
   const [painel, setPainel] = useState(false)
-  const [novoNome, setNovoNome] = useState('')
-  const [novoPreco, setNovoPreco] = useState('')
+  const [escolheu, setEscolheu] = useState(false)
   const fim = useRef<HTMLDivElement>(null)
   const contratacaoLiberada = usePlanosLiberados(perfil)
 
@@ -93,18 +92,10 @@ export function Conversa({ perfil, conversa, onVoltar, onPagar }: Props) {
     setMensagens(await lerMensagens(conversa.id))
   }
 
-  async function criarEMandar() {
-    const preco = lerReais(novoPreco)
-    if (!novoNome.trim()) return setErro('Escreva o que você está oferecendo.')
-    if (!preco || preco < 5) return setErro('Coloque um preço a partir de R$ 5,00.')
-    const e = await salvarServico({ profissional_id: perfil.id, nome: novoNome.trim().slice(0, 80), descricao: '', preco, ativo: true })
-    if (e) return setErro(e)
-    const lista = await listarServicos()
-    setServicos(lista)
-    const novo = [...lista].reverse().find((s) => s.profissional_id === perfil.id && s.nome === novoNome.trim().slice(0, 80))
-    setNovoNome('')
-    setNovoPreco('')
-    if (novo) await mandar(novo.id, `Proposta: ${novo.nome}`)
+  /** O aluno toca num serviço do menu: aparece o valor e o personal já recebe o interesse (triagem). */
+  async function escolher(s: Servico) {
+    await mandar(s.id, `Tenho interesse em: ${s.nome}`)
+    setEscolheu(true)
   }
 
   const avisoBloqueio =
@@ -132,11 +123,6 @@ export function Conversa({ perfil, conversa, onVoltar, onPagar }: Props) {
         </p>
       )}
 
-      {souAluno && aVenda.length > 0 && contratacaoLiberada && (
-        <button className="botao-sec chat-contratar" onClick={() => setPainel(!painel)}>
-          <ShoppingBag size={16} /> Contratar {outro.nome.split(' ')[0]}
-        </button>
-      )}
       {souPersonal && contratacaoLiberada && (
         <button className="botao-sec chat-contratar" onClick={() => setPainel(!painel)}>
           <Handshake size={16} /> Mandar proposta
@@ -148,54 +134,55 @@ export function Conversa({ perfil, conversa, onVoltar, onPagar }: Props) {
           <button className="chat-fechar" aria-label="Fechar" onClick={() => setPainel(false)}>
             <X size={18} />
           </button>
-          {souAluno ? (
-            <>
-              <h2>Serviços de {outro.nome.split(' ')[0]}</h2>
-              {aVenda.map((s) => (
-                <Proposta key={s.id} servico={s} podePagar contratacaoLiberada={contratacaoLiberada} onPagar={onPagar} />
-              ))}
-            </>
-          ) : (
+          {souPersonal && (
             <>
               <h2>Mandar proposta</h2>
               <p className="dica-sec">O aluno recebe um cartão com o botão de pagar pelo app.</p>
               {aVenda.map((s) => (
                 <button key={s.id} className="opcao" disabled={enviando} onClick={() => mandar(s.id, `Proposta: ${s.nome}`)}>
                   <strong>{s.nome}</strong>
-                  <span>{emReais(s.preco)}</span>
+                  <span>{precoServico(s)}</span>
                 </button>
               ))}
-              <div className="linha-campos">
-                <label className="campo">
-                  Novo serviço
-                  <input value={novoNome} maxLength={80} placeholder="Ex.: Treino mensal online" onChange={(e) => setNovoNome(e.target.value)} />
-                </label>
-                <label className="campo">
-                  Preço (R$)
-                  <input inputMode="decimal" value={novoPreco} placeholder="150" onChange={(e) => setNovoPreco(e.target.value)} />
-                </label>
-              </div>
-              <button className="botao" disabled={enviando} onClick={criarEMandar}>
-                <Plus size={16} /> Criar e mandar
-              </button>
+              <p className="dica-sec">{aVenda.length ? 'Para outro valor ou um serviço novo, peça em Conta → Meus serviços.' : 'Ligue seus serviços em Conta → Meus serviços para mandar propostas.'}</p>
             </>
           )}
         </section>
       )}
 
       {mensagens === null && <p className="carregando">Carregando mensagens…</p>}
-      {mensagens?.length === 0 && (
-        <p className="dica-sec centro">{souAluno ? `Mande sua dúvida para ${outro.nome.split(' ')[0]}. Ex.: "Você monta treino para corrida?"` : 'Nenhuma mensagem ainda.'}</p>
-      )}
+      {mensagens?.length === 0 && !souAluno && <p className="dica-sec centro">Nenhuma mensagem ainda.</p>}
 
       <div className="chat-mensagens">
+        {souAluno && mensagens && (
+          <div className="balao saudacao-chat">
+            <p>
+              Olá{perfil.nome ? `, ${perfil.nome.split(' ')[0]}` : ''}! Aqui é {outro.nome.split(' ')[0]}. Que bom ter você por aqui. {aVenda.length ? 'Toque em um serviço para ver o valor, ou escreva sua dúvida.' : 'Escreva sua dúvida que eu já respondo.'}
+            </p>
+            {aVenda.length > 0 && (
+              <div className="menu-servicos" aria-label="Serviços">
+                <span className="etiqueta">
+                  <ShoppingBag size={14} /> Serviços
+                </span>
+                {aVenda.map((s) => (
+                  <button key={s.id} className="opcao" disabled={enviando} onClick={() => escolher(s)}>
+                    {s.nome}
+                  </button>
+                ))}
+              </div>
+            )}
+            <small className="balao-hora">
+              <Sparkles size={11} /> Mensagem automática
+            </small>
+          </div>
+        )}
         {mensagens?.map((m) => {
           const minha = m.autor_id === perfil.id
           const doAluno = m.autor_id === conversa.aluno_id
           return (
             <div key={m.id} className={`balao ${minha || (!participo && !doAluno) ? 'minha' : ''}`}>
               {m.texto && !m.servico_id && <p>{m.texto}</p>}
-              {m.servico_id && <Proposta servico={doPersonal.find((s) => s.id === m.servico_id)} podePagar={souAluno} contratacaoLiberada={contratacaoLiberada} onPagar={onPagar} />}
+              {m.servico_id && <Proposta servico={doPersonal.find((s) => s.id === m.servico_id)} interesse={doAluno} podePagar={souAluno} contratacaoLiberada={contratacaoLiberada} onPagar={onPagar} />}
               {m.oculto && (
                 <small className="balao-oculto">
                   <EyeOff size={12} /> Contato oculto pelo FormaCerta
@@ -217,7 +204,7 @@ export function Conversa({ perfil, conversa, onVoltar, onPagar }: Props) {
             rows={1}
             value={texto}
             maxLength={MENSAGEM_MAXIMO}
-            placeholder="Escreva sua mensagem"
+            placeholder={escolheu ? 'Seu objetivo ou alguma dor?' : 'Escreva sua mensagem'}
             aria-label="Mensagem"
             onChange={(e) => setTexto(e.target.value)}
             onKeyDown={(e) => {

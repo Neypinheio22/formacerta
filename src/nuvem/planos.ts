@@ -49,6 +49,41 @@ export type Servico = {
   descricao: string
   preco: number
   ativo: boolean
+  /** Item da lista da plataforma (vazio = serviço próprio do personal). */
+  catalogo_id?: string | null
+  /** Cobrado por mês. */
+  mensal?: boolean
+  /** Valor diferente do sugerido, aprovado pelo administrador. */
+  preco_aprovado?: boolean
+}
+
+/** Trabalho que a plataforma oferece; cada personal liga e põe o preço dele. */
+export type ItemCatalogo = {
+  id: string
+  grupo: 'avaliacao' | 'treino'
+  nome: string
+  descricao: string
+  preco_min: number
+  preco_max: number
+  /** Preço do FormaCerta: o personal cobra este valor, a não ser que o administrador aprove outro. */
+  preco_sugerido: number
+  mensal: boolean
+  ordem: number
+  ativo: boolean
+}
+
+/** Pedido do personal para cobrar outro valor ou criar um serviço fora da lista. */
+export type PedidoPreco = {
+  id: string
+  profissional_id: string
+  catalogo_id: string | null
+  nome: string
+  mensal: boolean
+  valor: number
+  motivo: string
+  situacao: 'pendente' | 'aprovado' | 'recusado'
+  resposta: string
+  criado_em: string
 }
 
 export type Pagamento = {
@@ -262,7 +297,41 @@ export async function listarServicos(): Promise<Servico[]> {
   return (data ?? []).map((s) => numeros(s as Servico, ['preco']))
 }
 
-export async function salvarServico(s: { id?: string; profissional_id: string; nome: string; descricao: string; preco: number; ativo: boolean }) {
+export async function listarCatalogo(): Promise<ItemCatalogo[]> {
+  const { data } = await supabase.from('catalogo_servicos').select('*').eq('ativo', true).order('ordem')
+  return (data ?? []).map((i) => numeros(i as ItemCatalogo, ['preco_min', 'preco_max', 'preco_sugerido']))
+}
+
+/** Personal: os pedidos dele. Administrador: todos. */
+export async function listarPedidosPreco(): Promise<PedidoPreco[]> {
+  const { data } = await supabase.from('pedidos_preco').select('*').order('criado_em', { ascending: false }).limit(200)
+  return (data ?? []).map((p) => numeros(p as PedidoPreco, ['valor']))
+}
+
+export async function pedirPreco(p: Pick<PedidoPreco, 'profissional_id' | 'catalogo_id' | 'nome' | 'mensal' | 'valor' | 'motivo'>) {
+  const { error } = await supabase.from('pedidos_preco').insert(p)
+  return error ? erroAmigavel(error) : null
+}
+
+export async function desistirPedido(id: string) {
+  const { error } = await supabase.from('pedidos_preco').delete().eq('id', id)
+  return error ? erroAmigavel(error) : null
+}
+
+export async function decidirPreco(pedido: string, aprovar: boolean, resposta = '') {
+  const { error } = await supabase.rpc('admin_decidir_preco', { pedido, aprovar, resposta })
+  return error ? erroAmigavel(error) : null
+}
+
+export async function mudarSugerido(item: string, valor: number) {
+  const { error } = await supabase.rpc('admin_mudar_sugerido', { item, valor })
+  return error ? erroAmigavel(error) : null
+}
+
+/** "R$ 120,00" ou "R$ 150,00/mês". */
+export const precoServico = (s: Pick<Servico, 'preco' | 'mensal'>) => `${emReais(s.preco)}${s.mensal ? '/mês' : ''}`
+
+export async function salvarServico(s: { id?: string; profissional_id: string; nome: string; descricao: string; preco: number; ativo: boolean; catalogo_id?: string | null; mensal?: boolean }) {
   const { error } = s.id ? await supabase.from('servicos').update(s).eq('id', s.id) : await supabase.from('servicos').insert(s)
   return error ? erroAmigavel(error) : null
 }

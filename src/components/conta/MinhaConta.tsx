@@ -7,6 +7,7 @@ import { baixarMeusDados, definirLembretes } from '../../nuvem/privacidade'
 import { BIO_MAXIMO, enviarFotoPerfil, faltaParaAparecer, removerFotoPerfil, salvarContato, type DadosContato } from '../../nuvem/profissionais'
 import { telefoneValido } from '../../compartilhar/whatsapp'
 import { usePlanosLiberados } from '../planos/usePlanosLiberados'
+import { MeusServicos } from './MeusServicos'
 import { Privacidade } from './Privacidade'
 import { Suporte } from './Suporte'
 import { Termos } from './Termos'
@@ -225,6 +226,8 @@ export function MinhaConta({ onVoltar, onPlanos }: { onVoltar: () => void; onPla
           </button>
         </section>
       )}
+
+      {perfil.papel !== 'aluno' && <MeusServicos meuId={perfil.id} />}
 
       {perfil.papel === 'aluno' && (
         <section className="cartao">
