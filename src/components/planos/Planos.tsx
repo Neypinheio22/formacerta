@@ -1,4 +1,4 @@
-import { Check, Crown, Gift, Receipt, Tag } from 'lucide-react'
+import { Check, Crown, Gift, Info, Receipt, Tag } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useConta } from '../../nuvem/conta'
 import {
@@ -102,6 +102,12 @@ export function Planos({ onVoltar, onPagar }: Props) {
             Ver como aluno
           </button>
         </div>
+      )}
+
+      {ehAdmin && (
+        <p className="mensagem aviso faixa">
+          <Info size={16} /> Você está como administrador: aqui só dá para ver os planos. Para fazer uma compra teste, entre com uma conta de personal ou aluno que esteja na lista de testadores (Administração → Planos).
+        </p>
       )}
 
       {erro && <p className="mensagem erro">{erro}</p>}

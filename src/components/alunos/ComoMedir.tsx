@@ -1,6 +1,7 @@
 /** Onde passar a fita: desenho do corpo com as linhas e a dica de cada medida. */
 
 const DICAS: { nome: string; dica: string }[] = [
+  { nome: 'Pescoço', dica: 'Logo abaixo do gogó (pomo de adão), olhando para a frente.' },
   { nome: 'Tórax', dica: 'Na linha dos mamilos, depois de soltar o ar.' },
   { nome: 'Braço', dica: 'No meio, entre o ombro e o cotovelo, com o braço solto.' },
   { nome: 'Antebraço', dica: 'Na parte mais grossa, logo abaixo do cotovelo.' },
@@ -13,6 +14,7 @@ const DICAS: { nome: string; dica: string }[] = [
 
 // Linhas tracejadas sobre a silhueta (coordenadas do desenho de 120 x 240).
 const LINHAS: { y: number; x1: number; x2: number; rotulo: string }[] = [
+  { y: 40, x1: 50, x2: 70, rotulo: 'Pescoço' },
   { y: 62, x1: 38, x2: 82, rotulo: 'Tórax' },
   { y: 80, x1: 20, x2: 32, rotulo: 'Braço' },
   { y: 104, x1: 12, x2: 26, rotulo: 'Antebraço' },

@@ -4,7 +4,7 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
 
 const ADMIN = 'ney.comercial@gmail.com'
-const APP = 'https://neypinheio22.github.io/formacerta/'
+const APP = Deno.env.get('APP_URL') ?? 'https://formacerta.app.br/'
 
 const ok = (corpo: unknown, status = 200) => new Response(JSON.stringify(corpo), { status, headers: { 'Content-Type': 'application/json' } })
 

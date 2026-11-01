@@ -31,6 +31,8 @@ export function MinhaConta({ onVoltar, onPlanos }: { onVoltar: () => void; onPla
   const [contatoSalvo, setContatoSalvo] = useState(false)
   const [foto, setFoto] = useState(perfil?.foto_url ?? '')
   const [enviandoFoto, setEnviandoFoto] = useState(false)
+  const [erroFoto, setErroFoto] = useState<string | null>(null)
+  const [fotoSalva, setFotoSalva] = useState(false)
 
   useEffect(() => {
     if (!perfil) return
@@ -66,18 +68,21 @@ export function MinhaConta({ onVoltar, onPlanos }: { onVoltar: () => void; onPla
   async function trocarFoto(arquivo: File | undefined) {
     if (!arquivo) return
     setEnviandoFoto(true)
-    const r = await enviarFotoPerfil(perfil!.id, arquivo)
+    setErroFoto(null)
+    setFotoSalva(false)
+    const r = await enviarFotoPerfil(perfil!.id, arquivo, foto)
     setEnviandoFoto(false)
-    setErro(r.erro)
+    setErroFoto(r.erro && `Não deu para enviar a foto: ${r.erro}`)
     if (r.url) {
       setFoto(r.url)
+      setFotoSalva(true)
       recarregar()
     }
   }
 
   async function tirarFoto() {
-    const erro = await removerFotoPerfil(perfil!.id)
-    setErro(erro)
+    const erro = await removerFotoPerfil(perfil!.id, foto)
+    setErroFoto(erro)
     if (!erro) {
       setFoto('')
       recarregar()
@@ -150,7 +155,17 @@ export function MinhaConta({ onVoltar, onPlanos }: { onVoltar: () => void; onPla
             <div>
               <label className="botao-sec escolher-foto">
                 <Camera size={16} /> {enviandoFoto ? 'Enviando…' : foto ? 'Trocar foto' : 'Colocar minha foto'}
-                <input type="file" accept="image/*" hidden disabled={enviandoFoto} onChange={(e) => trocarFoto(e.target.files?.[0])} />
+                <input
+                  type="file"
+                  accept="image/*"
+                  hidden
+                  disabled={enviandoFoto}
+                  onChange={(e) => {
+                    trocarFoto(e.target.files?.[0])
+                    // Deixa escolher a mesma foto de novo depois de um erro.
+                    e.target.value = ''
+                  }}
+                />
               </label>
               {foto && (
                 <button className="link" onClick={tirarFoto}>
@@ -159,6 +174,8 @@ export function MinhaConta({ onVoltar, onPlanos }: { onVoltar: () => void; onPla
               )}
             </div>
           </div>
+          {erroFoto && <p className="mensagem erro">{erroFoto}</p>}
+          {fotoSalva && <p className="mensagem ok">Foto guardada. Os alunos já veem a foto nova.</p>}
           <label className="campo">
             WhatsApp com DDD (opcional, não aparece para os alunos)
             <input inputMode="tel" autoComplete="tel" value={contato.whatsapp} maxLength={20} placeholder="(11) 98765-4321" onChange={(e) => setContato({ ...contato, whatsapp: e.target.value })} />

@@ -63,25 +63,37 @@ export function filtrarProfissionais(lista: ProfissionalHabilitado[], busca: str
 
 const PASTA_FOTOS = 'fotos-perfil'
 
-/** Envia a foto do profissional (diminuída e sem dados escondidos do arquivo) e guarda o endereço no perfil. */
-export async function enviarFotoPerfil(id: string, arquivo: File): Promise<{ url: string | null; erro: string | null }> {
+/** Caminho da foto dentro da pasta, tirado do endereço guardado no perfil. */
+export function caminhoDaFoto(url: string): string | null {
+  const m = url.match(new RegExp(`/${PASTA_FOTOS}/([^?]+)`))
+  return m ? decodeURIComponent(m[1]) : null
+}
+
+/**
+ * Envia a foto do profissional (diminuída e sem dados escondidos do arquivo) e guarda o endereço no perfil.
+ * Cada envio ganha um nome novo: trocar um arquivo existente ("upsert") exige permissões a mais no
+ * banco e falhava, e o nome novo também faz o celular mostrar a foto nova em vez da antiga guardada.
+ */
+export async function enviarFotoPerfil(id: string, arquivo: File, fotoAntiga = ''): Promise<{ url: string | null; erro: string | null }> {
   try {
     const foto = await prepararFoto(arquivo)
-    const caminho = `${id}/foto.jpg`
-    const { error } = await supabase.storage.from(PASTA_FOTOS).upload(caminho, foto, { contentType: 'image/jpeg', upsert: true })
+    const caminho = `${id}/${Date.now()}.jpg`
+    const { error } = await supabase.storage.from(PASTA_FOTOS).upload(caminho, foto, { contentType: 'image/jpeg' })
     if (error) throw error
-    // O "?v=" faz o celular buscar a foto nova em vez da antiga guardada.
-    const url = `${supabase.storage.from(PASTA_FOTOS).getPublicUrl(caminho).data.publicUrl}?v=${Date.now()}`
+    const url = supabase.storage.from(PASTA_FOTOS).getPublicUrl(caminho).data.publicUrl
     const { error: e2 } = await supabase.from('perfis').update({ foto_url: url }).eq('id', id)
     if (e2) throw e2
+    const antiga = caminhoDaFoto(fotoAntiga)
+    if (antiga) await supabase.storage.from(PASTA_FOTOS).remove([antiga])
     return { url, erro: null }
   } catch (e) {
     return { url: null, erro: erroAmigavel(e as { message?: string }) }
   }
 }
 
-export async function removerFotoPerfil(id: string) {
-  await supabase.storage.from(PASTA_FOTOS).remove([`${id}/foto.jpg`])
+export async function removerFotoPerfil(id: string, fotoAtual = '') {
+  const caminho = caminhoDaFoto(fotoAtual)
+  if (caminho) await supabase.storage.from(PASTA_FOTOS).remove([caminho])
   const { error } = await supabase.from('perfis').update({ foto_url: '' }).eq('id', id)
   return error ? erroAmigavel(error) : null
 }

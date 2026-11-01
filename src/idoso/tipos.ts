@@ -29,6 +29,7 @@ export type Anamnese = {
 // Perimetria na ordem da ficha do personal Romildo. As três "antigas" (um lado só)
 // vêm das primeiras avaliações e só aparecem quando foram medidas.
 export const CIRCUNFERENCIAS = [
+  { id: 'pescoco', nome: 'Pescoço' },
   { id: 'torax', nome: 'Tórax' },
   { id: 'bracoD', nome: 'Braço direito' },
   { id: 'bracoE', nome: 'Braço esquerdo' },

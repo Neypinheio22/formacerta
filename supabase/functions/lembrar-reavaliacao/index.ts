@@ -5,7 +5,7 @@
 // novo não repete e-mail. Teste que já foi refeito não gera lembrete.
 import { createClient } from 'npm:@supabase/supabase-js@2'
 
-const APP = 'https://neypinheio22.github.io/formacerta/'
+const APP = Deno.env.get('APP_URL') ?? 'https://formacerta.app.br/'
 const SUPORTE = 'ney.comercial@gmail.com'
 // Lembretes atrasados há mais que isso não são mandados (evita e-mail velho).
 const JANELA_DIAS = 7

@@ -84,10 +84,11 @@ export type ResultadoNuvem = {
   dados: Record<string, unknown>
 }
 
-export async function listarResultados(filtro: { alunoId?: string; fichaId?: string } = {}): Promise<{ lista: ResultadoNuvem[]; erro: string | null }> {
+export async function listarResultados(filtro: { alunoId?: string; fichaId?: string; tipo?: TipoResultado } = {}): Promise<{ lista: ResultadoNuvem[]; erro: string | null }> {
   let q = supabase.from('resultados').select('*').order('feito_em', { ascending: false }).limit(500)
   if (filtro.alunoId) q = q.eq('aluno_id', filtro.alunoId)
   if (filtro.fichaId) q = q.eq('ficha_id', filtro.fichaId)
+  if (filtro.tipo) q = q.eq('tipo', filtro.tipo)
   const { data, error } = await q
   return { lista: (data ?? []) as ResultadoNuvem[], erro: error ? erroAmigavel(error) : null }
 }

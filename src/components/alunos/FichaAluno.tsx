@@ -6,9 +6,12 @@ import { dataCurta } from '../../testes/formato'
 import { NovoAluno } from '../conta/NovoAluno'
 import { FichaForm } from './FichaForm'
 import { MedidasForm } from './MedidasForm'
+import { corpoDaFicha } from '../../corpo/corpo'
+import { MeuCorpoCartao } from '../corpo/MeuCorpoCartao'
 import { PainelEvolucao } from './PainelEvolucao'
 import { CentralInteligencia } from '../plano/CentralInteligencia'
 import { EditorTreinos } from '../treino/EditorTreinos'
+import { TelaRotinas } from '../treino/Rotinas'
 
 type Props = {
   /** Null quando o aluno entrou sozinho no app e ainda não tem ficha de um profissional. */
@@ -26,7 +29,7 @@ type Props = {
   souOAluno?: boolean
 }
 
-type Modo = 'ver' | 'editar' | 'medidas' | 'acesso'
+type Modo = 'ver' | 'editar' | 'medidas' | 'acesso' | 'rotinas'
 
 /** Ficha do aluno: dados pessoais, gráficos de evolução e todas as avaliações guardadas. */
 export function FichaAluno({ ficha, meuId, podeEditar, nome, textoVoltar, onVoltar, onMudou, souOAluno = false }: Props) {
@@ -69,6 +72,18 @@ export function FichaAluno({ ficha, meuId, podeEditar, nome, textoVoltar, onVolt
     idade,
     sexo: dados?.sexo ?? null,
   }
+
+  if (modo === 'rotinas' && dados)
+    return (
+      <TelaRotinas
+        ficha={dados}
+        meuId={meuId}
+        onVoltar={() => {
+          setModo('ver')
+          window.scrollTo(0, 0)
+        }}
+      />
+    )
 
   return (
     <div className="tela">
@@ -216,6 +231,7 @@ export function FichaAluno({ ficha, meuId, podeEditar, nome, textoVoltar, onVolt
 
       {modo === 'ver' && resultados && (
         <>
+          {dados && <MeuCorpoCartao itens={corpoDaFicha(dados, resultados, idade)} titulo={souOAluno ? 'Meu corpo hoje' : 'Corpo hoje'} />}
           <div className="seletor-comparar abas-ficha" role="tablist">
             <button role="tab" aria-selected={aba === 'analise'} className={aba === 'analise' ? 'ativo' : ''} onClick={() => setAba('analise')}>
               🧠 Central IA
@@ -230,7 +246,7 @@ export function FichaAluno({ ficha, meuId, podeEditar, nome, textoVoltar, onVolt
             )}
           </div>
           {aba === 'treino' && podeEditar && dados ? (
-            <EditorTreinos ficha={dados} meuId={meuId} />
+            <EditorTreinos ficha={dados} meuId={meuId} onAbrirRotinas={() => setModo('rotinas')} />
           ) : aba === 'analise' ? (
             <CentralInteligencia resultados={resultados} nome={dados?.nome ?? nome} ficha={dados} podeEditar={podeEditar} onSalvo={carregar} />
           ) : (

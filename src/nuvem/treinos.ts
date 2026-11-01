@@ -13,6 +13,8 @@ export type ExercicioTreino = { nome: string; series: string; reps: string; obs:
 export type Treino = {
   id: string
   ficha_id: string
+  /** Rotina de que o treino faz parte (vazio antes do SQL das rotinas). */
+  rotina_id?: string
   letra: string
   nome: string
   exercicios: ExercicioTreino[]
@@ -25,6 +27,9 @@ export type Retorno = { inicio: string; fim: string; intensidade: string; coment
 export type TreinoFeito = { id: string; ficha_id: string; treino_id: string | null; letra: string; feito_em: string } & Partial<Retorno>
 
 export const INTENSIDADES = ['Muito leve', 'Leve', 'Moderada', 'Intensa', 'Muito intensa'] as const
+
+/** Treinos antigos (séries, repetições e dica) abrem já convertidos em linhas. */
+export const comLinhas = (exercicios: ExercicioTreino[]) => exercicios.map((e) => ({ ...e, linhas: linhasDe(e) }))
 
 export const exercicioVazio = (): ExercicioTreino => ({ nome: '', series: '', reps: '', obs: '', linhas: [linhaVazia()] })
 
@@ -54,24 +59,6 @@ export async function minhaFicha(meuId: string): Promise<Ficha | null> {
 export async function listarTreinos(fichaId: string): Promise<{ treinos: Treino[]; erro: string | null }> {
   const { data, error } = await supabase.from('treinos').select('*').eq('ficha_id', fichaId).order('letra')
   return { treinos: (data ?? []) as Treino[], erro: error ? erroAmigavel(error) : null }
-}
-
-/** Cria ou atualiza o treino daquela letra. Linhas sem nome de exercício são descartadas. */
-export async function salvarTreino(fichaId: string, t: { id?: string; letra: string; nome: string; exercicios: ExercicioTreino[] }) {
-  const linha = {
-    ficha_id: fichaId,
-    letra: t.letra,
-    nome: t.nome.trim().slice(0, 60),
-    exercicios: t.exercicios.filter((e) => e.nome.trim()).map(limparExercicio),
-    atualizado_em: new Date().toISOString(),
-  }
-  const { error } = t.id ? await supabase.from('treinos').update(linha).eq('id', t.id) : await supabase.from('treinos').insert(linha)
-  return error ? erroAmigavel(error) : null
-}
-
-export async function apagarTreino(id: string) {
-  const { error } = await supabase.from('treinos').delete().eq('id', id)
-  return error ? erroAmigavel(error) : null
 }
 
 /** Treinos feitos nos últimos dias (para a meta da semana e o próximo treino). */
