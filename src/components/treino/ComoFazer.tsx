@@ -1,7 +1,7 @@
-import { ExternalLink, Image, Pencil, PlayCircle, Plus, Trash2, Upload } from 'lucide-react'
+import { ExternalLink, PlayCircle, Upload } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { GRUPOS } from '../../movimento/exercicios'
-import { apagarExercicio, enderecoMidia, salvarExercicio } from '../../nuvem/exercicios'
+import { CATEGORIAS, categoriaDoGrupo, grupoPadrao, GRUPOS_MUSCULARES } from '../../treino/catalogo'
+import { enderecoMidia, salvarExercicio } from '../../nuvem/exercicios'
 import { buscaYoutube, idYoutube, type ExercicioProprio } from '../../treino/comoFazer'
 
 /** Foto, vídeo ou YouTube do exercício. Sem nenhum cadastrado, oferece a busca no YouTube. */
@@ -66,6 +66,9 @@ type PropsForm = {
   /** Editando um exercício que já existe. */
   antes?: ExercicioProprio
   nomeInicial?: string
+  /** Grupo e categoria já escolhidos (ao personalizar um exercício do app). */
+  grupoInicial?: string
+  categoriaInicial?: string
   onPronto: () => void
   onCancelar: () => void
 }
@@ -74,9 +77,10 @@ type PropsForm = {
  * Cadastro do exercício: nome, grupo, como fazer e foto ou vídeo. Não usa
  * <form> porque também abre dentro do formulário do treino.
  */
-export function FormExercicio({ meuId, admin, antes, nomeInicial = '', onPronto, onCancelar }: PropsForm) {
+export function FormExercicio({ meuId, admin, antes, nomeInicial = '', grupoInicial = '', categoriaInicial = '', onPronto, onCancelar }: PropsForm) {
   const [nome, setNome] = useState(antes?.nome ?? nomeInicial)
-  const [grupo, setGrupo] = useState(antes?.grupo ?? '')
+  const [grupo, setGrupo] = useState(antes ? grupoPadrao(antes.grupo) : grupoInicial)
+  const [categoria, setCategoria] = useState(antes ? antes.categoria || categoriaDoGrupo(antes.grupo) : categoriaInicial)
   const [descricao, setDescricao] = useState(antes?.descricao ?? '')
   const [arquivo, setArquivo] = useState<File | null>(null)
   const [link, setLink] = useState('')
@@ -89,7 +93,7 @@ export function FormExercicio({ meuId, admin, antes, nomeInicial = '', onPronto,
   async function salvar() {
     setSalvando(true)
     setErro(null)
-    const e = await salvarExercicio({ meuId, antes, nome, grupo, descricao, arquivo, link, semMidia, doApp })
+    const e = await salvarExercicio({ meuId, antes, nome, grupo, categoria, descricao, arquivo, link, semMidia, doApp })
     setSalvando(false)
     if (e) setErro(e)
     else onPronto()
@@ -102,17 +106,30 @@ export function FormExercicio({ meuId, admin, antes, nomeInicial = '', onPronto,
         Nome do exercício
         <input value={nome} onChange={(e) => setNome(e.target.value)} maxLength={80} placeholder="Ex.: Remada cavalinho" />
       </label>
-      <label className="campo">
-        Grupo (opcional)
-        <select value={grupo} onChange={(e) => setGrupo(e.target.value)}>
-          <option value="">Sem grupo</option>
-          {[...GRUPOS, 'Peito', 'Glúteo', 'Panturrilha', 'Cardio', 'Alongamento', 'Mobilidade'].map((g) => (
-            <option key={g} value={g}>
-              {g}
-            </option>
-          ))}
-        </select>
-      </label>
+      <div className="linha-campos">
+        <label className="campo">
+          Grupo muscular
+          <select value={grupo} onChange={(e) => setGrupo(e.target.value)}>
+            <option value="">Sem grupo</option>
+            {[...GRUPOS_MUSCULARES, ...(grupo && !(GRUPOS_MUSCULARES as readonly string[]).includes(grupo) ? [grupo] : [])].map((g) => (
+              <option key={g} value={g}>
+                {g}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="campo">
+          Categoria
+          <select value={categoria} onChange={(e) => setCategoria(e.target.value)}>
+            <option value="">Sem categoria</option>
+            {CATEGORIAS.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
       <label className="campo">
         Como fazer (opcional)
         <textarea value={descricao} onChange={(e) => setDescricao(e.target.value)} rows={3} maxLength={500} placeholder="Ex.: tronco a 45°, puxe a barra até o umbigo e segure 1 s" />
@@ -127,7 +144,7 @@ export function FormExercicio({ meuId, admin, antes, nomeInicial = '', onPronto,
         </p>
       )}
       <label className="campo">
-        Foto ou vídeo seu fazendo o exercício (até 50 MB)
+        Foto, GIF ou vídeo do exercício (até 50 MB)
         <input type="file" accept="image/*,video/*" onChange={(e) => setArquivo(e.target.files?.[0] ?? null)} />
       </label>
       {!arquivo && (
@@ -150,72 +167,5 @@ export function FormExercicio({ meuId, admin, antes, nomeInicial = '', onPronto,
         Cancelar
       </button>
     </div>
-  )
-}
-
-const ROTULO_MIDIA = { imagem: 'foto', video: 'vídeo', link: 'YouTube' } as const
-
-/** Lista "Meus exercícios": o personal cadastra, edita e apaga os exercícios dele. */
-export function MeusExercicios({ meuId, admin, lista, onMudou }: { meuId: string; admin: boolean; lista: ExercicioProprio[]; onMudou: () => void }) {
-  const [editando, setEditando] = useState<ExercicioProprio | 'novo' | null>(null)
-  const [vendo, setVendo] = useState<string | null>(null)
-  const [erro, setErro] = useState<string | null>(null)
-  const meus = lista.filter((e) => e.profissional_id === meuId || (admin && e.do_app))
-
-  async function apagar(e: ExercicioProprio) {
-    if (!confirm(`Apagar "${e.nome}"? A foto ou o vídeo some das fichas que usam este exercício.`)) return
-    const r = await apagarExercicio(e)
-    if (r) setErro(r)
-    else onMudou()
-  }
-
-  return (
-    <section className="cartao">
-      <h2>Meus exercícios</h2>
-      <p className="dica-sec">Não achou o exercício no app ou quer usar o seu vídeo? Cadastre aqui com foto ou vídeo. Ele aparece na hora de montar as fichas, e o aluno vê como fazer no treino.</p>
-      {meus.length > 0 && (
-        <ul className="materiais">
-          {meus.map((e) => (
-            <li key={e.id}>
-              <div className="material">
-                <button className="material-abrir" onClick={() => setVendo(vendo === e.id ? null : e.id)}>
-                  <span className="atalho-icone">{e.tipo === 'imagem' ? <Image size={18} /> : <PlayCircle size={18} />}</span>
-                  <span className="material-texto">
-                    <strong>{e.nome}</strong>
-                    <small>
-                      {[e.grupo, e.tipo ? `com ${ROTULO_MIDIA[e.tipo]}` : 'sem foto ou vídeo', e.do_app ? 'do app' : ''].filter(Boolean).join(' · ')}
-                    </small>
-                  </span>
-                </button>
-                <button className="icone-apagar" aria-label={`Editar ${e.nome}`} onClick={() => setEditando(e)}>
-                  <Pencil size={16} />
-                </button>
-                <button className="icone-apagar" aria-label={`Apagar ${e.nome}`} onClick={() => apagar(e)}>
-                  <Trash2 size={16} />
-                </button>
-              </div>
-              {vendo === e.id && <MidiaExercicio nome={e.nome} ex={e} />}
-            </li>
-          ))}
-        </ul>
-      )}
-      {erro && <p className="mensagem erro">{erro}</p>}
-      {editando ? (
-        <FormExercicio
-          meuId={meuId}
-          admin={admin}
-          antes={editando === 'novo' ? undefined : editando}
-          onCancelar={() => setEditando(null)}
-          onPronto={() => {
-            setEditando(null)
-            onMudou()
-          }}
-        />
-      ) : (
-        <button className="botao-sec" onClick={() => setEditando('novo')}>
-          <Plus size={16} /> Criar exercício
-        </button>
-      )}
-    </section>
   )
 }

@@ -11,6 +11,8 @@ export type ExercicioProprio = {
   profissional_id: string
   nome: string
   grupo: string
+  /** Musculação, Funcional, Mobilidade... (vazio nos exercícios de antes da biblioteca). */
+  categoria?: string | null
   descricao: string
   tipo: TipoMidia | null
   arquivo: string | null

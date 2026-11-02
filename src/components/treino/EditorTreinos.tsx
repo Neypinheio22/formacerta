@@ -1,4 +1,4 @@
-import { CheckCircle2, ClipboardList, Film, Plus, Trash2, X } from 'lucide-react'
+import { CheckCircle2, ClipboardList, Film, Library, Plus, Trash2, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { EXERCICIOS } from '../../movimento/exercicios'
 import type { Ficha } from '../../nuvem/fichas'
@@ -8,16 +8,18 @@ import { SUGESTOES_EXERCICIO } from '../../treino/carga'
 import { acharExercicio, comoFazerDe, type ExercicioProprio } from '../../treino/comoFazer'
 import { linhaVazia, tipoDe, TIPOS_LINHA, type CampoLinha, type LinhaSerie, type TipoLinha } from '../../treino/linhas'
 import { EXERCICIOS_MOBILIDADE } from '../../treino/videosApp'
+import { CATALOGO } from '../../treino/catalogo'
 import { andamento, dataDia, rotinaAtual } from '../../treino/rotinas'
-import { FormExercicio, MeusExercicios, MidiaExercicio } from './ComoFazer'
+import { FormExercicio, MidiaExercicio } from './ComoFazer'
+import { BibliotecaExercicios, CartaoBibliotecaExercicios } from './BibliotecaExercicios'
 import { useExercicios } from './useExercicios'
 import { MateriaisEditor } from './Materiais'
 import { RetornosAluno } from './RetornosAluno'
 import { IconeDaRotina } from './IconeRotina'
 
-const SUGESTOES = [...EXERCICIOS.map((e) => e.nome), ...SUGESTOES_EXERCICIO, ...EXERCICIOS_MOBILIDADE]
+const SUGESTOES = [...EXERCICIOS.map((e) => e.nome), ...SUGESTOES_EXERCICIO, ...EXERCICIOS_MOBILIDADE, ...CATALOGO.map((e) => e.nome)]
 
-export type Biblioteca = { meuId: string; lista: ExercicioProprio[]; onMudou: () => void }
+export type Biblioteca = { meuId: string; admin?: boolean; lista: ExercicioProprio[]; onMudou: () => void }
 
 /** Embaixo do nome do exercício: mostra a foto ou o vídeo que o aluno vai ver, ou deixa cadastrar. */
 function MidiaNaFicha({ nome, bib }: { nome: string; bib: Biblioteca }) {
@@ -103,7 +105,17 @@ function EditorLinhas({ linhas, onMudar }: { linhas: LinhaSerie[]; onMudar: (l: 
 
 /** Lista de exercícios de um treino, com sugestões, foto/vídeo e linhas de cada um. */
 export function EditorExercicios({ exercicios, bib, onMudar }: { exercicios: ExercicioTreino[]; bib: Biblioteca; onMudar: (e: ExercicioTreino[]) => void }) {
+  const [buscando, setBuscando] = useState(false)
   const mudarEx = (i: number, mudancas: Partial<ExercicioTreino>) => onMudar(exercicios.map((e, j) => (j === i ? { ...e, ...mudancas } : e)))
+
+  /** Exercícios escolhidos na biblioteca entram no fim do treino, no lugar das linhas em branco. */
+  function adicionar(nomes: string[]) {
+    const preenchidos = exercicios.filter((e) => e.nome.trim())
+    const cabem = Math.max(0, 30 - preenchidos.length)
+    onMudar([...preenchidos, ...nomes.slice(0, cabem).map((nome) => ({ ...exercicioVazio(), nome }))])
+    setBuscando(false)
+  }
+
   return (
     <>
       <p className="dica-sec">Em cada exercício, adicione as linhas que quiser: escolha o tipo (repetições e carga, cadência, observações...) e toque em + Linha.</p>
@@ -127,9 +139,24 @@ export function EditorExercicios({ exercicios, bib, onMudar }: { exercicios: Exe
         ))}
       </ol>
       {exercicios.length < 30 && (
-        <button type="button" className="botao-sec" onClick={() => onMudar([...exercicios, exercicioVazio()])}>
-          <Plus size={16} /> Exercício
-        </button>
+        <div className="acoes-exercicio">
+          <button type="button" className="botao" onClick={() => setBuscando(true)}>
+            <Library size={16} /> Buscar na biblioteca
+          </button>
+          <button type="button" className="botao-sec" onClick={() => onMudar([...exercicios, exercicioVazio()])}>
+            <Plus size={16} /> Digitar exercício
+          </button>
+        </div>
+      )}
+      {buscando && (
+        <BibliotecaExercicios
+          meuId={bib.meuId}
+          admin={!!bib.admin}
+          lista={bib.lista}
+          onMudou={bib.onMudou}
+          onFechar={() => setBuscando(false)}
+          escolha={{ naFicha: exercicios.map((e) => e.nome), onAdicionar: adicionar }}
+        />
       )}
     </>
   )
@@ -211,7 +238,7 @@ export function EditorTreinos({ ficha, meuId, onAbrirRotinas }: { ficha: Ficha; 
         {erro && <p className="mensagem erro">{erro}</p>}
       </section>
       <RetornosAluno ficha={ficha} treinos={treinos} />
-      <MeusExercicios meuId={meuId} admin={false} lista={exercicios.lista} onMudou={exercicios.recarregar} />
+      <CartaoBibliotecaExercicios meuId={meuId} admin={false} lista={exercicios.lista} onMudou={exercicios.recarregar} />
       <MateriaisEditor meuId={meuId} fichaId={ficha.id} nome={ficha.nome} />
     </>
   )
