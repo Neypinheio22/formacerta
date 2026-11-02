@@ -11,7 +11,8 @@ import { linhasDe, repsDe, resumoLinha } from '../../treino/linhas'
 import { hora, minutos, textoDuracao } from '../../treino/retorno'
 import { diaLocal, noCatalogo } from '../../treino/semana'
 import { SemanaCartao } from './CartoesAluno'
-import { MeusExercicios, MidiaExercicio } from './ComoFazer'
+import { MidiaExercicio } from './ComoFazer'
+import { CartaoBibliotecaExercicios } from './BibliotecaExercicios'
 import { useExercicios } from './useExercicios'
 import { ListaMateriais } from './Materiais'
 import { gravarUltimaSugerida, useMeuTreino } from './useMeuTreino'
@@ -370,7 +371,7 @@ export function TelaTreino({ perfil, abrir, onVoltar, onCamera, onCarga, onPerso
         </section>
       )}
 
-      {perfil && !aluno && <MeusExercicios meuId={perfil.id} admin={perfil.papel === 'admin'} lista={exercicios.lista} onMudou={exercicios.recarregar} />}
+      {perfil && !aluno && <CartaoBibliotecaExercicios meuId={perfil.id} admin={perfil.papel === 'admin'} lista={exercicios.lista} onMudou={exercicios.recarregar} />}
 
       <section className="grupo-atalhos">
         <h2 className="secao">Ferramentas</h2>

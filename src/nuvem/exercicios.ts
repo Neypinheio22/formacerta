@@ -17,6 +17,8 @@ export type NovoExercicio = {
   antes?: ExercicioProprio
   nome: string
   grupo: string
+  /** Musculação, Funcional, Mobilidade... (precisa do SQL da biblioteca de exercícios). */
+  categoria?: string
   descricao: string
   /** Foto ou vídeo novo. Sem arquivo e sem link, fica a mídia que já tinha (ou nenhuma). */
   arquivo: File | null
@@ -56,9 +58,11 @@ export async function salvarExercicio(n: NovoExercicio): Promise<string | null> 
       link,
       do_app: n.doApp,
     }
-    const { error } = n.antes
-      ? await supabase.from('exercicios_proprios').update(linha).eq('id', n.antes.id)
-      : await supabase.from('exercicios_proprios').insert({ ...linha, profissional_id: n.meuId })
+    const gravar = (l: typeof linha & { categoria?: string }) =>
+      n.antes ? supabase.from('exercicios_proprios').update(l).eq('id', n.antes.id) : supabase.from('exercicios_proprios').insert({ ...l, profissional_id: n.meuId })
+    let { error } = await gravar(n.categoria === undefined ? linha : { ...linha, categoria: n.categoria.trim().slice(0, 30) })
+    // Sem o SQL da biblioteca de exercícios ainda não existe a coluna categoria: guarda o resto.
+    if (error && n.categoria !== undefined && /categoria/i.test(error.message)) ({ error } = await gravar(linha))
     if (error) {
       if (/duplicate|unique/i.test(error.message)) return `Você já tem um exercício chamado "${linha.nome}". Edite o que já existe.`
       throw error
