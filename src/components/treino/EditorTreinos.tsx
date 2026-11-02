@@ -1,9 +1,9 @@
-import { CheckCircle2, ClipboardList, Film, Library, Plus, Trash2, X } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { CheckCircle2, ClipboardList, Film, Library, Plus, Trash2, TrendingUp, X } from 'lucide-react'
+import { useCallback, useEffect, useState } from 'react'
 import { EXERCICIOS } from '../../movimento/exercicios'
 import type { Ficha } from '../../nuvem/fichas'
 import { listarRotinas, listarTreinosDasRotinas, type Rotina } from '../../nuvem/rotinas'
-import { definirMetaSemana, exercicioVazio, type ExercicioTreino, type Treino } from '../../nuvem/treinos'
+import { definirMetaSemana, exercicioVazio, listarFeitos, listarFeitosDosTreinos, type ExercicioTreino, type Treino, type TreinoFeito } from '../../nuvem/treinos'
 import { SUGESTOES_EXERCICIO } from '../../treino/carga'
 import { acharExercicio, comoFazerDe, type ExercicioProprio } from '../../treino/comoFazer'
 import { linhaVazia, tipoDe, TIPOS_LINHA, type CampoLinha, type LinhaSerie, type TipoLinha } from '../../treino/linhas'
@@ -14,8 +14,13 @@ import { FormExercicio, MidiaExercicio } from './ComoFazer'
 import { BibliotecaExercicios, CartaoBibliotecaExercicios } from './BibliotecaExercicios'
 import { useExercicios } from './useExercicios'
 import { MateriaisEditor } from './Materiais'
-import { RetornosAluno } from './RetornosAluno'
 import { IconeDaRotina } from './IconeRotina'
+import { FeedbacksPersonal } from './Feedbacks'
+import { OrientacoesPersonal } from './Orientacoes'
+import { useAtualizacao } from './useAtualizacao'
+import { historicoDoTreino, ROTULO_STATUS } from '../../treino/execucao'
+import { dataCurta } from '../../testes/formato'
+import type { Vista } from './Rotinas'
 
 const SUGESTOES = [...EXERCICIOS.map((e) => e.nome), ...SUGESTOES_EXERCICIO, ...EXERCICIOS_MOBILIDADE, ...CATALOGO.map((e) => e.nome)]
 
@@ -162,29 +167,36 @@ export function EditorExercicios({ exercicios, bib, onMudar }: { exercicios: Exe
   )
 }
 
-/** Aba Treino da ficha (personal): rotina atual, meta da semana, retorno dos treinos e materiais. */
-export function EditorTreinos({ ficha, meuId, onAbrirRotinas }: { ficha: Ficha; meuId: string; onAbrirRotinas: () => void }) {
+/** Aba Treino da ficha (personal): rotina atual com a situação de cada treino, orientações, feedback, meta da semana e materiais. */
+export function EditorTreinos({ ficha, meuId, onAbrirRotinas }: { ficha: Ficha; meuId: string; onAbrirRotinas: (v?: Vista) => void }) {
   const [rotinas, setRotinas] = useState<Rotina[] | null>(null)
   const [treinos, setTreinos] = useState<Treino[]>([])
+  const [execucoes, setExecucoes] = useState<TreinoFeito[]>([])
+  const [recentes, setRecentes] = useState<TreinoFeito[] | null>(null)
   const [faltaSql, setFaltaSql] = useState(false)
   const [meta, setMeta] = useState<number | null>(ficha.treinos_semana ?? null)
   const [erro, setErro] = useState<string | null>(null)
   const exercicios = useExercicios()
 
-  useEffect(() => {
-    let vivo = true
-    listarRotinas(ficha.id).then(async (r) => {
-      const t = await listarTreinosDasRotinas(r.rotinas.map((x) => x.id))
-      if (!vivo) return
-      setRotinas(r.rotinas)
-      setTreinos(t)
-      setFaltaSql(r.semTabela)
-      setErro(r.semTabela ? null : r.erro)
-    })
-    return () => {
-      vivo = false
-    }
+  const carregar = useCallback(async () => {
+    const r = await listarRotinas(ficha.id)
+    const t = await listarTreinosDasRotinas(r.rotinas.map((x) => x.id))
+    const atualId = rotinaAtual(r.rotinas)?.id
+    const [ex, rec] = await Promise.all([listarFeitosDosTreinos(t.filter((x) => x.rotina_id === atualId).map((x) => x.id)), listarFeitos(ficha.id, 90)])
+    setRotinas(r.rotinas)
+    setTreinos(t)
+    setExecucoes(ex)
+    setRecentes(rec)
+    setFaltaSql(r.semTabela)
+    setErro(r.semTabela ? null : r.erro)
   }, [ficha.id])
+
+  useEffect(() => {
+    carregar()
+  }, [carregar])
+
+  // O aluno concluiu ou avaliou um treino: aparece aqui sozinho.
+  useAtualizacao(carregar)
 
   async function mudarMeta(v: string) {
     const n = v ? Number(v) : null
@@ -194,7 +206,7 @@ export function EditorTreinos({ ficha, meuId, onAbrirRotinas }: { ficha: Ficha; 
   }
 
   const atual = rotinas ? rotinaAtual(rotinas) : null
-  const treinosAtual = treinos.filter((t) => t.rotina_id === atual?.id)
+  const treinosAtual = treinos.filter((t) => t.rotina_id === atual?.id).sort((a, b) => a.letra.localeCompare(b.letra))
   const primeiro = ficha.nome.split(' ')[0]
   const guardadas = rotinas?.filter((r) => r.situacao !== 'excluida').length ?? 0
 
@@ -207,20 +219,50 @@ export function EditorTreinos({ ficha, meuId, onAbrirRotinas }: { ficha: Ficha; 
         {rotinas === null && <p className="carregando">Carregando rotinas…</p>}
         {rotinas && !atual && !faltaSql && <p className="dica-sec">Nenhuma rotina valendo. Enquanto isso, {primeiro} vê a série sugerida pelo app, com o aviso para procurar um personal.</p>}
         {atual && (
-          <button className="rotina-resumo" onClick={onAbrirRotinas}>
-            <IconeDaRotina id={atual.icone} objetivo={atual.objetivo} />
-            <span>
-              <strong>{atual.nome}</strong>
-              <small>
-                {treinosAtual.map((t) => t.letra).join(' ') || 'Sem treinos'}
-                {atual.fim && ` · até ${dataDia(atual.fim)}`}
-              </small>
-            </span>
-            <span className={`chip chip-${andamento(atual).tom}`}>{andamento(atual).rotulo}</span>
-          </button>
+          <>
+            <button className="rotina-resumo" onClick={() => onAbrirRotinas({ tipo: 'rotina', id: atual.id })}>
+              <IconeDaRotina id={atual.icone} objetivo={atual.objetivo} />
+              <span>
+                <strong>{atual.nome}</strong>
+                <small>
+                  {treinosAtual.map((t) => t.letra).join(' ') || 'Sem treinos'}
+                  {atual.fim && ` · até ${dataDia(atual.fim)}`}
+                </small>
+              </span>
+              <span className={`chip chip-${andamento(atual).tom}`}>{andamento(atual).rotulo}</span>
+            </button>
+            {treinosAtual.length > 0 && (
+              <ul className="status-treinos">
+                {treinosAtual.map((t) => {
+                  const h = historicoDoTreino(t.id, execucoes)
+                  const st = ROTULO_STATUS[h.status]
+                  return (
+                    <li key={t.id}>
+                      <b className="verde">{t.letra}</b>
+                      <span>
+                        {t.nome || `Treino ${t.letra}`}
+                        <small className="dica-sec">
+                          {h.vezes}x{h.ultima ? ` · última ${dataCurta(h.ultima)}` : ''}
+                        </small>
+                      </span>
+                      <span className={`chip chip-${st.tom}`}>{st.rotulo.replace(' na semana', '')}</span>
+                    </li>
+                  )
+                })}
+              </ul>
+            )}
+            <div className="acoes-linha">
+              <button className="botao" onClick={() => onAbrirRotinas({ tipo: 'evolucao', id: atual.id })}>
+                <TrendingUp size={16} /> Evolução
+              </button>
+              <button className="botao-sec" onClick={() => onAbrirRotinas({ tipo: 'rotina', id: atual.id })}>
+                <ClipboardList size={16} /> Abrir rotina
+              </button>
+            </div>
+          </>
         )}
         {!faltaSql && (
-          <button className="botao" onClick={onAbrirRotinas}>
+          <button className={atual ? 'botao-sec' : 'botao'} onClick={() => onAbrirRotinas()}>
             <ClipboardList size={18} /> {guardadas > 1 ? `Ver as ${guardadas} rotinas` : atual ? 'Gerenciar rotinas' : 'Criar rotina'}
           </button>
         )}
@@ -237,7 +279,8 @@ export function EditorTreinos({ ficha, meuId, onAbrirRotinas }: { ficha: Ficha; 
         </label>
         {erro && <p className="mensagem erro">{erro}</p>}
       </section>
-      <RetornosAluno ficha={ficha} treinos={treinos} />
+      <OrientacoesPersonal ficha={ficha} />
+      <FeedbacksPersonal nome={ficha.nome} feitos={recentes} treinos={treinos} onMudou={carregar} />
       <CartaoBibliotecaExercicios meuId={meuId} admin={false} lista={exercicios.lista} onMudou={exercicios.recarregar} />
       <MateriaisEditor meuId={meuId} fichaId={ficha.id} nome={ficha.nome} />
     </>

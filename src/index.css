@@ -5780,3 +5780,576 @@ p.selo-aluno {
   width: 60px;
   height: 48px;
 }
+
+/* Gerenciamento de treinos: orientações, situação de cada treino, evolução e feedback */
+.laranja {
+  color: var(--laranja);
+}
+
+.campo-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+}
+
+.campo-check input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--verde);
+}
+
+.orientacoes-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.orientacao {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  border: 1px solid var(--borda);
+  border-left: 3px solid var(--verde);
+  border-radius: 12px;
+}
+
+.orientacao p {
+  margin: 0;
+  white-space: pre-line;
+}
+
+.orientacao-recomendacao {
+  border-left-color: #5cc8ff;
+}
+
+.orientacao-observacao {
+  border-left-color: var(--laranja);
+}
+
+.orientacao-tipo {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--texto-sec);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.orientacao-acoes {
+  display: inline-flex;
+  gap: 2px;
+}
+
+.orientacao .linha-fim {
+  justify-content: space-between;
+}
+
+.orientacao-form {
+  padding: 10px 0;
+}
+
+/* Rotina aberta */
+.rotina-detalhe.atual {
+  border-color: var(--verde);
+}
+
+.rotina-detalhe-topo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.rotina-detalhe-topo h2 {
+  margin: 0;
+}
+
+.acoes-rotina {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.acoes-rotina > * {
+  flex: 1 1 auto;
+}
+
+.treinos-gerenciar {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0 0 10px;
+  padding: 0;
+  list-style: none;
+}
+
+.treino-gerenciar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background: var(--vidro);
+  border: 1px solid var(--borda-verde);
+  border-radius: 16px;
+}
+
+.treino-gerenciar-topo {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.treino-gerenciar-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  min-width: 0;
+  background: none;
+  border: none;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+
+.treino-gerenciar-info small {
+  color: var(--texto-sec);
+}
+
+.ordem-botoes {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ordem-botoes button:disabled {
+  opacity: 0.3;
+}
+
+.treino-execucao {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding-top: 8px;
+  border-top: 1px solid var(--borda);
+}
+
+.execucao-numeros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  font-size: 0.86rem;
+  color: var(--texto-sec);
+}
+
+.execucao-numeros b {
+  color: var(--texto);
+}
+
+.historico-execucao {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.85rem;
+}
+
+.historico-execucao li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  padding: 6px 0;
+  border-bottom: 1px dashed var(--borda);
+}
+
+.historico-execucao .dica-sec {
+  margin: 0;
+}
+
+.chip-foco {
+  background: rgba(92, 200, 255, 0.14);
+  color: #5cc8ff;
+}
+
+.treino-foco {
+  font-size: 0.78rem;
+  color: #5cc8ff;
+}
+
+.grade-treinos .chip {
+  align-self: flex-start;
+  margin-top: 2px;
+}
+
+/* Formulário da rotina: + Treino e ordem */
+.aba-mais {
+  background: none;
+  border: 1px dashed var(--borda-verde);
+  border-radius: 999px;
+  color: var(--verde);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  padding: 6px 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.treino-ordem {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 8px 0;
+}
+
+.treino-ordem .botao-sec {
+  flex: 1 1 auto;
+  padding: 8px 10px;
+  font-size: 0.85rem;
+}
+
+.chip-botao.sugestao {
+  border-style: dashed;
+  color: var(--verde);
+}
+
+.foco-opcoes {
+  margin-top: 8px;
+}
+
+.filtro-rotinas {
+  margin-bottom: 4px;
+}
+
+/* Painel: situação dos treinos da rotina atual */
+.status-treinos {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 8px 0;
+  padding: 0;
+  list-style: none;
+}
+
+.status-treinos li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid var(--borda);
+  border-radius: 12px;
+}
+
+.status-treinos li > span:nth-child(2) {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.status-treinos small {
+  margin: 0;
+}
+
+/* Feedback */
+.escala-5 {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+}
+
+.escala-5 button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 2px;
+  background: var(--cartao);
+  border: 1px solid var(--borda);
+  border-radius: 12px;
+  color: var(--texto-sec);
+  font: inherit;
+}
+
+.escala-5 button b {
+  font-size: 1.1rem;
+}
+
+.escala-5 button small {
+  font-size: 0.66rem;
+  line-height: 1.15;
+  text-align: center;
+}
+
+.escala-5 button.ativo {
+  background: rgba(54, 242, 148, 0.15);
+  border-color: var(--verde);
+  color: var(--verde);
+}
+
+.escala-esforco {
+  display: grid;
+  grid-template-columns: repeat(11, 1fr);
+  gap: 3px;
+}
+
+.escala-esforco button {
+  aspect-ratio: 1;
+  min-width: 0;
+  padding: 0;
+  border-radius: 8px;
+  border: 1px solid var(--borda);
+  background: var(--cartao);
+  color: var(--texto-sec);
+  font: inherit;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.escala-esforco button.tom-ok {
+  border-bottom: 3px solid rgba(54, 242, 148, 0.6);
+}
+
+.escala-esforco button.tom-atencao {
+  border-bottom: 3px solid rgba(250, 204, 21, 0.7);
+}
+
+.escala-esforco button.tom-alerta {
+  border-bottom: 3px solid var(--laranja);
+}
+
+.escala-esforco button.ativo {
+  background: var(--verde);
+  color: #04202c;
+}
+
+.escala-esforco button.ativo.tom-atencao {
+  background: var(--amarelo);
+}
+
+.escala-esforco button.ativo.tom-alerta {
+  background: var(--laranja);
+}
+
+.chip-botao.ativo.alerta {
+  background: rgba(251, 141, 26, 0.15);
+  border-color: var(--laranja);
+  color: var(--laranja);
+}
+
+.dor-detalhe {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.dor-detalhe input[type='range'] {
+  accent-color: var(--laranja);
+}
+
+.feedback-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 2px 0;
+}
+
+.feedback-chips .chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.feedback-chips .chip-alerta {
+  background: rgba(251, 141, 26, 0.15);
+  color: var(--laranja);
+}
+
+.retornos > li.com-dor {
+  border-color: rgba(251, 141, 26, 0.5);
+}
+
+.alerta-dor {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(251, 141, 26, 0.12);
+  border: 1px solid rgba(251, 141, 26, 0.4);
+  color: var(--laranja);
+}
+
+.obs-personal {
+  display: block;
+  margin-top: 4px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: rgba(54, 242, 148, 0.08);
+  font-size: 0.86rem;
+}
+
+.obs-personal svg {
+  vertical-align: -2px;
+}
+
+.obs-form {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.obs-form textarea {
+  width: 100%;
+}
+
+.avaliar-form {
+  margin-top: 6px;
+}
+
+/* Anotar carga e repetições durante o treino */
+.anotar-cargas {
+  flex: 1 1 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.anotar-cargas > .link {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  text-decoration: none;
+}
+
+.series-anotar {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.series-anotar li {
+  display: grid;
+  grid-template-columns: 28px 1fr 1fr;
+  align-items: center;
+  gap: 8px;
+}
+
+.series-anotar label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.series-anotar input {
+  width: 100%;
+  min-width: 0;
+  padding: 8px 10px;
+  text-align: center;
+}
+
+.series-anotar small {
+  color: var(--texto-sec);
+  font-size: 0.75rem;
+}
+
+/* Evolução da rotina */
+.tabela-comparar {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.86rem;
+  margin-top: 10px;
+}
+
+.tabela-comparar th,
+.tabela-comparar td {
+  padding: 7px 4px;
+  border-bottom: 1px solid var(--borda);
+  text-align: right;
+}
+
+.tabela-comparar tbody th {
+  text-align: left;
+  font-weight: 500;
+  color: var(--texto-sec);
+}
+
+.tabela-comparar thead th {
+  font-size: 0.78rem;
+  color: var(--texto-sec);
+}
+
+.tabela-comparar thead small {
+  display: block;
+  font-weight: 400;
+  font-size: 0.68rem;
+}
+
+.mudanca {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-weight: 700;
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+.mudanca-ok {
+  color: var(--verde);
+}
+
+.mudanca-alerta {
+  color: var(--laranja);
+}
+
+.mudanca-neutro {
+  color: var(--texto-sec);
+}
+
+.progresso-exercicio {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.9rem;
+  margin: 6px 0;
+}
+
+.historico-cargas {
+  display: flex;
+  flex-direction: column;
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.85rem;
+}
+
+.historico-cargas li {
+  display: grid;
+  grid-template-columns: 1fr 1.3fr 0.8fr;
+  gap: 6px;
+  padding: 6px 0;
+  border-bottom: 1px dashed var(--borda);
+}
+
+.historico-cargas .dica-sec {
+  margin: 0;
+  text-align: right;
+}

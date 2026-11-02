@@ -1,8 +1,9 @@
-import { Archive, ArchiveRestore, BookCopy, CalendarDays, Copy, EllipsisVertical, HeartPulse, Library, Pencil, Plus, RotateCcw, Trash2 } from 'lucide-react'
+import { Archive, ArchiveRestore, ArrowLeft, ArrowRight, BookCopy, CalendarDays, Copy, EllipsisVertical, HeartPulse, Library, Pencil, Plus, RotateCcw, Sparkles, Trash2 } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { Ficha } from '../../nuvem/fichas'
-import { fotoDoAluno, listarRotinas, listarTreinosDasRotinas, mudarSituacao, salvarRotina, type DadosRotina, type Rotina, type TreinoRascunho } from '../../nuvem/rotinas'
-import { comLinhas, exercicioVazio, type Treino } from '../../nuvem/treinos'
+import { fotoDoAluno, listarRotinas, listarTreinosDasRotinas, mudarSituacao, ordenarTreinos, salvarRotina, type DadosRotina, type Rotina, type TreinoRascunho } from '../../nuvem/rotinas'
+import { comLinhas, exercicioVazio, listarFeitosDosTreinos, type Treino, type TreinoFeito } from '../../nuvem/treinos'
+import { focoEmLista, focoSugerido, LETRAS_TREINO, listaEmFoco, mover, OPCOES_FOCO, reletrar } from '../../treino/execucao'
 import { dataCurta } from '../../testes/formato'
 import { andamento, dataDia, DIVISOES, ICONES_ROTINA, NIVEIS, nomeSugerido, OBJETIVOS_ROTINA, ordenarRotinas, rotinaAtual, rotuloNivel, rotuloTipo, somarSemanas, tipoDaRotina, type Nivel, type Situacao } from '../../treino/rotinas'
 import { diaLocal } from '../../treino/semana'
@@ -14,6 +15,9 @@ import { AbaAerobico } from './Aerobico'
 import { EditorExercicios, type Biblioteca } from './EditorTreinos'
 import { DesenhoIcone, IconeDaRotina } from './IconeRotina'
 import { useExercicios } from './useExercicios'
+import { DetalheRotina, type AcaoRotina } from './DetalheRotina'
+import { EvolucaoRotina } from './EvolucaoRotina'
+import { useAtualizacao } from './useAtualizacao'
 
 type Lista = 'ativas' | 'arquivada' | 'excluida'
 
@@ -22,7 +26,7 @@ type Lista = 'ativas' | 'arquivada' | 'excluida'
  * formulário monta os modelos da biblioteca de treinos (com pasta e duração
  * sugerida no lugar das datas).
  */
-export type Edicao = { id?: string; dados: DadosRotina; treinos: TreinoRascunho[]; copiaDe?: string; doModelo?: string; pastaId?: string | null; semanas?: number | null }
+export type Edicao = { id?: string; dados: DadosRotina; treinos: TreinoRascunho[]; copiaDe?: string; doModelo?: string; pastaId?: string | null; semanas?: number | null; abrirLetra?: string }
 
 const treinoVazio = (letra: string): TreinoRascunho => ({ letra, nome: '', exercicios: [exercicioVazio()] })
 
@@ -57,13 +61,11 @@ function copiaDe(r: Rotina, treinos: Treino[]): Edicao {
   return {
     copiaDe: r.nome,
     dados: { nome: `${r.nome} (cópia)`.slice(0, 60), inicio: hoje, fim: somarSemanas(hoje, semanas), objetivo: r.objetivo, nivel: r.nivel, icone: r.icone },
-    treinos: treinos.map((t) => ({ letra: t.letra, nome: t.nome, exercicios: comLinhas(t.exercicios) })),
+    treinos: treinos.map((t) => ({ letra: t.letra, nome: t.nome, foco: t.foco, exercicios: comLinhas(t.exercicios) })),
   }
 }
 
 /** Menu dos três pontinhos do cartão. */
-type AcaoRotina = 'editar' | 'duplicar' | 'biblioteca' | Situacao
-
 function MenuRotina({ r, onAcao }: { r: Rotina; onAcao: (acao: AcaoRotina) => void }) {
   const [aberto, setAberto] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
@@ -114,12 +116,13 @@ function MenuRotina({ r, onAcao }: { r: Rotina; onAcao: (acao: AcaoRotina) => vo
   )
 }
 
-function CartaoRotina({ r, treinos, atual, onAbrir, onAcao }: { r: Rotina; treinos: Treino[]; atual: boolean; onAbrir: () => void; onAcao: (acao: AcaoRotina) => void }) {
+function CartaoRotina({ r, treinos, feitos, atual, onAbrir, onAcao }: { r: Rotina; treinos: Treino[]; feitos: TreinoFeito[]; atual: boolean; onAbrir: () => void; onAcao: (acao: AcaoRotina) => void }) {
   const a = andamento(r)
   const exercicios = treinos.reduce((n, t) => n + t.exercicios.length, 0)
+  const meus = feitos.filter((f) => treinos.some((t) => t.id === f.treino_id))
   return (
     <li className={`cartao rotina-cartao ${atual ? 'atual' : ''}`}>
-      <button className="rotina-corpo" onClick={onAbrir} disabled={r.situacao === 'excluida'}>
+      <button className="rotina-corpo" onClick={onAbrir}>
         <IconeDaRotina id={r.icone} objetivo={r.objetivo} />
         <span className="rotina-info">
           <strong>{r.nome}</strong>
@@ -136,6 +139,11 @@ function CartaoRotina({ r, treinos, atual, onAbrir, onAcao }: { r: Rotina; trein
             {treinos.length ? `Treinos ${treinos.map((t) => t.letra).join(' ')} · ${exercicios} exercício${exercicios === 1 ? '' : 's'}` : 'Sem treinos'}
             {r.situacao === 'excluida' && r.excluida_em && ` · excluída em ${dataCurta(r.excluida_em)}`}
           </small>
+          {meus.length > 0 && (
+            <small className="verde">
+              Feita {meus.length}x · última em {dataCurta(meus[0].feito_em)}
+            </small>
+          )}
         </span>
       </button>
       <MenuRotina r={r} onAcao={onAcao} />
@@ -153,18 +161,44 @@ export function FormRotina({ inicial, bib, nomeAluno, pastas, onSalvar, onCancel
   const [pastaId, setPastaId] = useState(inicial.pastaId ?? null)
   const [semanas, setSemanas] = useState(inicial.semanas ?? null)
   const [treinos, setTreinos] = useState<TreinoRascunho[]>(() => inicial.treinos.map((t) => ({ ...t, exercicios: comLinhas(t.exercicios) })))
-  const [letra, setLetra] = useState(inicial.treinos[0]?.letra ?? 'A')
+  const [letra, setLetra] = useState(inicial.abrirLetra ?? inicial.treinos[0]?.letra ?? 'A')
   const [salvando, setSalvando] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
   const divisao = treinos.map((t) => t.letra).join('')
   const treino = treinos.find((t) => t.letra === letra) ?? treinos[0]
   const vazio = !treinos.some((t) => t.exercicios.some((e) => e.nome.trim()))
+  const mudarTreino = (m: Partial<TreinoRascunho>) => setTreinos(treinos.map((t) => (t.letra === treino.letra ? { ...t, ...m } : t)))
 
   function mudarDivisao(nova: string) {
     const sai = treinos.filter((t) => !nova.includes(t.letra) && t.exercicios.some((e) => e.nome.trim()))
     if (sai.length && !confirm(`Tirar ${sai.map((t) => `o treino ${t.letra}`).join(' e ')} desta rotina? Os exercícios dele saem junto.`)) return
     setTreinos(nova.split('').map((l) => treinos.find((t) => t.letra === l) ?? treinoVazio(l)))
     if (!nova.includes(letra)) setLetra('A')
+  }
+
+  /** Mais um treino no fim (até o J). */
+  function adicionarTreino() {
+    const nova = LETRAS_TREINO[treinos.length]
+    if (!nova) return
+    setTreinos([...treinos, treinoVazio(nova)])
+    setLetra(nova)
+  }
+
+  /** Muda o treino aberto de lugar: as letras se ajustam (A, B, C...). */
+  function moverTreino(passo: -1 | 1) {
+    const i = treinos.findIndex((t) => t.letra === letra)
+    const nova = reletrar(mover(treinos, i, passo))
+    if (nova === treinos) return
+    setTreinos(nova)
+    setLetra(LETRAS_TREINO[i + passo])
+  }
+
+  function tirarTreino() {
+    const t = treinos.find((x) => x.letra === letra)
+    if (!t || treinos.length < 2) return
+    if (t.exercicios.some((e) => e.nome.trim()) && !confirm(`Tirar o treino ${t.letra}${t.nome ? ` (${t.nome})` : ''} desta rotina? Os exercícios dele saem junto.`)) return
+    setTreinos(reletrar(treinos.filter((x) => x.letra !== letra)))
+    setLetra('A')
   }
 
   function usarSugerida() {
@@ -313,14 +347,33 @@ export function FormRotina({ inicial, bib, nomeAluno, pastas, onSalvar, onCancel
               </button>
             )
           })}
+          {treinos.length < 10 && (
+            <button type="button" className="aba-mais" onClick={adicionarTreino} aria-label="Adicionar treino">
+              <Plus size={14} /> Treino
+            </button>
+          )}
         </div>
         {treino && (
           <div key={treino.letra}>
+            <div className="treino-ordem">
+              <button type="button" className="botao-sec" onClick={() => moverTreino(-1)} disabled={treino.letra === treinos[0]?.letra} aria-label="Mover para antes">
+                <ArrowLeft size={15} /> Antes
+              </button>
+              <button type="button" className="botao-sec" onClick={() => moverTreino(1)} disabled={treino.letra === treinos[treinos.length - 1]?.letra} aria-label="Mover para depois">
+                Depois <ArrowRight size={15} />
+              </button>
+              {treinos.length > 1 && (
+                <button type="button" className="botao-sec perigo" onClick={tirarTreino}>
+                  <Trash2 size={15} /> Tirar
+                </button>
+              )}
+            </div>
             <label className="campo">
               Nome do treino {treino.letra}
-              <input value={treino.nome} onChange={(e) => setTreinos(treinos.map((t) => (t.letra === treino.letra ? { ...t, nome: e.target.value } : t)))} maxLength={60} placeholder="Ex.: Pernas, Superiores, Glúteo" />
+              <input value={treino.nome} onChange={(e) => mudarTreino({ nome: e.target.value })} maxLength={60} placeholder="Ex.: Pernas, Superiores, Glúteo" />
             </label>
-            <EditorExercicios exercicios={treino.exercicios} bib={bib} onMudar={(exercicios) => setTreinos(treinos.map((t) => (t.letra === treino.letra ? { ...t, exercicios } : t)))} />
+            <EditorFoco foco={treino.foco ?? ''} exercicios={treino.exercicios} onMudar={(foco) => mudarTreino({ foco })} />
+            <EditorExercicios exercicios={treino.exercicios} bib={bib} onMudar={(exercicios) => mudarTreino({ exercicios })} />
           </div>
         )}
       </section>
@@ -337,13 +390,55 @@ export function FormRotina({ inicial, bib, nomeAluno, pastas, onSalvar, onCancel
   )
 }
 
-/** Tela de rotinas do aluno (personal): rotinas de treino e aeróbico, com histórico. */
-export function TelaRotinas({ ficha, meuId, onVoltar }: { ficha: Ficha; meuId: string; onVoltar: () => void }) {
+/** Foco do treino: grupos musculares ou objetivo, com sugestão tirada dos exercícios. */
+function EditorFoco({ foco, exercicios, onMudar }: { foco: string; exercicios: { nome: string }[]; onMudar: (f: string) => void }) {
+  const [abrir, setAbrir] = useState(false)
+  const lista = focoEmLista(foco)
+  const sugestao = focoSugerido(exercicios)
+  const alternar = (g: string) => onMudar(listaEmFoco(lista.includes(g) ? lista.filter((x) => x !== g) : [...lista, g]))
+  return (
+    <fieldset className="campo foco-treino">
+      <legend>Grupo muscular ou objetivo</legend>
+      <div className="atalhos-data">
+        {lista.map((g) => (
+          <button key={g} type="button" className="chip-botao ativo" onClick={() => alternar(g)} aria-label={`Tirar ${g}`}>
+            {g} ×
+          </button>
+        ))}
+        <button type="button" className="chip-botao" onClick={() => setAbrir(!abrir)} aria-expanded={abrir}>
+          <Plus size={13} /> {lista.length ? 'Mudar' : 'Escolher'}
+        </button>
+        {!lista.length && sugestao.length > 0 && (
+          <button type="button" className="chip-botao sugestao" onClick={() => onMudar(listaEmFoco(sugestao))}>
+            <Sparkles size={13} /> Usar: {sugestao.join(', ')}
+          </button>
+        )}
+      </div>
+      {abrir && (
+        <div className="atalhos-data foco-opcoes">
+          {OPCOES_FOCO.map((g) => (
+            <button key={g} type="button" className={`chip-botao ${lista.includes(g) ? 'ativo' : ''}`} aria-pressed={lista.includes(g)} onClick={() => alternar(g)}>
+              {g}
+            </button>
+          ))}
+        </div>
+      )}
+    </fieldset>
+  )
+}
+
+export type Vista = { tipo: 'lista' } | { tipo: 'rotina'; id: string } | { tipo: 'evolucao'; id: string }
+
+/** Tela de rotinas do aluno (personal): rotinas de treino e aeróbico, com histórico de execução e evolução. */
+export function TelaRotinas({ ficha, meuId, abrir, onVoltar }: { ficha: Ficha; meuId: string; abrir?: Vista; onVoltar: () => void }) {
   const [aba, setAba] = useState<'rotinas' | 'aerobico'>('rotinas')
   const [lista, setLista] = useState<Lista>('ativas')
   const [rotinas, setRotinas] = useState<Rotina[] | null>(null)
   const [treinos, setTreinos] = useState<Treino[]>([])
+  const [feitos, setFeitos] = useState<TreinoFeito[]>([])
   const [foto, setFoto] = useState('')
+  const [vista, setVista] = useState<Vista>(abrir ?? { tipo: 'lista' })
+  const [filtro, setFiltro] = useState('')
   const [editando, setEditando] = useState<Edicao | null>(null)
   const [escolhendoModelo, setEscolhendoModelo] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
@@ -354,7 +449,9 @@ export function TelaRotinas({ ficha, meuId, onVoltar }: { ficha: Ficha; meuId: s
 
   const carregar = useCallback(async () => {
     const r = await listarRotinas(ficha.id)
-    setTreinos(await listarTreinosDasRotinas(r.rotinas.map((x) => x.id)))
+    const t = await listarTreinosDasRotinas(r.rotinas.map((x) => x.id))
+    setFeitos(await listarFeitosDosTreinos(t.map((x) => x.id)))
+    setTreinos(t)
     setRotinas(r.rotinas)
     setErro(r.semTabela ? 'Falta rodar no Supabase o arquivo rotinas-de-treino.sql para as rotinas funcionarem.' : r.erro)
   }, [ficha.id])
@@ -363,11 +460,24 @@ export function TelaRotinas({ ficha, meuId, onVoltar }: { ficha: Ficha; meuId: s
     carregar()
   }, [carregar])
 
+  // Atualização automática (o aluno concluiu um treino): só fora do formulário, para não atrapalhar quem está editando.
+  useAtualizacao(() => {
+    if (!editando && !escolhendoModelo) carregar()
+  })
+
   useEffect(() => {
     fotoDoAluno(ficha.aluno_id).then(setFoto)
   }, [ficha.aluno_id])
 
-  const treinosDe = (r: Rotina) => treinos.filter((t) => t.rotina_id === r.id)
+  const treinosDe = (r: Rotina) => treinos.filter((t) => t.rotina_id === r.id).sort((a, b) => a.letra.localeCompare(b.letra))
+  const feitosDe = (r: Rotina) => {
+    const ids = new Set(treinosDe(r).map((t) => t.id))
+    return feitos.filter((f) => f.treino_id && ids.has(f.treino_id))
+  }
+  const ir = (v: Vista) => {
+    setVista(v)
+    window.scrollTo(0, 0)
+  }
 
   async function acao(r: Rotina, a: AcaoRotina) {
     setAviso(null)
@@ -383,18 +493,48 @@ export function TelaRotinas({ ficha, meuId, onVoltar }: { ficha: Ficha; meuId: s
     const e = await mudarSituacao(r.id, a)
     if (e) return setErro(e)
     setAviso(a === 'arquivada' ? `${r.nome} foi para Arquivadas.` : a === 'excluida' ? `${r.nome} foi para Excluídas.` : `${r.nome} voltou para as rotinas.`)
+    ir({ tipo: 'lista' })
     carregar()
   }
 
+  async function ordenar(r: Rotina, ordem: Treino[]) {
+    setAviso(null)
+    // Mostra a ordem nova na hora; se o banco recusar, volta como estava.
+    setTreinos(treinos.map((t) => {
+      const i = ordem.findIndex((o) => o.id === t.id)
+      return i >= 0 ? { ...t, letra: LETRAS_TREINO[i] } : t
+    }))
+    const e = await ordenarTreinos(r.id, ordem)
+    if (e) setErro(e)
+    else setAviso(`Ordem salva: ${ordem.map((t, i) => `${LETRAS_TREINO[i]} ${t.nome || ''}`.trim()).join(' · ')}.`)
+    carregar()
+  }
+
+  const rotinaDaVista = vista.tipo !== 'lista' ? rotinas?.find((r) => r.id === vista.id) : undefined
+
   const cabecalho = (
     <header className="rotinas-topo">
-      <button className="voltar" onClick={editando ? () => setEditando(null) : escolhendoModelo ? () => setEscolhendoModelo(false) : onVoltar} aria-label="Voltar">
+      <button
+        className="voltar"
+        onClick={
+          editando
+            ? () => setEditando(null)
+            : escolhendoModelo
+              ? () => setEscolhendoModelo(false)
+              : vista.tipo === 'evolucao' && abrir?.tipo !== 'evolucao'
+                ? () => ir({ tipo: 'rotina', id: vista.id })
+                : vista.tipo === 'rotina' && abrir?.tipo !== 'rotina'
+                  ? () => ir({ tipo: 'lista' })
+                  : onVoltar
+        }
+        aria-label="Voltar"
+      >
         ←
       </button>
       {foto ? <img className="rotinas-foto" src={foto} alt="" /> : <span className="personal-inicial">{ficha.nome.charAt(0).toUpperCase()}</span>}
       <div>
         <h1>{ficha.nome}</h1>
-        <small className="dica-sec">{editando ? 'Rotina de treino' : 'Rotinas e aeróbico'}</small>
+        <small className="dica-sec">{editando ? 'Rotina de treino' : vista.tipo === 'evolucao' ? 'Evolução da rotina' : vista.tipo === 'rotina' ? 'Rotina de treino' : 'Rotinas e aeróbico'}</small>
       </div>
     </header>
   )
@@ -432,7 +572,8 @@ export function TelaRotinas({ ficha, meuId, onVoltar }: { ficha: Ficha; meuId: s
             setLista('ativas')
             setAviso(e.id ? 'Rotina atualizada. O aluno já vê as mudanças.' : `Rotina salva e liberada para ${primeiro}. As anteriores continuam guardadas.`)
             await carregar()
-            window.scrollTo(0, 0)
+            if (r.id) ir({ tipo: 'rotina', id: r.id })
+            else window.scrollTo(0, 0)
             return null
           }}
         />
@@ -440,7 +581,50 @@ export function TelaRotinas({ ficha, meuId, onVoltar }: { ficha: Ficha; meuId: s
     )
 
   const atual = rotinas ? rotinaAtual(rotinas) : null
-  const visiveis = rotinas ? ordenarRotinas(rotinas.filter((r) => (lista === 'ativas' ? r.situacao === 'ativa' : r.situacao === lista))) : []
+
+  if (rotinaDaVista && vista.tipo === 'evolucao')
+    return (
+      <div className="tela">
+        {cabecalho}
+        <EvolucaoRotina nomeRotina={rotinaDaVista.nome} nomeAluno={primeiro} treinos={treinosDe(rotinaDaVista)} feitos={feitosDe(rotinaDaVista)} />
+        <button className="botao-sec" onClick={() => ir({ tipo: 'rotina', id: rotinaDaVista.id })}>
+          Voltar à rotina
+        </button>
+      </div>
+    )
+
+  if (rotinaDaVista && vista.tipo === 'rotina')
+    return (
+      <div className="tela">
+        {cabecalho}
+        {aviso && <p className="mensagem ok">{aviso}</p>}
+        {erro && <p className="mensagem erro">{erro}</p>}
+        <DetalheRotina
+          r={rotinaDaVista}
+          treinos={treinosDe(rotinaDaVista)}
+          feitos={feitosDe(rotinaDaVista)}
+          atual={rotinaDaVista.id === atual?.id}
+          onEditar={(letra) => {
+            setAviso(null)
+            setEditando({ id: rotinaDaVista.id, dados: rotinaDaVista, treinos: treinosDe(rotinaDaVista), abrirLetra: letra })
+          }}
+          onAdicionar={() => {
+            const ts = treinosDe(rotinaDaVista)
+            const nova = LETRAS_TREINO[ts.length]
+            setAviso(null)
+            setEditando({ id: rotinaDaVista.id, dados: rotinaDaVista, treinos: [...ts, treinoVazio(nova)], abrirLetra: nova })
+          }}
+          onOrdenar={(ordem) => ordenar(rotinaDaVista, ordem)}
+          onAcao={(a) => acao(rotinaDaVista, a)}
+          onEvolucao={() => ir({ tipo: 'evolucao', id: rotinaDaVista.id })}
+        />
+      </div>
+    )
+
+  const daLista = rotinas ? rotinas.filter((r) => (lista === 'ativas' ? r.situacao === 'ativa' : r.situacao === lista)) : []
+  // Organizar por objetivo ou tipo de exercício (só aparece com mais de uma opção).
+  const grupos = [...new Set(daLista.flatMap((r) => [rotuloTipo(r.icone, r.objetivo), r.objetivo].filter(Boolean)))]
+  const visiveis = ordenarRotinas(daLista.filter((r) => !filtro || rotuloTipo(r.icone, r.objetivo) === filtro || r.objetivo === filtro))
   const quantas = (s: Situacao) => rotinas?.filter((r) => r.situacao === s).length ?? 0
 
   return (
@@ -474,6 +658,19 @@ export function TelaRotinas({ ficha, meuId, onVoltar }: { ficha: Ficha; meuId: s
             </button>
           </div>
 
+          {grupos.length > 1 && (
+            <div className="atalhos-data filtro-rotinas" role="radiogroup" aria-label="Organizar por objetivo ou tipo">
+              <button type="button" role="radio" aria-checked={!filtro} className={`chip-botao ${!filtro ? 'ativo' : ''}`} onClick={() => setFiltro('')}>
+                Todas
+              </button>
+              {grupos.map((g) => (
+                <button key={g} type="button" role="radio" aria-checked={filtro === g} className={`chip-botao ${filtro === g ? 'ativo' : ''}`} onClick={() => setFiltro(filtro === g ? '' : g)}>
+                  {g}
+                </button>
+              ))}
+            </div>
+          )}
+
           {aviso && <p className="mensagem ok">{aviso}</p>}
           {erro && <p className="mensagem erro">{erro}</p>}
           {rotinas === null && <p className="carregando">Carregando rotinas…</p>}
@@ -489,13 +686,15 @@ export function TelaRotinas({ ficha, meuId, onVoltar }: { ficha: Ficha; meuId: s
 
           {rotinas && visiveis.length === 0 && (
             <p className="dica-sec centro">
-              {lista === 'ativas' ? `${primeiro} ainda não tem rotina ativa. Toque em Criar rotina.` : lista === 'arquivada' ? 'Nenhuma rotina arquivada.' : 'Nenhuma rotina excluída.'}
+              {lista === 'ativas' ? (filtro ? 'Nenhuma rotina com esse filtro.' : `${primeiro} ainda não tem rotina ativa. Toque em Criar rotina.`) : lista === 'arquivada' ? 'Nenhuma rotina arquivada.' : 'Nenhuma rotina excluída.'}
             </p>
           )}
 
+          {visiveis.length > 0 && <p className="dica-sec">Toque numa rotina para ver os treinos, quantas vezes cada um foi feito e a evolução.</p>}
+
           <ul className="rotinas-lista">
             {visiveis.map((r) => (
-              <CartaoRotina key={r.id} r={r} treinos={treinosDe(r)} atual={r.id === atual?.id} onAbrir={() => acao(r, 'editar')} onAcao={(a) => acao(r, a)} />
+              <CartaoRotina key={r.id} r={r} treinos={treinosDe(r)} feitos={feitosDe(r)} atual={r.id === atual?.id} onAbrir={() => ir({ tipo: 'rotina', id: r.id })} onAcao={(a) => acao(r, a)} />
             ))}
           </ul>
         </>
