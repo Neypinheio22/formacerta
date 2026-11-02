@@ -80,7 +80,8 @@ Deno.serve(async (req) => {
     headers: cabecalho,
     body: JSON.stringify({
       items: [{ id: pg.id, title: `FormaCerta: ${pg.descricao}`, quantity: 1, unit_price: valor, currency_id: 'BRL' }],
-      payer: { email: quem.user.email },
+      // Sem o e-mail de quem paga: a pessoa entra na própria conta na página do Mercado Pago.
+      // Mandar o e-mail do app misturava conta real com conta de teste e travava o pagamento.
       external_reference: pg.id,
       notification_url: aviso,
       payment_methods: { excluded_payment_types: fora.map((id) => ({ id })), installments: forma === 'cartao' ? 12 : 1 },
