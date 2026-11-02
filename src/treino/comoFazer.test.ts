@@ -101,9 +101,19 @@ describe('vídeos do app', () => {
 })
 
 describe('vídeos curtos', () => {
-  it('Shorts viram vídeo embutido pelo código', async () => {
+  it('todo link vira vídeo embutido pelo código', async () => {
     const { VIDEOS_APP } = await import('./videosApp')
     for (const link of Object.values(VIDEOS_APP)) expect(idYoutube(link)).toBeTruthy()
-    expect(Object.values(VIDEOS_APP).filter((l) => l.includes('/shorts/')).length).toBeGreaterThan(30)
+  })
+
+  it('o catálogo usa os vídeos do canal 4Nutrition (pedido do Romildo)', async () => {
+    const { CATALOGO } = await import('./catalogo')
+    const { VIDEOS_APP } = await import('./videosApp')
+    const links = new Set(Object.values(VIDEOS_APP))
+    const comVideo = CATALOGO.filter((c) => videoDoApp(c.nome))
+    expect(comVideo.length).toBeGreaterThan(100)
+    expect(videoDoApp('Supino reto')).toBe('https://www.youtube.com/watch?v=MTS2g0Im_Js')
+    expect(videoDoApp('Crucifixo na máquina (peck deck)')).toBe(videoDoApp('Peck deck'))
+    expect(links.size).toBeGreaterThan(100)
   })
 })
