@@ -2,11 +2,11 @@ import { useEffect, useMemo, useState } from 'react'
 import { ROTULO_PAPEL, ROTULO_SITUACAO, useConta, type Perfil, type Situacao } from '../../nuvem/conta'
 import { definirSituacao, excluirConta, listarPerfis } from '../../nuvem/gestao'
 import { ModerarVitrine } from '../vitrine/ModerarVitrine'
-import { AdminPagamentos, AdminPlanos } from '../planos/AdminCobranca'
+import { AdminPagamentos, AdminPlanos, AdminRepasses } from '../planos/AdminCobranca'
 import { AdminPrecos } from '../planos/AdminPrecos'
 import { ROTULO_TIPO, listarResultados, type ResultadoNuvem, type TipoResultado } from '../../nuvem/resultados'
 
-type Aba = 'aguardando' | 'profissionais' | 'alunos' | 'resultados' | 'vitrine' | 'planos' | 'precos' | 'pagamentos'
+type Aba = 'aguardando' | 'profissionais' | 'alunos' | 'resultados' | 'vitrine' | 'planos' | 'precos' | 'pagamentos' | 'repasses'
 
 /** Tela do administrador: libera, bloqueia e exclui profissionais e alunos. */
 export function Admin({ onVoltar }: { onVoltar: () => void }) {
@@ -66,7 +66,7 @@ export function Admin({ onVoltar }: { onVoltar: () => void }) {
       </header>
 
       <h1>Administração</h1>
-      <p className="dica-sec">Você gerencia todos os profissionais, alunos, resultados, fotos da vitrine, planos e pagamentos do FormaCerta.</p>
+      <p className="dica-sec">Você gerencia todos os profissionais, alunos, resultados, fotos da vitrine, planos, pagamentos e repasses do FormaCerta. Alunos entram direto; só os profissionais esperam a sua liberação.</p>
 
       <div className="numeros">
         <div>
@@ -104,6 +104,9 @@ export function Admin({ onVoltar }: { onVoltar: () => void }) {
         </button>
         <button className={aba === 'pagamentos' ? 'ativo' : ''} onClick={() => setAba('pagamentos')}>
           Pagamentos
+        </button>
+        <button className={aba === 'repasses' ? 'ativo' : ''} onClick={() => setAba('repasses')}>
+          Repasses
         </button>
       </div>
 
@@ -165,6 +168,8 @@ export function Admin({ onVoltar }: { onVoltar: () => void }) {
       {!carregando && aba === 'precos' && <AdminPrecos nomePorId={nomePorId} />}
 
       {!carregando && aba === 'pagamentos' && <AdminPagamentos nomePorId={nomePorId} />}
+
+      {!carregando && aba === 'repasses' && <AdminRepasses />}
     </div>
   )
 }

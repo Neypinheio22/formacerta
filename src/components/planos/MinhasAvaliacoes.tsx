@@ -27,6 +27,7 @@ export function MinhasAvaliacoes({ meuId, comissaoPct, servicos, recebidos, onMu
   const conta = valor ? dividir(valor, comissaoPct) : null
   const pagos = recebidos.filter((p) => p.situacao === 'pago')
   const totalLiquido = pagos.reduce((t, p) => t + p.valor - p.comissao, 0)
+  const jaRepassado = pagos.filter((p) => p.repassado_em).reduce((t, p) => t + p.valor - p.comissao, 0)
 
   async function adicionar() {
     if (!valor || valor < 5) return setErro('Coloque um preço a partir de R$ 5,00.')
@@ -127,7 +128,9 @@ export function MinhasAvaliacoes({ meuId, comissaoPct, servicos, recebidos, onMu
       {recebidos.length > 0 && (
         <>
           <h3>Vendas</h3>
-          <p className="dica-sec">Recebido até agora: {emReais(totalLiquido)}</p>
+          <p className="dica-sec">
+            Vendido até agora: {emReais(totalLiquido)} · já repassado a você: {emReais(jaRepassado)} · a receber: {emReais(Math.max(0, totalLiquido - jaRepassado))}
+          </p>
           <ul className="historico">
             {recebidos.map((p) => (
               <li key={p.id}>
@@ -137,6 +140,7 @@ export function MinhasAvaliacoes({ meuId, comissaoPct, servicos, recebidos, onMu
                     <br />
                     <small className="dica-sec">
                       {new Date(p.criado_em).toLocaleDateString('pt-BR')} · {ROTULO_PAGAMENTO[p.situacao]}
+                      {p.situacao === 'pago' && (p.repassado_em ? ` · repassado em ${new Date(p.repassado_em).toLocaleDateString('pt-BR')}` : ' · a receber')}
                     </small>
                   </span>
                   <span className="nota">{emReais(p.valor - p.comissao)}</span>

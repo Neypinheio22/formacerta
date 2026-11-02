@@ -232,7 +232,7 @@ export function MinhaConta({ onVoltar, onPlanos }: { onVoltar: () => void; onPla
       {perfil.papel !== 'aluno' && (
         <>
           <PainelVideo key={`video-${versaoVideo}`} meuId={perfil.id} onMudou={() => setVersaoVideo((v) => v + 1)} />
-          <MeusServicos key={`servicos-${versaoVideo}`} meuId={perfil.id} onMudou={() => setVersaoVideo((v) => v + 1)} />
+          <MeusServicos key={`servicos-${versaoVideo}`} meuId={perfil.id} onMudou={() => setVersaoVideo((v) => v + 1)} onPlanos={onPlanos} />
         </>
       )}
 

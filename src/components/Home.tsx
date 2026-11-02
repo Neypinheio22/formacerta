@@ -1,12 +1,14 @@
 import type { Perfil } from '../nuvem/conta'
+import { avisoDoPlano, type Direitos } from '../nuvem/planos'
 import type { Assessment } from '../pose/types'
-import { Activity, ArrowRight, BadgeCheck, Brain, Clapperboard, Crown, Dumbbell, FileText, Footprints, HeartPulse, PersonStanding, PlayCircle, Ruler, Sparkles, type LucideIcon } from 'lucide-react'
+import { Activity, AlertTriangle, ArrowRight, BadgeCheck, Brain, Clapperboard, Crown, Dumbbell, FileText, Footprints, HeartPulse, PersonStanding, PlayCircle, Ruler, Sparkles, type LucideIcon } from 'lucide-react'
 import { useState } from 'react'
 import { FundoHex } from './FundoHex'
 import { Logo } from './Logo'
 import { CartaoReavaliacao } from './plano/Reavaliacoes'
 import { CartaoMeusDados } from './alunos/CartaoMeusDados'
 import { usePlanosLiberados } from './planos/usePlanosLiberados'
+import { travadoNoPro } from './planos/useDireitos'
 import { AguaCartao, ProximoTreinoCartao, SemanaCartao } from './treino/CartoesAluno'
 import { useMeuTreino } from './treino/useMeuTreino'
 import { VitrineCarrossel } from './vitrine/VitrineCarrossel'
@@ -33,22 +35,29 @@ type Props = {
   onRelatorio: () => void
   onTreino: (letra?: string) => void
   onPersonais: () => void
+  direitos?: Direitos | null
 }
 
-type Atalho = { titulo: string; texto: string; Icone: LucideIcon; abrir: () => void; soPersonal?: boolean }
+/** pro: recurso do Aluno Pro (mostra a coroa para quem está no grátis). */
+type Atalho = { titulo: string; texto: string; Icone: LucideIcon; abrir: () => void; soPersonal?: boolean; pro?: boolean }
 
-function Grupo({ titulo, atalhos, personal }: { titulo: string; atalhos: Atalho[]; personal: boolean }) {
+function Grupo({ titulo, atalhos, personal, semPro = false }: { titulo: string; atalhos: Atalho[]; personal: boolean; semPro?: boolean }) {
   const visiveis = atalhos.filter((a) => personal || !a.soPersonal)
   if (!visiveis.length) return null
   return (
     <section className="grupo-atalhos">
       <h2 className="secao">{titulo}</h2>
       <div className="atalhos">
-        {visiveis.map(({ titulo, texto, Icone, abrir }) => (
+        {visiveis.map(({ titulo, texto, Icone, abrir, pro }) => (
           <button key={titulo} className="atalho" onClick={abrir}>
             <span className="atalho-icone">
               <Icone size={20} />
             </span>
+            {pro && semPro && (
+              <span className="atalho-pro" title="Do Aluno Pro">
+                <Crown size={12} /> Pro
+              </span>
+            )}
             <strong>{titulo}</strong>
             <span>{texto}</span>
           </button>
@@ -58,13 +67,15 @@ function Grupo({ titulo, atalhos, personal }: { titulo: string; atalhos: Atalho[
   )
 }
 
-export function Home({ history, onStart, onOpen, onEstudio, onExercicio, onCarga, onCorrida, onFlexibilidade, onAdams, onIdoso, perfil, onAdmin, onAlunos, onReavaliacoes, onEvolucao, onMeusDados, onVitrine, onPlanos, onRelatorio, onTreino, onPersonais }: Props) {
+export function Home({ history, onStart, onOpen, onEstudio, onExercicio, onCarga, onCorrida, onFlexibilidade, onAdams, onIdoso, perfil, onAdmin, onAlunos, onReavaliacoes, onEvolucao, onMeusDados, onVitrine, onPlanos, onRelatorio, onTreino, onPersonais, direitos = null }: Props) {
   const verPlanos = usePlanosLiberados(perfil)
   const [todoHistorico, setTodoHistorico] = useState(false)
   // O aluno só vê o que ele mesmo usa; as ferramentas de avaliar e atender alunos ficam para o personal.
   const personal = !perfil || perfil.papel !== 'aluno'
   const aluno = perfil?.papel === 'aluno'
   const treino = useMeuTreino(perfil)
+  const semPro = travadoNoPro(perfil, direitos)
+  const aviso = avisoDoPlano(direitos)
 
   return (
     <div className="tela">
@@ -97,6 +108,19 @@ export function Home({ history, onStart, onOpen, onEstudio, onExercicio, onCarga
             Treine certo. <span className="verde">Evolua sempre.</span>
           </p>
         </header>
+      )}
+
+      {aviso && (
+        <section className={`cartao aviso-plano ${aviso.tipo}`}>
+          <span className="etiqueta">
+            <AlertTriangle size={14} /> Seu plano
+          </span>
+          <h2>{aviso.titulo}</h2>
+          <p className="dica-sec">{aviso.texto}</p>
+          <button className="botao" onClick={onPlanos}>
+            {aviso.tipo === 'venceu' || direitos?.situacao !== 'teste' ? 'Renovar agora' : 'Assinar agora'}
+          </button>
+        </section>
       )}
 
       {aluno && perfil && <CartaoMeusDados meuId={perfil.id} onAbrir={onMeusDados} />}
@@ -140,8 +164,9 @@ export function Home({ history, onStart, onOpen, onEstudio, onExercicio, onCarga
       <Grupo
         titulo="Testes"
         personal={personal}
+        semPro={semPro}
         atalhos={[
-          { titulo: 'Corrida', texto: 'Pisada, cadência e joelhos', Icone: Footprints, abrir: onCorrida },
+          { titulo: 'Corrida', texto: 'Pisada, cadência e joelhos', Icone: Footprints, abrir: onCorrida, pro: true },
           { titulo: 'Flexibilidade', texto: 'Até onde as mãos chegam', Icone: Ruler, abrir: onFlexibilidade },
           { titulo: 'Coluna (Adams)', texto: 'Assimetria nas costas', Icone: PersonStanding, abrir: onAdams },
           { titulo: 'Idoso', texto: 'Berg, 6 minutos e mais', Icone: HeartPulse, abrir: onIdoso, soPersonal: true },
@@ -151,9 +176,10 @@ export function Home({ history, onStart, onOpen, onEstudio, onExercicio, onCarga
       <Grupo
         titulo={aluno ? 'Meu acompanhamento' : 'Meus alunos'}
         personal={personal}
+        semPro={semPro}
         atalhos={[
           ...(perfil
-            ? [{ titulo: 'Central de Inteligência', texto: aluno ? 'Minha análise e exercícios' : '🟢🟡🔴 de cada aluno', Icone: Brain, abrir: aluno ? onEvolucao : onAlunos }]
+            ? [{ titulo: 'Central de Inteligência', texto: aluno ? 'Minha análise e exercícios' : '🟢🟡🔴 de cada aluno', Icone: Brain, abrir: aluno ? onEvolucao : onAlunos, pro: aluno }]
             : []),
           ...(aluno ? [{ titulo: 'Encontrar personal', texto: 'Profissional com CREF e chat no app', Icone: BadgeCheck, abrir: onPersonais }] : []),
           { titulo: 'Relatório', texto: 'PDF com sua logo e registro', Icone: FileText, abrir: onRelatorio, soPersonal: true },

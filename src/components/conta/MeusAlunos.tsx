@@ -6,9 +6,13 @@ import { listarResultados, type ResultadoNuvem } from '../../nuvem/resultados'
 import { dataCurta } from '../../testes/formato'
 import { FichaAluno } from '../alunos/FichaAluno'
 import { FichaForm } from '../alunos/FichaForm'
+import { useConta } from '../../nuvem/conta'
+import { recarregarDireitos, useDireitos } from '../planos/useDireitos'
 
 /** Tela do profissional: a ficha de cada aluno, com a evolução de todas as avaliações. */
-export function MeusAlunos({ onVoltar, meuId }: { onVoltar: () => void; meuId: string }) {
+export function MeusAlunos({ onVoltar, meuId, onPlanos }: { onVoltar: () => void; meuId: string; onPlanos?: () => void }) {
+  const { perfil } = useConta()
+  const direitos = useDireitos(perfil)
   const [fichas, setFichas] = useState<Ficha[] | null>(null)
   const [resultados, setResultados] = useState<ResultadoNuvem[]>([])
   const [erro, setErro] = useState<string | null>(null)
@@ -44,6 +48,9 @@ export function MeusAlunos({ onVoltar, meuId }: { onVoltar: () => void; meuId: s
     )
 
   const termo = busca.trim().toLocaleLowerCase('pt-BR')
+  const limite = direitos?.travado ? direitos.limite_alunos : null
+  const total = fichas?.length ?? direitos?.alunos ?? 0
+  const noLimite = limite !== null && total >= limite
   const lista = (fichas ?? []).filter((f) => !termo || f.nome.toLocaleLowerCase('pt-BR').includes(termo))
 
   return (
@@ -58,6 +65,25 @@ export function MeusAlunos({ onVoltar, meuId }: { onVoltar: () => void; meuId: s
 
       {erro && <p className="mensagem erro">{erro}</p>}
 
+      {limite !== null && (
+        <section className={`cartao limite-alunos ${noLimite ? 'plano-vencido' : ''}`}>
+          <span>
+            <strong>
+              {total} de {limite} alunos
+            </strong>
+            <br />
+            <small className="dica-sec">
+              {noLimite ? `Seu plano ${direitos?.plano_nome ?? ''} chegou no limite. Mude de plano para cadastrar mais alunos.` : `Plano ${direitos?.plano_nome ?? ''}`}
+            </small>
+          </span>
+          {onPlanos && (
+            <button className={noLimite ? 'botao' : 'botao-sec'} onClick={onPlanos}>
+              Ver planos
+            </button>
+          )}
+        </section>
+      )}
+
       {nova ? (
         <FichaForm
           inicial={fichaVazia()}
@@ -67,6 +93,7 @@ export function MeusAlunos({ onVoltar, meuId }: { onVoltar: () => void; meuId: s
           onSalvar={async (dados) => {
             const r = await criarFicha(meuId, dados)
             if (r.ficha) {
+              recarregarDireitos()
               setNova(false)
               setFichas((x) => [...(x ?? []), r.ficha!].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')))
               setAberta(r.ficha)
@@ -75,7 +102,7 @@ export function MeusAlunos({ onVoltar, meuId }: { onVoltar: () => void; meuId: s
           }}
         />
       ) : (
-        <button className="botao grande" onClick={() => setNova(true)}>
+        <button className="botao grande" disabled={noLimite} onClick={() => setNova(true)}>
           <UserPlus size={20} /> Nova ficha de aluno
         </button>
       )}

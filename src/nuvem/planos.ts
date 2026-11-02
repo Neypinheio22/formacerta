@@ -4,7 +4,7 @@ import { erroAmigavel, type Papel } from './conta'
 export type Publico = 'aluno' | 'profissional'
 export type Ciclo = 'mensal' | 'anual'
 export type Forma = 'pix' | 'cartao' | 'boleto'
-export type SituacaoAssinatura = 'teste' | 'aguardando' | 'ativa' | 'cancelada'
+export type SituacaoAssinatura = 'teste' | 'aguardando' | 'ativa' | 'vencida' | 'cancelada'
 export type SituacaoPagamento = 'pendente' | 'pago' | 'cancelado'
 
 export type Plano = {
@@ -21,6 +21,8 @@ export type Plano = {
   destaque: boolean
   ativo: boolean
   ordem: number
+  /** O personal deste plano vende serviços pelo app. */
+  vende_servicos?: boolean
 }
 
 export type ConfigCobranca = {
@@ -29,6 +31,8 @@ export type ConfigCobranca = {
   gateway: 'nenhum' | 'asaas' | 'mercadopago' | 'stripe'
   /** Enquanto 'testadores', só o administrador e quem ele escolher veem os planos. */
   planos_para: 'testadores' | 'todos'
+  /** Desligado, ninguém fica travado: todos usam tudo, como antes dos planos. */
+  travar_recursos?: boolean
 }
 
 export type Assinatura = {
@@ -40,6 +44,8 @@ export type Assinatura = {
   valor: number
   valido_ate: string | null
   criado_em: string
+  /** Dado pelo administrador, sem pagamento. */
+  cortesia?: boolean
 }
 
 export type Servico = {
@@ -106,6 +112,8 @@ export type Pagamento = {
   pix_copia_cola: string | null
   pix_qr: string | null
   link_pagamento: string | null
+  /** Quando o FormaCerta repassou ao personal a parte dele. */
+  repassado_em?: string | null
 }
 
 export type Cobranca = { pix_copia_cola?: string; pix_qr?: string | null; link?: string | null }
@@ -115,6 +123,7 @@ export const ROTULO_ASSINATURA: Record<SituacaoAssinatura, string> = {
   teste: 'Teste grátis',
   aguardando: 'Aguardando pagamento',
   ativa: 'Ativa',
+  vencida: 'Vencida',
   cancelada: 'Cancelada',
 }
 export const ROTULO_PAGAMENTO: Record<SituacaoPagamento, string> = { pendente: 'Pendente', pago: 'Pago', cancelado: 'Cancelado' }
@@ -229,8 +238,14 @@ export function dividir(valor: number, comissaoPct: number) {
   return { comissao, liquido: Math.round((valor - comissao) * 100) / 100 }
 }
 
-/** A assinatura que vale agora (a mais nova que não foi cancelada). */
-export const assinaturaAtual = (lista: Assinatura[]) => lista.find((a) => a.situacao !== 'cancelada') ?? null
+/** A assinatura que vale agora (a mais nova que não foi cancelada nem venceu). */
+export const assinaturaAtual = (lista: Assinatura[]) => lista.find((a) => a.situacao !== 'cancelada' && a.situacao !== 'vencida') ?? null
+
+/** A última assinatura, se ela venceu (para mostrar "Renovar"). */
+export const assinaturaVencida = (lista: Assinatura[]) => {
+  const ultima = lista.find((a) => a.situacao !== 'cancelada')
+  return ultima?.situacao === 'vencida' ? ultima : null
+}
 
 /** "1.234,5" ou "49.90" vira número. */
 export function lerReais(texto: string): number | null {
@@ -287,6 +302,24 @@ export async function minhasAssinaturas(meuId: string): Promise<Assinatura[]> {
 export async function escolherPlano(plano: string, ciclo: Ciclo, forma: Forma) {
   const { error } = await supabase.rpc('escolher_plano', { plano, ciclo, forma })
   return error ? erroAmigavel(error) : null
+}
+
+/** Cobra mais um período do plano atual (ou do que venceu) sem tirar o acesso. Devolve o pagamento. */
+export async function renovarPlano(forma: Forma): Promise<{ id: string | null; erro: string | null }> {
+  const { data, error } = await supabase.rpc('renovar_plano', { forma })
+  return error ? { id: null, erro: erroAmigavel(error) } : { id: data as string, erro: null }
+}
+
+/** A assinatura que dá para renovar agora: plano pago perto do fim (ou no teste) ou que já venceu. */
+export function paraRenovar(lista: Assinatura[], diasAviso = 3): Assinatura | null {
+  const ultima = lista.find((a) => a.situacao !== 'cancelada')
+  if (!ultima || ultima.cortesia || ultima.valor <= 0) return null
+  if (ultima.situacao === 'vencida') return ultima
+  if ((ultima.situacao === 'ativa' || ultima.situacao === 'teste') && ultima.valido_ate) {
+    const dias = (Date.parse(ultima.valido_ate) - Date.now()) / 86_400_000
+    return dias <= diasAviso ? ultima : null
+  }
+  return null
 }
 
 export async function cancelarAssinatura() {
@@ -382,7 +415,13 @@ export async function salvarPlano(p: Plano) {
   return error ? erroAmigavel(error) : null
 }
 
-export async function salvarConfig(c: Partial<Pick<ConfigCobranca, 'comissao_pct' | 'dias_gratis' | 'planos_para' | 'gateway'>>) {
+/** Se o que é do plano pago está travado. Vazio quando o SQL novo ainda não rodou. */
+export async function lerTravas(): Promise<boolean | null> {
+  const { data, error } = await supabase.from('config_cobranca').select('travar_recursos').maybeSingle()
+  return error || !data ? null : data.travar_recursos !== false
+}
+
+export async function salvarConfig(c: Partial<Pick<ConfigCobranca, 'comissao_pct' | 'dias_gratis' | 'planos_para' | 'gateway' | 'travar_recursos'>>) {
   const { error } = await supabase.from('config_cobranca').update({ ...c, atualizado_em: new Date().toISOString() }).eq('id', true)
   return error ? erroAmigavel(error) : null
 }
@@ -390,4 +429,94 @@ export async function salvarConfig(c: Partial<Pick<ConfigCobranca, 'comissao_pct
 export async function definirPagamento(id: string, nova: SituacaoPagamento) {
   const { error } = await supabase.rpc('admin_definir_pagamento', { pagamento: id, nova })
   return error ? erroAmigavel(error) : null
+}
+
+/** O que a pessoa pode usar agora, calculado no banco (meus_direitos). */
+export type Direitos = {
+  papel: Papel
+  /** Falso quando o administrador desligou as travas ou os planos estão escondidos. */
+  travado: boolean
+  plano_id: string | null
+  plano_nome: string | null
+  /** Está num plano pago (pagou, teste grátis ou cortesia). */
+  pago: boolean
+  cortesia: boolean
+  situacao: SituacaoAssinatura | null
+  ciclo: Ciclo | null
+  valido_ate: string | null
+  dias_restantes: number | null
+  /** Aluno: corrida, exercício em vídeo e Central de Inteligência liberados. */
+  pro: boolean
+  /** Aluno que ganha o Pro porque o personal dele tem plano pago. */
+  pro_pelo_personal: boolean
+  alunos: number
+  /** Vazio = sem limite. */
+  limite_alunos: number | null
+  vende_servicos: boolean
+  ultima_situacao: SituacaoAssinatura | null
+  ultimo_plano_id: string | null
+  ultimo_plano_nome: string | null
+  ultimo_ciclo: Ciclo | null
+  ultimo_valido_ate: string | null
+}
+
+/** Vazio quando o banco ainda não tem a função (SQL não rodado) ou sem internet: aí nada fica travado. */
+export async function meusDireitos(): Promise<Direitos | null> {
+  const { data, error } = await supabase.rpc('meus_direitos')
+  if (error || !data) return null
+  return data as Direitos
+}
+
+/** Dias para dizer "vence em": aviso a partir de 3 dias antes. */
+export const DIAS_AVISO = 3
+
+/** O aviso do plano para a tela inicial, ou vazio quando não há nada a dizer. */
+export function avisoDoPlano(d: Direitos | null): { tipo: 'vence' | 'venceu'; titulo: string; texto: string } | null {
+  if (!d || d.papel === 'admin') return null
+  if (d.pago && !d.cortesia && d.dias_restantes !== null && d.dias_restantes <= DIAS_AVISO) {
+    const quando = d.dias_restantes <= 0 ? 'hoje' : d.dias_restantes === 1 ? 'amanhã' : `em ${d.dias_restantes} dias`
+    return d.situacao === 'teste'
+      ? { tipo: 'vence', titulo: `Seu teste grátis acaba ${quando}`, texto: `Assine o ${d.plano_nome} para continuar com tudo liberado.` }
+      : { tipo: 'vence', titulo: `Seu plano ${d.plano_nome} vence ${quando}`, texto: 'Renove para não perder o acesso.' }
+  }
+  if (!d.pago && d.ultima_situacao === 'vencida' && d.ultimo_plano_nome)
+    return { tipo: 'venceu', titulo: `Seu plano ${d.ultimo_plano_nome} venceu`, texto: 'Você voltou para o plano grátis. Renove para liberar tudo de novo.' }
+  return null
+}
+
+/** Administrador: dá um plano de cortesia por tantos dias. */
+export async function darPlano(usuario: string, plano: string, dias: number) {
+  const { error } = await supabase.rpc('admin_dar_plano', { usuario, plano, dias })
+  return error ? erroAmigavel(error) : null
+}
+
+export type PlanoDeAlguem = { usuario_id: string; plano_id: string; situacao: SituacaoAssinatura; valido_ate: string | null; cortesia: boolean }
+
+/** Administrador: o plano atual de cada pessoa que já escolheu um. */
+export async function planosDeTodos(): Promise<PlanoDeAlguem[]> {
+  const { data } = await supabase.rpc('admin_planos_de_todos')
+  return (data ?? []) as PlanoDeAlguem[]
+}
+
+export type Repasse = {
+  profissional_id: string
+  nome: string
+  servicos: number
+  servicos_valor: number
+  chamadas: number
+  chamadas_valor: number
+  repassado_total: number
+}
+
+/** Administrador: quanto falta repassar a cada personal (serviços e chamadas de vídeo). */
+export async function listarRepasses(): Promise<{ lista: Repasse[]; erro: string | null }> {
+  const { data, error } = await supabase.rpc('admin_repasses')
+  if (error) return { lista: [], erro: erroAmigavel(error) }
+  return { lista: ((data ?? []) as Repasse[]).map((r) => numeros(r, ['servicos_valor', 'chamadas_valor', 'repassado_total'])), erro: null }
+}
+
+/** Administrador: marca como repassado tudo o que estava em aberto para o personal. */
+export async function marcarRepasse(profissional: string): Promise<{ valor: number; erro: string | null }> {
+  const { data, error } = await supabase.rpc('admin_marcar_repasse', { profissional })
+  return error ? { valor: 0, erro: erroAmigavel(error) } : { valor: Number(data ?? 0), erro: null }
 }
