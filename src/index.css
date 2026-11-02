@@ -6692,3 +6692,58 @@ p.selo-aluno {
   background: var(--verde);
   color: var(--fundo);
 }
+
+/* Meus alunos: WhatsApp direto no cartão do aluno */
+.cartao.pessoa.aluno-cartao {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  cursor: default;
+}
+
+.aluno-abrir {
+  flex: 1;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.aluno-acoes {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.aluno-acoes .chip {
+  cursor: pointer;
+  border: none;
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 0.72rem;
+  padding: 3px 9px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.whats-redondo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: none;
+  padding: 0;
+  background: #25d366;
+  color: #ffffff;
+  text-decoration: none;
+  box-shadow: 0 2px 12px rgba(37, 211, 102, 0.35);
+  cursor: pointer;
+}
+
+.whats-redondo.sem-numero {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.35);
+  box-shadow: none;
+}
