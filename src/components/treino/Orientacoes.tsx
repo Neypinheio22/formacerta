@@ -91,7 +91,7 @@ export function OrientacoesPersonal({ ficha }: { ficha: Ficha }) {
       <h2>
         <Lightbulb size={18} /> Orientações para {primeiro}
       </h2>
-      <p className="dica-sec">Orientações gerais, recomendações e observações individuais. {primeiro} vê na aba Treino, menos as marcadas como “só eu vejo”.</p>
+      <p className="dica-sec">{primeiro} vê na aba Treino, menos as marcadas “só eu vejo”.</p>
       {lista === null && !erro && <p className="carregando">Carregando…</p>}
       {erro && <p className="mensagem erro">{erro}</p>}
       {lista && lista.length > 0 && (

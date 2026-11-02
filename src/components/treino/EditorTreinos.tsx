@@ -1,4 +1,4 @@
-import { CheckCircle2, ClipboardList, Film, Library, Plus, Trash2, TrendingUp, X } from 'lucide-react'
+import { CheckCircle2, ClipboardList, Film, FolderOpen, Library, Lightbulb, MessageSquareText, Plus, Trash2, TrendingUp, X } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { EXERCICIOS } from '../../movimento/exercicios'
 import type { Ficha } from '../../nuvem/fichas'
@@ -167,6 +167,8 @@ export function EditorExercicios({ exercicios, bib, onMudar }: { exercicios: Exe
   )
 }
 
+type Secao = 'rotina' | 'orientacoes' | 'feedback' | 'extras'
+
 /** Aba Treino da ficha (personal): rotina atual com a situação de cada treino, orientações, feedback, meta da semana e materiais. */
 export function EditorTreinos({ ficha, meuId, onAbrirRotinas }: { ficha: Ficha; meuId: string; onAbrirRotinas: (v?: Vista) => void }) {
   const [rotinas, setRotinas] = useState<Rotina[] | null>(null)
@@ -176,6 +178,7 @@ export function EditorTreinos({ ficha, meuId, onAbrirRotinas }: { ficha: Ficha; 
   const [faltaSql, setFaltaSql] = useState(false)
   const [meta, setMeta] = useState<number | null>(ficha.treinos_semana ?? null)
   const [erro, setErro] = useState<string | null>(null)
+  const [secao, setSecao] = useState<Secao>('rotina')
   const exercicios = useExercicios()
 
   const carregar = useCallback(async () => {
@@ -210,24 +213,41 @@ export function EditorTreinos({ ficha, meuId, onAbrirRotinas }: { ficha: Ficha; 
   const primeiro = ficha.nome.split(' ')[0]
   const guardadas = rotinas?.filter((r) => r.situacao !== 'excluida').length ?? 0
 
+  // Avisos nos botões: treinos da última semana sem a sua observação e dor relatada.
+  const semana = Date.now() - 7 * 86400000
+  const paraResponder = (recentes ?? []).filter((f) => new Date(f.feito_em).getTime() >= semana && !f.obs_personal).length
+  const comDor = (recentes ?? []).slice(0, 10).some((f) => f.dor)
+  const SECOES: { id: Secao; rotulo: string; Icone: typeof ClipboardList; aviso?: string; alerta?: boolean }[] = [
+    { id: 'rotina', rotulo: 'Rotina', Icone: ClipboardList },
+    { id: 'orientacoes', rotulo: 'Orientações', Icone: Lightbulb },
+    { id: 'feedback', rotulo: 'Feedback', Icone: MessageSquareText, aviso: paraResponder ? String(paraResponder) : comDor ? '!' : undefined, alerta: comDor },
+    { id: 'extras', rotulo: 'Materiais', Icone: FolderOpen },
+  ]
+
   return (
     <>
+      <nav className="secoes-treino" role="tablist" aria-label="Treino do aluno">
+        {SECOES.map(({ id, rotulo, Icone, aviso, alerta }) => (
+          <button key={id} role="tab" aria-selected={secao === id} className={secao === id ? 'ativo' : ''} onClick={() => setSecao(id)}>
+            <Icone size={20} />
+            <span>{rotulo}</span>
+            {aviso && <b className={`secao-aviso ${alerta ? 'alerta' : ''}`}>{aviso}</b>}
+          </button>
+        ))}
+      </nav>
+
+      {secao === 'rotina' && (
       <section className="cartao">
-        <h2>Rotinas de treino</h2>
-        <p className="dica-sec">{primeiro} segue a rotina que está valendo, vê o próximo treino na tela inicial e marca quando concluir. As rotinas antigas ficam guardadas.</p>
         {faltaSql && <p className="mensagem erro">Falta rodar no Supabase o arquivo rotinas-de-treino.sql para as rotinas funcionarem.</p>}
         {rotinas === null && <p className="carregando">Carregando rotinas…</p>}
-        {rotinas && !atual && !faltaSql && <p className="dica-sec">Nenhuma rotina valendo. Enquanto isso, {primeiro} vê a série sugerida pelo app, com o aviso para procurar um personal.</p>}
+        {rotinas && !atual && !faltaSql && <p className="dica-sec">Nenhuma rotina valendo. Enquanto isso, {primeiro} vê a série sugerida pelo app.</p>}
         {atual && (
           <>
             <button className="rotina-resumo" onClick={() => onAbrirRotinas({ tipo: 'rotina', id: atual.id })}>
               <IconeDaRotina id={atual.icone} objetivo={atual.objetivo} />
               <span>
                 <strong>{atual.nome}</strong>
-                <small>
-                  {treinosAtual.map((t) => t.letra).join(' ') || 'Sem treinos'}
-                  {atual.fim && ` · até ${dataDia(atual.fim)}`}
-                </small>
+                <small>{atual.fim ? `até ${dataDia(atual.fim)}` : 'sem validade'}</small>
               </span>
               <span className={`chip chip-${andamento(atual).tom}`}>{andamento(atual).rotulo}</span>
             </button>
@@ -245,44 +265,52 @@ export function EditorTreinos({ ficha, meuId, onAbrirRotinas }: { ficha: Ficha; 
                           {h.vezes}x{h.ultima ? ` · última ${dataCurta(h.ultima)}` : ''}
                         </small>
                       </span>
-                      <span className={`chip chip-${st.tom}`}>{st.rotulo.replace(' na semana', '')}</span>
+                      <span className={`ponto-status ponto-${st.tom}`} title={st.rotulo} aria-label={st.rotulo} />
                     </li>
                   )
                 })}
               </ul>
             )}
+            <p className="legenda-status">
+              <span className="ponto-status ponto-ok" /> feito na semana <span className="ponto-status ponto-atencao" /> pendente <span className="ponto-status ponto-neutro" /> não iniciado
+            </p>
             <div className="acoes-linha">
               <button className="botao" onClick={() => onAbrirRotinas({ tipo: 'evolucao', id: atual.id })}>
                 <TrendingUp size={16} /> Evolução
               </button>
               <button className="botao-sec" onClick={() => onAbrirRotinas({ tipo: 'rotina', id: atual.id })}>
-                <ClipboardList size={16} /> Abrir rotina
+                Abrir rotina
               </button>
             </div>
           </>
         )}
         {!faltaSql && (
-          <button className={atual ? 'botao-sec' : 'botao'} onClick={() => onAbrirRotinas()}>
-            <ClipboardList size={18} /> {guardadas > 1 ? `Ver as ${guardadas} rotinas` : atual ? 'Gerenciar rotinas' : 'Criar rotina'}
+          <button className={atual ? 'link' : 'botao'} onClick={() => onAbrirRotinas()}>
+            {guardadas > 1 ? `Todas as rotinas (${guardadas})` : atual ? 'Criar outra rotina' : 'Criar rotina'}
           </button>
         )}
-        <label className="campo">
-          Meta de treinos por semana
+        <label className="campo campo-linha">
+          Meta por semana
           <select value={meta ?? ''} onChange={(e) => mudarMeta(e.target.value)}>
-            <option value="">Igual ao número de treinos ({treinosAtual.length || 3})</option>
+            <option value="">{treinosAtual.length || 3} (nº de treinos)</option>
             {[1, 2, 3, 4, 5, 6, 7].map((n) => (
               <option key={n} value={n}>
-                {n} por semana
+                {n} treino{n === 1 ? '' : 's'}
               </option>
             ))}
           </select>
         </label>
         {erro && <p className="mensagem erro">{erro}</p>}
       </section>
-      <OrientacoesPersonal ficha={ficha} />
-      <FeedbacksPersonal nome={ficha.nome} feitos={recentes} treinos={treinos} onMudou={carregar} />
-      <CartaoBibliotecaExercicios meuId={meuId} admin={false} lista={exercicios.lista} onMudou={exercicios.recarregar} />
-      <MateriaisEditor meuId={meuId} fichaId={ficha.id} nome={ficha.nome} />
+      )}
+      {secao === 'orientacoes' && <OrientacoesPersonal ficha={ficha} />}
+      {secao === 'feedback' && <FeedbacksPersonal nome={ficha.nome} feitos={recentes} treinos={treinos} onMudou={carregar} />}
+      {secao === 'extras' && (
+        <>
+          <MateriaisEditor meuId={meuId} fichaId={ficha.id} nome={ficha.nome} />
+          <CartaoBibliotecaExercicios meuId={meuId} admin={false} lista={exercicios.lista} onMudou={exercicios.recarregar} />
+        </>
+      )}
     </>
   )
 }

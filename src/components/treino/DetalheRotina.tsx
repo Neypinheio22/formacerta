@@ -1,4 +1,4 @@
-import { Archive, ArchiveRestore, ArrowDown, ArrowUp, BookCopy, CalendarDays, ChevronDown, ChevronUp, Copy, History, Pencil, Plus, Trash2, TrendingUp, TriangleAlert } from 'lucide-react'
+import { ArrowDown, ArrowUp, CalendarDays, ChevronDown, ChevronUp, History, Pencil, Plus, TrendingUp, TriangleAlert } from 'lucide-react'
 import { useState } from 'react'
 import type { Rotina } from '../../nuvem/rotinas'
 import type { Treino, TreinoFeito } from '../../nuvem/treinos'
@@ -73,12 +73,12 @@ function CartaoTreino({
             Última: <b>{h.ultima ? `${dataCurta(h.ultima)} (${haQuanto(h.ultima)})` : '–'}</b>
           </span>
         </span>
-        <span className={`chip chip-${st.tom}`}>{st.rotulo}</span>
+        <span className={`chip chip-${st.tom}`}>{st.rotulo.replace(' na semana', '')}</span>
       </div>
       {h.vezes > 0 && (
         <>
-          <button className="link" onClick={() => setAberto(!aberto)} aria-expanded={aberto}>
-            <History size={14} /> Histórico de realização {aberto ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+          <button className="link link-discreto" onClick={() => setAberto(!aberto)} aria-expanded={aberto}>
+            <History size={14} /> Histórico {aberto ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
           </button>
           {aberto && (
             <ol className="historico-execucao">
@@ -122,6 +122,7 @@ export function DetalheRotina({
   onOrdenar,
   onAcao,
   onEvolucao,
+  menu,
 }: {
   r: Rotina
   treinos: Treino[]
@@ -132,6 +133,8 @@ export function DetalheRotina({
   onOrdenar: (ordem: Treino[]) => void
   onAcao: (a: AcaoRotina) => void
   onEvolucao: () => void
+  /** Três pontinhos: duplicar, biblioteca, arquivar, excluir. */
+  menu: React.ReactNode
 }) {
   const a = andamento(r)
   const ordem = [...treinos].sort((x, y) => x.letra.localeCompare(y.letra))
@@ -147,21 +150,19 @@ export function DetalheRotina({
       <section className={`cartao rotina-detalhe ${atual ? 'atual' : ''}`}>
         <div className="rotina-detalhe-topo">
           <IconeDaRotina id={r.icone} objetivo={r.objetivo} />
-          <div>
+          <div className="rotina-detalhe-nome">
             <h2>{r.nome}</h2>
             <small className="dica-sec">
               <CalendarDays size={13} /> {r.inicio ? dataDia(r.inicio) : 'Sem início'} até {r.fim ? dataDia(r.fim) : 'sem validade'}
             </small>
           </div>
+          {menu}
         </div>
         <span className="rotina-chips">
-          <span className="chip chip-neutro">{rotuloTipo(r.icone, r.objetivo)}</span>
-          {r.objetivo && <span className="chip chip-neutro">{r.objetivo}</span>}
-          {r.nivel && <span className="chip chip-neutro">{rotuloNivel(r.nivel)}</span>}
           <span className={`chip chip-${a.tom}`}>{atual ? `Valendo · ${a.rotulo.toLowerCase()}` : a.rotulo}</span>
         </span>
         <p className="dica-sec">
-          {total ? `${total} treino${total === 1 ? '' : 's'} concluído${total === 1 ? '' : 's'} nesta rotina · último em ${dataCurta(feitos[0].feito_em)}` : 'Nenhum treino concluído nesta rotina ainda.'}
+          {[r.objetivo || rotuloTipo(r.icone, r.objetivo), r.nivel && rotuloNivel(r.nivel), total ? `${total} treino${total === 1 ? '' : 's'} feito${total === 1 ? '' : 's'}` : 'nenhum treino feito ainda'].filter(Boolean).join(' · ')}
         </p>
         <div className="acoes-rotina">
           <button className="botao" onClick={onEvolucao}>
@@ -172,17 +173,11 @@ export function DetalheRotina({
               <Pencil size={16} /> Editar
             </button>
           )}
-          {podeMexer && (
-            <button className="botao-sec" onClick={() => onAcao('duplicar')}>
-              <Copy size={16} /> Duplicar
-            </button>
-          )}
         </div>
       </section>
 
       <section className="cartao">
         <h2>Treinos da rotina</h2>
-        {podeMexer && ordem.length > 1 && <p className="dica-sec">Use as setas para mudar a ordem (A, B, C…). O histórico de cada treino vai junto.</p>}
         <ul className="treinos-gerenciar">
           {ordem.map((t, i) => (
             <CartaoTreino
@@ -205,31 +200,11 @@ export function DetalheRotina({
         )}
       </section>
 
-      <div className="acoes-rotina">
-        {r.situacao === 'excluida' ? (
-          <button className="botao-sec" onClick={() => onAcao('ativa')}>
-            Recuperar
-          </button>
-        ) : (
-          <>
-            <button className="botao-sec" onClick={() => onAcao('biblioteca')}>
-              <BookCopy size={16} /> Salvar na biblioteca
-            </button>
-            {r.situacao === 'arquivada' ? (
-              <button className="botao-sec" onClick={() => onAcao('ativa')}>
-                <ArchiveRestore size={16} /> Reativar
-              </button>
-            ) : (
-              <button className="botao-sec" onClick={() => onAcao('arquivada')}>
-                <Archive size={16} /> Arquivar
-              </button>
-            )}
-            <button className="botao-sec perigo" onClick={() => onAcao('excluida')}>
-              <Trash2 size={16} /> Excluir
-            </button>
-          </>
-        )}
-      </div>
+      {r.situacao === 'excluida' && (
+        <button className="botao-sec" onClick={() => onAcao('ativa')}>
+          Recuperar rotina
+        </button>
+      )}
     </>
   )
 }

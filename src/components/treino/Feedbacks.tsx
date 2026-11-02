@@ -78,29 +78,29 @@ export function CamposFeedback({ f, onMudar }: { f: Feedback; onMudar: (f: Feedb
   )
 }
 
-/** Feedback pronto para o personal ou para o aluno ler, em chips. */
+/** Feedback pronto para ler: uma linha de texto e, só quando há dor, um aviso laranja. */
 export function ResumoFeedback({ e }: { e: Execucao }) {
   const m = minutos(e.inicio, e.fim)
+  const partes = [
+    m !== null && textoDuracao(m),
+    e.dificuldade != null && rotuloDificuldade(e.dificuldade),
+    e.esforco != null ? `esforço ${e.esforco}/10` : e.intensidade,
+    e.dor === false && 'sem dor',
+  ].filter(Boolean)
   return (
     <>
-      <span className="feedback-chips">
-        {m !== null && <span className="chip chip-neutro">{textoDuracao(m)}</span>}
-        {e.dificuldade != null && <span className="chip chip-neutro">Dificuldade: {rotuloDificuldade(e.dificuldade)}</span>}
-        {e.esforco != null ? (
-          <span className={`chip chip-${tomEsforco(e.esforco)}`}>
-            Esforço {e.esforco}/10 · {rotuloEsforco(e.esforco)}
-          </span>
-        ) : (
-          e.intensidade && <span className="chip chip-neutro">{e.intensidade}</span>
-        )}
-        {e.dor && (
-          <span className="chip chip-alerta">
-            <TriangleAlert size={12} /> Dor{e.dor_local ? `: ${e.dor_local}` : ''}
-            {e.dor_nivel != null ? ` (${e.dor_nivel}/10)` : ''}
-          </span>
-        )}
-        {e.dor === false && <span className="chip chip-ok">Sem dor</span>}
-      </span>
+      {partes.length > 0 && (
+        <span className="feedback-linha">
+          {partes.join(' · ')}
+          {e.esforco != null && e.esforco >= 9 && <b className="laranja"> · quase no máximo</b>}
+        </span>
+      )}
+      {e.dor && (
+        <span className="chip chip-alerta dor-chip">
+          <TriangleAlert size={12} /> Dor{e.dor_local ? `: ${e.dor_local}` : ''}
+          {e.dor_nivel != null ? ` (${e.dor_nivel}/10)` : ''}
+        </span>
+      )}
       {e.comentario && <span className="retorno-comentario">“{e.comentario}”</span>}
     </>
   )
@@ -148,14 +148,14 @@ function ObsPersonal({ f, onSalvo }: { f: TreinoFeito; onSalvo: () => void }) {
   if (!editando)
     return f.obs_personal ? (
       <span className="obs-personal">
-        <UserRound size={13} /> <b>Sua observação:</b> {f.obs_personal}{' '}
-        <button className="link" onClick={() => setEditando(true)}>
-          <Pencil size={12} /> editar
+        <UserRound size={13} /> {f.obs_personal}{' '}
+        <button className="link" onClick={() => setEditando(true)} aria-label="Editar observação">
+          <Pencil size={12} />
         </button>
       </span>
     ) : (
-      <button className="link" onClick={() => setEditando(true)}>
-        <Pencil size={13} /> Registrar minha observação
+      <button className="link link-discreto" onClick={() => setEditando(true)}>
+        <Pencil size={13} /> Responder
       </button>
     )
   return (
@@ -204,7 +204,7 @@ export function FeedbacksPersonal({ nome, feitos, treinos, onMudou }: { nome: st
       <h2>
         <MessageSquareText size={18} /> Feedback dos treinos
       </h2>
-      <p className="dica-sec">Ao concluir, {primeiro} avalia a dificuldade, o esforço e se sentiu dor. Registre a sua observação em cada treino: {primeiro} vê a resposta no app.</p>
+      <p className="dica-sec">Como {primeiro} sentiu cada treino. A sua observação volta para {primeiro} no app.</p>
       {feitos === null && <p className="carregando">Carregando…</p>}
       {feitos?.length === 0 && <p className="dica-sec">Nenhum treino concluído nos últimos 90 dias.</p>}
       {dores.length > 0 && (
