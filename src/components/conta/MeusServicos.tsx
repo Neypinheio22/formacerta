@@ -1,4 +1,4 @@
-import { Clock, Plus, Store, Trash2 } from 'lucide-react'
+import { Clock, Plus, Store, Trash2, Video } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import {
   apagarServico,
@@ -15,10 +15,13 @@ import {
   type PedidoPreco,
   type Servico,
 } from '../../nuvem/planos'
+import { aceitouTermoVideo, lerRegrasVideo, REGRAS_PADRAO, type RegrasVideo } from '../../nuvem/video'
+import { TermoVideo } from '../video/TermoVideo'
 
 const GRUPOS: { grupo: ItemCatalogo['grupo']; titulo: string }[] = [
   { grupo: 'avaliacao', titulo: 'Avaliações' },
   { grupo: 'treino', titulo: 'Treino e acompanhamento' },
+  { grupo: 'video', titulo: 'Treino acompanhado por chamada de vídeo' },
 ]
 
 type Pedindo = { catalogo_id: string | null; nome: string; mensal: boolean; valor: string; motivo: string }
@@ -60,7 +63,7 @@ function PedirValor({ pedido, novo, onMudar, onEnviar, onCancelar }: { pedido: P
 }
 
 /** O personal liga os serviços da lista do FormaCerta. O preço é o sugerido; outro valor passa pela aprovação do administrador. */
-export function MeusServicos({ meuId }: { meuId: string }) {
+export function MeusServicos({ meuId, onMudou }: { meuId: string; onMudou?: () => void }) {
   const [catalogo, setCatalogo] = useState<ItemCatalogo[] | null>(null)
   const [meus, setMeus] = useState<Servico[]>([])
   const [pedidos, setPedidos] = useState<PedidoPreco[]>([])
@@ -68,10 +71,15 @@ export function MeusServicos({ meuId }: { meuId: string }) {
   const [mudando, setMudando] = useState<string | null>(null)
   const [erro, setErro] = useState<string | null>(null)
   const [ok, setOk] = useState<string | null>(null)
+  const [termoVideo, setTermoVideo] = useState(false)
+  const [regras, setRegras] = useState<RegrasVideo>(REGRAS_PADRAO)
+  const [mostrarTermo, setMostrarTermo] = useState(false)
 
   const carregar = useCallback(async () => {
-    const [c, s, p] = await Promise.all([listarCatalogo(), listarServicos(), listarPedidosPreco()])
+    const [c, s, p, t, r] = await Promise.all([listarCatalogo(), listarServicos(), listarPedidosPreco(), aceitouTermoVideo(meuId), lerRegrasVideo()])
     setCatalogo(c)
+    setTermoVideo(t)
+    setRegras(r)
     setMeus(s.filter((x) => x.profissional_id === meuId))
     setPedidos(p.filter((x) => x.profissional_id === meuId))
   }, [meuId])
@@ -98,6 +106,7 @@ export function MeusServicos({ meuId }: { meuId: string }) {
     if (e) setErro(e)
     await carregar()
     setMudando(null)
+    if (!e && item.grupo === 'video') onMudou?.()
   }
 
   async function enviarPedido() {
@@ -144,6 +153,28 @@ export function MeusServicos({ meuId }: { meuId: string }) {
       {GRUPOS.map(({ grupo, titulo }) => (
         <div key={grupo} className="servicos-grupo">
           <h3>{titulo}</h3>
+          {grupo === 'video' && (
+            <p className="dica-sec">
+              <Video size={13} /> O aluno paga pelo app e chama quando você estiver disponível. Comissão de {regras.comissao_pct.toLocaleString('pt-BR')}% do FormaCerta e taxa de {emReais(regras.taxa_video)} por chamada realizada, paga por você.
+            </p>
+          )}
+          {grupo === 'video' && !termoVideo && !mostrarTermo && (
+            <button className="botao-sec" onClick={() => setMostrarTermo(true)}>
+              Ler e aceitar o termo para liberar
+            </button>
+          )}
+          {grupo === 'video' && mostrarTermo && (
+            <TermoVideo
+              regras={regras}
+              aceito={termoVideo}
+              onAceito={() => {
+                setMostrarTermo(false)
+                carregar()
+                onMudou?.()
+              }}
+              onFechar={() => setMostrarTermo(false)}
+            />
+          )}
           {catalogo
             .filter((i) => i.grupo === grupo)
             .map((i) => {
@@ -154,7 +185,7 @@ export function MeusServicos({ meuId }: { meuId: string }) {
               return (
                 <div key={i.id} className={`servico-linha ${ligado ? 'ligado' : ''}`}>
                   <label className="aceite">
-                    <input type="checkbox" checked={ligado} disabled={mudando === i.id} onChange={(e) => ligar(i, e.target.checked)} />
+                    <input type="checkbox" checked={ligado} disabled={mudando === i.id || (grupo === 'video' && !termoVideo && !ligado)} onChange={(e) => ligar(i, e.target.checked)} />
                     <span>
                       <b>{i.nome}</b>
                       <small>

@@ -24,6 +24,7 @@ import { Home } from './components/Home'
 import { EncontrarPersonal } from './components/conta/EncontrarPersonal'
 import { Conversa } from './components/chat/Conversa'
 import { Conversas } from './components/chat/Conversas'
+import { CentralChamadas } from './components/video/CentralChamadas'
 import type { Conversa as ConversaNuvem } from './nuvem/chat'
 import { TelaTreino } from './components/treino/TelaTreino'
 import { Vitrine } from './components/vitrine/Vitrine'
@@ -126,11 +127,20 @@ function Telas({ inicial }: { inicial: Screen }) {
 
   const aba: Aba | null = (['inicio', 'treino', 'conversas', 'evolucao', 'alunos', 'conta'] as const).find((a) => a === screen.name) ?? null
   const conteudo = desenhar()
-  if (!perfil || !aba) return conteudo
+  // Chamada de vídeo: toca no celular do personal e abre por cima de qualquer tela.
+  const chamadas = perfil ? <CentralChamadas perfil={perfil} /> : null
+  if (!perfil || !aba)
+    return (
+      <>
+        {conteudo}
+        {chamadas}
+      </>
+    )
   return (
     <div className="com-barra">
       {conteudo}
       <BarraInferior atual={aba} aluno={perfil.papel === 'aluno'} onIr={(a) => go({ name: a })} />
+      {chamadas}
     </div>
   )
 

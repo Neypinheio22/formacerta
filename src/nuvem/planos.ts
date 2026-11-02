@@ -60,7 +60,7 @@ export type Servico = {
 /** Trabalho que a plataforma oferece; cada personal liga e põe o preço dele. */
 export type ItemCatalogo = {
   id: string
-  grupo: 'avaliacao' | 'treino'
+  grupo: 'avaliacao' | 'treino' | 'video'
   nome: string
   descricao: string
   preco_min: number
@@ -70,6 +70,9 @@ export type ItemCatalogo = {
   mensal: boolean
   ordem: number
   ativo: boolean
+  /** Chamada de vídeo: minutos de cada chamada e quantas chamadas a compra dá. */
+  video_minutos?: number | null
+  video_chamadas?: number | null
 }
 
 /** Pedido do personal para cobrar outro valor ou criar um serviço fora da lista. */

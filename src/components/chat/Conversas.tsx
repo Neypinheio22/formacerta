@@ -2,6 +2,7 @@ import { BadgeCheck, MessagesSquare, ShieldCheck } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import type { Perfil } from '../../nuvem/conta'
 import { listarConversas, outroLado, quando, type Conversa } from '../../nuvem/chat'
+import { PainelVideo } from '../video/PainelVideo'
 
 type Props = {
   perfil: Perfil
@@ -38,6 +39,8 @@ export function Conversas({ perfil, onAbrir, onPersonais }: Props) {
       <p className="dica-sec">
         <ShieldCheck size={14} /> {aluno ? 'Tire dúvidas com o personal e contrate pelo app, com pagamento seguro e histórico guardado.' : 'Alunos que encontraram você no app falam com você aqui e contratam seus serviços pelo FormaCerta.'}
       </p>
+
+      {!aluno && <PainelVideo meuId={perfil.id} curto />}
 
       {perfil.papel === 'admin' && (
         <div className="escolha">

@@ -21,6 +21,7 @@ import {
   type Plano,
   type SituacaoPagamento,
 } from '../../nuvem/planos'
+import { AdminVideo } from '../video/AdminVideo'
 
 /** Administrador: muda preços, recursos, comissão e dias grátis. */
 export function AdminPlanos({ perfis }: { perfis: Perfil[] }) {
@@ -312,6 +313,7 @@ export function AdminPagamentos({ nomePorId }: { nomePorId: Map<string, string> 
 
   return (
     <>
+      <AdminVideo />
       <div className="numeros">
         <div>
           <strong>{pendentes.length}</strong> pendentes

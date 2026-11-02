@@ -8,6 +8,7 @@ import { BIO_MAXIMO, enviarFotoPerfil, faltaParaAparecer, removerFotoPerfil, sal
 import { telefoneValido } from '../../compartilhar/whatsapp'
 import { usePlanosLiberados } from '../planos/usePlanosLiberados'
 import { MeusServicos } from './MeusServicos'
+import { PainelVideo } from '../video/PainelVideo'
 import { Privacidade } from './Privacidade'
 import { Suporte } from './Suporte'
 import { Termos } from './Termos'
@@ -16,6 +17,7 @@ export function MinhaConta({ onVoltar, onPlanos }: { onVoltar: () => void; onPla
   const { perfil, recarregar } = useConta()
   const [nome, setNome] = useState(perfil?.nome ?? '')
   const [registro, setRegistro] = useState(perfil?.registro ?? '')
+  const [versaoVideo, setVersaoVideo] = useState(0)
   const [meus, setMeus] = useState<ResultadoNuvem[]>([])
   const [erro, setErro] = useState<string | null>(null)
   const [ver, setVer] = useState<'termos' | 'privacidade' | null>(null)
@@ -227,7 +229,12 @@ export function MinhaConta({ onVoltar, onPlanos }: { onVoltar: () => void; onPla
         </section>
       )}
 
-      {perfil.papel !== 'aluno' && <MeusServicos meuId={perfil.id} />}
+      {perfil.papel !== 'aluno' && (
+        <>
+          <PainelVideo key={`video-${versaoVideo}`} meuId={perfil.id} onMudou={() => setVersaoVideo((v) => v + 1)} />
+          <MeusServicos key={`servicos-${versaoVideo}`} meuId={perfil.id} onMudou={() => setVersaoVideo((v) => v + 1)} />
+        </>
+      )}
 
       {perfil.papel === 'aluno' && (
         <section className="cartao">
