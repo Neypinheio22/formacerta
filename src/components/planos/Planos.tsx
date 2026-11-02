@@ -135,7 +135,7 @@ export function Planos({ onVoltar, onPagar }: Props) {
           ) : (
             <p className="dica-sec">Você está no plano grátis.</p>
           )}
-          {direitos?.pro_pelo_personal && <p className="mensagem ok">Você ganha o Aluno Pro porque o seu personal tem plano no FormaCerta.</p>}
+          {direitos?.pro_pelo_personal && <p className="mensagem ok">Você ganha o Aluno Pro porque o seu personal assina um plano pago do FormaCerta.</p>}
           {atual && atual.situacao === 'aguardando' && config.gateway === 'mercadopago' && (
             <p className="dica-sec">O plano começa a valer assim que o pagamento cair. Ele está em "Meus pagamentos", abaixo.</p>
           )}

@@ -35,7 +35,7 @@ export function TravaPro({ recurso, onPlanos, onVoltar }: { recurso: RecursoPro;
         <button className="botao grande" onClick={onPlanos}>
           Ver o Aluno Pro
         </button>
-        <p className="dica-sec">Se o seu personal tem plano no FormaCerta, você ganha o Aluno Pro sem pagar nada.</p>
+        <p className="dica-sec">Se o seu personal assina um plano pago do FormaCerta, você ganha o Aluno Pro sem pagar nada.</p>
       </section>
     </div>
   )
