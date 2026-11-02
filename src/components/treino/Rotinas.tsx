@@ -617,6 +617,7 @@ export function TelaRotinas({ ficha, meuId, abrir, onVoltar }: { ficha: Ficha; m
           onOrdenar={(ordem) => ordenar(rotinaDaVista, ordem)}
           onAcao={(a) => acao(rotinaDaVista, a)}
           onEvolucao={() => ir({ tipo: 'evolucao', id: rotinaDaVista.id })}
+          menu={<MenuRotina r={rotinaDaVista} onAcao={(a) => acao(rotinaDaVista, a)} />}
         />
       </div>
     )

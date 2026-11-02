@@ -6353,3 +6353,126 @@ p.selo-aluno {
   margin: 0;
   text-align: right;
 }
+
+/* Aba Treino do personal em seções (menos coisa na tela de uma vez) */
+.secoes-treino {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  margin: 4px 0 12px;
+}
+
+.secoes-treino button {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 4px;
+  background: var(--vidro);
+  border: 1px solid var(--borda);
+  border-radius: 14px;
+  color: var(--texto-sec);
+  font: inherit;
+  font-size: 0.74rem;
+  font-weight: 600;
+}
+
+.secoes-treino button.ativo {
+  border-color: var(--verde);
+  background: rgba(54, 242, 148, 0.12);
+  color: var(--verde);
+}
+
+.secao-aviso {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--verde);
+  color: #04202c;
+  font-size: 0.68rem;
+  line-height: 18px;
+}
+
+.secao-aviso.alerta {
+  background: var(--laranja);
+}
+
+.ponto-status {
+  display: inline-block;
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--texto-sec);
+  opacity: 0.6;
+}
+
+.ponto-ok {
+  background: var(--verde);
+  opacity: 1;
+}
+
+.ponto-atencao {
+  background: var(--amarelo);
+  opacity: 1;
+}
+
+.legenda-status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+  margin: 0 0 10px;
+  font-size: 0.72rem;
+  color: var(--texto-sec);
+}
+
+.legenda-status .ponto-status {
+  width: 8px;
+  height: 8px;
+  margin-left: 4px;
+}
+
+.campo-linha {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.campo-linha select {
+  width: auto;
+}
+
+.link-discreto {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  text-decoration: none;
+  font-size: 0.82rem;
+}
+
+.feedback-linha {
+  font-size: 0.84rem;
+  color: var(--texto-sec);
+}
+
+.dor-chip {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: rgba(251, 141, 26, 0.15);
+  color: var(--laranja);
+}
+
+.rotina-detalhe-nome {
+  flex: 1;
+  min-width: 0;
+}
