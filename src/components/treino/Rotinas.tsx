@@ -1,4 +1,4 @@
-import { Archive, ArchiveRestore, CalendarDays, Copy, EllipsisVertical, HeartPulse, Pencil, Plus, RotateCcw, Trash2 } from 'lucide-react'
+import { Archive, ArchiveRestore, BookCopy, CalendarDays, Copy, EllipsisVertical, HeartPulse, Library, Pencil, Plus, RotateCcw, Trash2 } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { Ficha } from '../../nuvem/fichas'
 import { fotoDoAluno, listarRotinas, listarTreinosDasRotinas, mudarSituacao, salvarRotina, type DadosRotina, type Rotina, type TreinoRascunho } from '../../nuvem/rotinas'
@@ -7,6 +7,9 @@ import { dataCurta } from '../../testes/formato'
 import { andamento, dataDia, DIVISOES, ICONES_ROTINA, NIVEIS, nomeSugerido, OBJETIVOS_ROTINA, ordenarRotinas, rotinaAtual, rotuloNivel, rotuloTipo, somarSemanas, tipoDaRotina, type Nivel, type Situacao } from '../../treino/rotinas'
 import { diaLocal } from '../../treino/semana'
 import { SERIE_SUGERIDA } from '../../treino/sugerida'
+import { salvarModelo } from '../../nuvem/biblioteca'
+import { SEMANAS_MODELO, type Modelo, type Pasta } from '../../treino/biblioteca'
+import { EscolherModelo } from './BibliotecaTreinos'
 import { AbaAerobico } from './Aerobico'
 import { EditorExercicios, type Biblioteca } from './EditorTreinos'
 import { DesenhoIcone, IconeDaRotina } from './IconeRotina'
@@ -14,8 +17,12 @@ import { useExercicios } from './useExercicios'
 
 type Lista = 'ativas' | 'arquivada' | 'excluida'
 
-/** O que abre no formulário: rotina nova, cópia de outra ou edição. */
-type Edicao = { id?: string; dados: DadosRotina; treinos: TreinoRascunho[]; copiaDe?: string }
+/**
+ * O que abre no formulário: rotina nova, cópia de outra ou edição. O mesmo
+ * formulário monta os modelos da biblioteca de treinos (com pasta e duração
+ * sugerida no lugar das datas).
+ */
+export type Edicao = { id?: string; dados: DadosRotina; treinos: TreinoRascunho[]; copiaDe?: string; doModelo?: string; pastaId?: string | null; semanas?: number | null }
 
 const treinoVazio = (letra: string): TreinoRascunho => ({ letra, nome: '', exercicios: [exercicioVazio()] })
 
@@ -25,6 +32,22 @@ function novaRotina(): Edicao {
     dados: { nome: nomeSugerido(), inicio: hoje, fim: somarSemanas(hoje, 8), objetivo: '', nivel: '', icone: '' },
     treinos: ['A', 'B', 'C'].map(treinoVazio),
   }
+}
+
+/** Rotina do aluno a partir de um modelo da biblioteca: começa hoje e vale pelas semanas do modelo. */
+function rotinaDoModelo(m: Modelo): Edicao {
+  const hoje = diaLocal(new Date())
+  return {
+    doModelo: m.nome,
+    dados: { nome: m.nome, inicio: hoje, fim: m.semanas ? somarSemanas(hoje, m.semanas) : null, objetivo: m.objetivo, nivel: m.nivel, icone: m.icone },
+    treinos: m.treinos.map((t) => ({ letra: t.letra, nome: t.nome, exercicios: comLinhas(t.exercicios) })),
+  }
+}
+
+/** Semanas entre o início e a validade da rotina (para guardar como modelo). */
+function semanasDe(r: Pick<Rotina, 'inicio' | 'fim'>): number | null {
+  if (!r.inicio || !r.fim) return null
+  return Math.min(52, Math.max(1, Math.round((new Date(r.fim).getTime() - new Date(r.inicio).getTime()) / (7 * 86400000))))
 }
 
 /** Cópia para a próxima fase: mesmos treinos, datas novas com a mesma duração. */
@@ -39,7 +62,9 @@ function copiaDe(r: Rotina, treinos: Treino[]): Edicao {
 }
 
 /** Menu dos três pontinhos do cartão. */
-function MenuRotina({ r, onAcao }: { r: Rotina; onAcao: (acao: 'editar' | 'duplicar' | Situacao) => void }) {
+type AcaoRotina = 'editar' | 'duplicar' | 'biblioteca' | Situacao
+
+function MenuRotina({ r, onAcao }: { r: Rotina; onAcao: (acao: AcaoRotina) => void }) {
   const [aberto, setAberto] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
@@ -78,6 +103,7 @@ function MenuRotina({ r, onAcao }: { r: Rotina; onAcao: (acao: 'editar' | 'dupli
             <>
               {item('editar', <Pencil size={16} />, 'Editar')}
               {item('duplicar', <Copy size={16} />, 'Duplicar')}
+              {item('biblioteca', <BookCopy size={16} />, 'Salvar na biblioteca')}
               {r.situacao === 'arquivada' ? item('ativa', <ArchiveRestore size={16} />, 'Reativar') : item('arquivada', <Archive size={16} />, 'Arquivar')}
               {item('excluida', <Trash2 size={16} />, 'Excluir', true)}
             </>
@@ -88,7 +114,7 @@ function MenuRotina({ r, onAcao }: { r: Rotina; onAcao: (acao: 'editar' | 'dupli
   )
 }
 
-function CartaoRotina({ r, treinos, atual, onAbrir, onAcao }: { r: Rotina; treinos: Treino[]; atual: boolean; onAbrir: () => void; onAcao: (acao: 'editar' | 'duplicar' | Situacao) => void }) {
+function CartaoRotina({ r, treinos, atual, onAbrir, onAcao }: { r: Rotina; treinos: Treino[]; atual: boolean; onAbrir: () => void; onAcao: (acao: AcaoRotina) => void }) {
   const a = andamento(r)
   const exercicios = treinos.reduce((n, t) => n + t.exercicios.length, 0)
   return (
@@ -117,8 +143,15 @@ function CartaoRotina({ r, treinos, atual, onAbrir, onAcao }: { r: Rotina; trein
   )
 }
 
-function FormRotina({ inicial, bib, nomeAluno, onSalvar, onCancelar }: { inicial: Edicao; bib: Biblioteca; nomeAluno: string; onSalvar: (e: Edicao) => Promise<string | null>; onCancelar: () => void }) {
+/**
+ * Formulário da rotina. Com `pastas`, monta um modelo da biblioteca de treinos:
+ * no lugar das datas vêm a pasta e a duração sugerida.
+ */
+export function FormRotina({ inicial, bib, nomeAluno, pastas, onSalvar, onCancelar }: { inicial: Edicao; bib: Biblioteca; nomeAluno: string; pastas?: Pasta[]; onSalvar: (e: Edicao) => Promise<string | null>; onCancelar: () => void }) {
+  const modelo = !!pastas
   const [dados, setDados] = useState(inicial.dados)
+  const [pastaId, setPastaId] = useState(inicial.pastaId ?? null)
+  const [semanas, setSemanas] = useState(inicial.semanas ?? null)
   const [treinos, setTreinos] = useState<TreinoRascunho[]>(() => inicial.treinos.map((t) => ({ ...t, exercicios: comLinhas(t.exercicios) })))
   const [letra, setLetra] = useState(inicial.treinos[0]?.letra ?? 'A')
   const [salvando, setSalvando] = useState(false)
@@ -141,10 +174,10 @@ function FormRotina({ inicial, bib, nomeAluno, onSalvar, onCancelar }: { inicial
 
   async function salvar(e: React.FormEvent) {
     e.preventDefault()
-    if (!dados.nome.trim()) return setErro('Dê um nome para a rotina.')
-    if (dados.inicio && dados.fim && dados.fim < dados.inicio) return setErro('A validade precisa ser depois do início.')
+    if (!dados.nome.trim()) return setErro(modelo ? 'Dê um nome para o modelo.' : 'Dê um nome para a rotina.')
+    if (!modelo && dados.inicio && dados.fim && dados.fim < dados.inicio) return setErro('A validade precisa ser depois do início.')
     setSalvando(true)
-    const e2 = await onSalvar({ ...inicial, dados, treinos })
+    const e2 = await onSalvar({ ...inicial, dados, treinos, pastaId, semanas })
     setSalvando(false)
     setErro(e2)
   }
@@ -152,11 +185,54 @@ function FormRotina({ inicial, bib, nomeAluno, onSalvar, onCancelar }: { inicial
   return (
     <form className="formulario rotina-form" onSubmit={salvar}>
       <section className="cartao destaque">
-        <h2>{inicial.id ? 'Editar rotina' : inicial.copiaDe ? `Cópia de ${inicial.copiaDe}` : 'Nova rotina'}</h2>
+        <h2>
+          {modelo
+            ? inicial.id
+              ? 'Editar modelo'
+              : inicial.copiaDe
+                ? `Modelo a partir de ${inicial.copiaDe}`
+                : 'Novo modelo de treino'
+            : inicial.id
+              ? 'Editar rotina'
+              : inicial.copiaDe
+                ? `Cópia de ${inicial.copiaDe}`
+                : inicial.doModelo
+                  ? `Rotina a partir do modelo ${inicial.doModelo}`
+                  : 'Nova rotina'}
+        </h2>
+        {inicial.doModelo && !modelo && <p className="dica-sec">Ajuste o que precisar para {nomeAluno}. O modelo na biblioteca não muda.</p>}
         <label className="campo">
-          Nome da rotina
-          <input value={dados.nome} onChange={(e) => setDados({ ...dados, nome: e.target.value })} maxLength={60} placeholder="Ex.: TREINO NOVO 2026/11" />
+          {modelo ? 'Nome do modelo' : 'Nome da rotina'}
+          <input value={dados.nome} onChange={(e) => setDados({ ...dados, nome: e.target.value })} maxLength={60} placeholder={modelo ? 'Ex.: Hipertrofia ABC, Circuito de abdominais' : 'Ex.: TREINO NOVO 2026/11'} />
         </label>
+        {modelo && (
+          <>
+            <label className="campo">
+              Pasta
+              <select value={pastaId ?? ''} onChange={(e) => setPastaId(e.target.value || null)}>
+                <option value="">Sem pasta</option>
+                {pastas.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.nome}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <fieldset className="campo">
+              <legend>Duração sugerida</legend>
+              <div className="atalhos-data">
+                {SEMANAS_MODELO.map((s) => (
+                  <button key={s} type="button" className={`chip-botao ${semanas === s ? 'ativo' : ''}`} aria-pressed={semanas === s} onClick={() => setSemanas(semanas === s ? null : s)}>
+                    {s} semanas
+                  </button>
+                ))}
+              </div>
+              <small className="dica-sec">Vira a validade da rotina quando você usar o modelo num aluno.</small>
+            </fieldset>
+          </>
+        )}
+        {!modelo && (
+          <>
         <div className="linha-campos">
           <label className="campo">
             Início
@@ -174,6 +250,8 @@ function FormRotina({ inicial, bib, nomeAluno, onSalvar, onCancelar }: { inicial
             </button>
           ))}
         </div>
+          </>
+        )}
         <label className="campo">
           Objetivo
           <select value={dados.objetivo} onChange={(e) => setDados({ ...dados, objetivo: e.target.value })}>
@@ -186,7 +264,7 @@ function FormRotina({ inicial, bib, nomeAluno, onSalvar, onCancelar }: { inicial
           </select>
         </label>
         <fieldset className="campo">
-          <legend>Nível do aluno</legend>
+          <legend>{modelo ? 'Nível' : 'Nível do aluno'}</legend>
           <div className="atalhos-data">
             {NIVEIS.map((n) => (
               <button key={n.id} type="button" className={`chip-botao ${dados.nivel === n.id ? 'ativo' : ''}`} onClick={() => setDados({ ...dados, nivel: dados.nivel === n.id ? '' : (n.id as Nivel) })}>
@@ -249,7 +327,7 @@ function FormRotina({ inicial, bib, nomeAluno, onSalvar, onCancelar }: { inicial
 
       {erro && <p className="mensagem erro">{erro}</p>}
       <button className="botao grande" type="submit" disabled={salvando || vazio}>
-        {salvando ? 'Guardando…' : `Salvar e liberar para ${nomeAluno}`}
+        {salvando ? 'Guardando…' : modelo ? 'Salvar na biblioteca' : `Salvar e liberar para ${nomeAluno}`}
       </button>
       {vazio && <p className="dica-sec centro">Coloque pelo menos um exercício para salvar.</p>}
       <button className="botao-sec" type="button" onClick={onCancelar}>
@@ -267,6 +345,7 @@ export function TelaRotinas({ ficha, meuId, onVoltar }: { ficha: Ficha; meuId: s
   const [treinos, setTreinos] = useState<Treino[]>([])
   const [foto, setFoto] = useState('')
   const [editando, setEditando] = useState<Edicao | null>(null)
+  const [escolhendoModelo, setEscolhendoModelo] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
   const [aviso, setAviso] = useState<string | null>(null)
   const exercicios = useExercicios()
@@ -290,10 +369,16 @@ export function TelaRotinas({ ficha, meuId, onVoltar }: { ficha: Ficha; meuId: s
 
   const treinosDe = (r: Rotina) => treinos.filter((t) => t.rotina_id === r.id)
 
-  async function acao(r: Rotina, a: 'editar' | 'duplicar' | Situacao) {
+  async function acao(r: Rotina, a: AcaoRotina) {
     setAviso(null)
     if (a === 'editar') return setEditando({ id: r.id, dados: r, treinos: treinosDe(r) })
     if (a === 'duplicar') return setEditando(copiaDe(r, treinosDe(r)))
+    if (a === 'biblioteca') {
+      const m = await salvarModelo(undefined, { pasta_id: null, nome: r.nome, objetivo: r.objetivo, nivel: r.nivel, icone: r.icone, semanas: semanasDe(r), treinos: treinosDe(r) })
+      if (m.erro) return setErro(/does not exist|schema cache|relation/i.test(m.erro) ? 'Falta rodar no Supabase o arquivo biblioteca-de-treinos.sql.' : m.erro)
+      setErro(null)
+      return setAviso(`${r.nome} foi guardada na sua biblioteca de treinos (Sem pasta). Abra a biblioteca na aba Treino para pôr numa pasta ou usar em outros alunos.`)
+    }
     if (a === 'excluida' && !confirm(`Excluir a rotina ${r.nome}? Ela vai para Excluídas e dá para recuperar depois.`)) return
     const e = await mudarSituacao(r.id, a)
     if (e) return setErro(e)
@@ -303,7 +388,7 @@ export function TelaRotinas({ ficha, meuId, onVoltar }: { ficha: Ficha; meuId: s
 
   const cabecalho = (
     <header className="rotinas-topo">
-      <button className="voltar" onClick={editando ? () => setEditando(null) : onVoltar} aria-label="Voltar">
+      <button className="voltar" onClick={editando ? () => setEditando(null) : escolhendoModelo ? () => setEscolhendoModelo(false) : onVoltar} aria-label="Voltar">
         ←
       </button>
       {foto ? <img className="rotinas-foto" src={foto} alt="" /> : <span className="personal-inicial">{ficha.nome.charAt(0).toUpperCase()}</span>}
@@ -313,6 +398,23 @@ export function TelaRotinas({ ficha, meuId, onVoltar }: { ficha: Ficha; meuId: s
       </div>
     </header>
   )
+
+  if (escolhendoModelo)
+    return (
+      <div className="tela">
+        {cabecalho}
+        <EscolherModelo
+          meuId={meuId}
+          nomeAluno={primeiro}
+          onCancelar={() => setEscolhendoModelo(false)}
+          onEscolher={(m) => {
+            setEscolhendoModelo(false)
+            setEditando(rotinaDoModelo(m))
+            window.scrollTo(0, 0)
+          }}
+        />
+      </div>
+    )
 
   if (editando)
     return (
@@ -359,6 +461,9 @@ export function TelaRotinas({ ficha, meuId, onVoltar }: { ficha: Ficha; meuId: s
         <>
           <button className="botao grande" onClick={() => setEditando(novaRotina())} disabled={!rotinas || !!erro?.includes('rotinas-de-treino.sql')}>
             <Plus size={20} /> Criar rotina
+          </button>
+          <button className="botao-sec" onClick={() => setEscolhendoModelo(true)} disabled={!rotinas || !!erro?.includes('rotinas-de-treino.sql')}>
+            <Library size={18} /> Usar treino pronto da biblioteca
           </button>
           <div className="acoes-linha rotinas-filtros">
             <button className={`botao-sec ${lista === 'arquivada' ? 'ativo' : ''}`} onClick={() => setLista(lista === 'arquivada' ? 'ativas' : 'arquivada')} aria-pressed={lista === 'arquivada'}>

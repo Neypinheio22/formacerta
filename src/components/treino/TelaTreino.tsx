@@ -1,4 +1,4 @@
-import { BadgeCheck, Camera, CheckCircle2, Dumbbell, HeartPulse, Medal, PlayCircle, TriangleAlert, Video } from 'lucide-react'
+import { BadgeCheck, BookCopy, Camera, CheckCircle2, Dumbbell, HeartPulse, Medal, PlayCircle, TriangleAlert, Video } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { EXERCICIOS } from '../../movimento/exercicios'
 import type { ExercicioId } from '../../movimento/tipos'
@@ -18,6 +18,7 @@ import { gravarUltimaSugerida, useMeuTreino } from './useMeuTreino'
 import { AVISO_SUGERIDA } from '../../treino/sugerida'
 import { dataDia, resumoAerobico, rotuloNivel, rotuloTipo } from '../../treino/rotinas'
 import { IconeDaRotina } from './IconeRotina'
+import { TelaBiblioteca } from './BibliotecaTreinos'
 
 type Props = {
   perfil: Perfil | null
@@ -211,6 +212,7 @@ export function TelaTreino({ perfil, abrir, onVoltar, onCamera, onCarga, onPerso
   const exercicios = useExercicios(!!perfil)
   const profissionalId = t.ficha?.profissional_id ?? perfil?.profissional_id ?? perfil?.id
 
+  const [biblioteca, setBiblioteca] = useState(false)
   const treino = t.lista.find((x) => x.letra === aberto) ?? null
 
   // O relógio do treino começa quando o aluno abre o treino.
@@ -234,6 +236,17 @@ export function TelaTreino({ perfil, abrir, onVoltar, onCamera, onCarga, onPerso
     t.recarregar()
     window.scrollTo(0, 0)
   }
+
+  if (biblioteca && perfil && !aluno)
+    return (
+      <TelaBiblioteca
+        meuId={perfil.id}
+        onVoltar={() => {
+          setBiblioteca(false)
+          window.scrollTo(0, 0)
+        }}
+      />
+    )
 
   if (treino && inicio && fim)
     return (
@@ -343,10 +356,17 @@ export function TelaTreino({ perfil, abrir, onVoltar, onCamera, onCarga, onPerso
         </section>
       )}
 
-      {!aluno && (
-        <section className="cartao">
-          <h2>Rotinas de treino dos alunos</h2>
-          <p className="dica-sec">Para criar rotinas (treinos A a E), aeróbico e mandar materiais, abra Alunos, escolha o aluno e toque na aba 🏋️ Treino.</p>
+      {!aluno && perfil && (
+        <section className="cartao destaque">
+          <span className="etiqueta">
+            <BookCopy size={14} /> Treinos prontos
+          </span>
+          <h2>Biblioteca de treinos</h2>
+          <p className="dica-sec">Guarde treinos em pastas e crie a rotina de um ou de vários alunos com um toque. Já vem com treinos prontos do FormaCerta.</p>
+          <button className="botao grande" onClick={() => setBiblioteca(true)}>
+            Abrir biblioteca
+          </button>
+          <p className="dica-sec">Para a rotina de um aluno só, aeróbico e materiais, abra Alunos, escolha o aluno e toque na aba 🏋️ Treino.</p>
         </section>
       )}
 
