@@ -106,6 +106,8 @@ async function avisarPlanos(banco: SupabaseBanco, chave: string, remetente: stri
     .in('situacao', ['ativa', 'teste'])
     .eq('cortesia', false)
     .is('aviso_vencimento_em', null)
+    // Quem cancelou não recebe "renove": o plano só acaba na data.
+    .is('cancelado_em', null)
     .gt('valido_ate', agora.toISOString())
     .lte('valido_ate', limite.toISOString())
     .limit(200)

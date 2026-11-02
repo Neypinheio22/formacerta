@@ -10,6 +10,7 @@ import {
   assinaturaAtual,
   assinaturaVencida,
   paraRenovar,
+  reativarAssinatura,
   cancelarAssinatura,
   economiaAnual,
   emReais,
@@ -80,8 +81,18 @@ export function Planos({ onVoltar, onPagar }: Props) {
   const meusPagamentos = pagamentos.filter((p) => p.pagador_id === perfil.id)
 
   async function cancelar() {
-    if (!confirm('Cancelar o seu plano? Você volta para o plano grátis.')) return
+    const ate = atual?.situacao === 'ativa' && atual.valido_ate && Date.parse(atual.valido_ate) > Date.now() ? new Date(atual.valido_ate).toLocaleDateString('pt-BR') : null
+    const texto = ate
+      ? `Cancelar o seu plano? Ele continua valendo até ${ate} e depois não renova. Você não perde nada do que já pagou.`
+      : 'Cancelar o seu plano? Você volta para o plano grátis.'
+    if (!confirm(texto)) return
     const e = await cancelarAssinatura()
+    if (e) setErro(e)
+    else carregar()
+  }
+
+  async function reativar() {
+    const e = await reativarAssinatura()
     if (e) setErro(e)
     else carregar()
   }
@@ -139,10 +150,20 @@ export function Planos({ onVoltar, onPagar }: Props) {
           {atual && atual.situacao === 'aguardando' && config.gateway === 'mercadopago' && (
             <p className="dica-sec">O plano começa a valer assim que o pagamento cair. Ele está em "Meus pagamentos", abaixo.</p>
           )}
-          {atual && atual.valor > 0 && (
-            <button className="link" onClick={cancelar}>
-              Cancelar plano
-            </button>
+          {atual?.cancelado_em ? (
+            <>
+              <p className="mensagem aviso">Plano cancelado: vale até {atual.valido_ate ? new Date(atual.valido_ate).toLocaleDateString('pt-BR') : 'o fim do período'} e não renova.</p>
+              <button className="link" onClick={reativar}>
+                Desfazer o cancelamento
+              </button>
+            </>
+          ) : (
+            atual &&
+            atual.valor > 0 && (
+              <button className="link" onClick={cancelar}>
+                Cancelar plano
+              </button>
+            )
           )}
         </section>
       )}

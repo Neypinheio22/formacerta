@@ -72,6 +72,7 @@ describe('planos', () => {
     expect(avisoDoPlano({ ...base, dias_restantes: 1 })?.titulo).toBe('Seu plano Aluno Pro vence amanhã')
     expect(avisoDoPlano({ ...base, dias_restantes: 2, situacao: 'teste' })?.titulo).toBe('Seu teste grátis acaba em 2 dias')
     expect(avisoDoPlano({ ...base, dias_restantes: 2, cortesia: true })).toBeNull()
+    expect(avisoDoPlano({ ...base, dias_restantes: 2, cancelado: true })).toBeNull()
     const venceu = avisoDoPlano({ ...base, pago: false, situacao: null, dias_restantes: null, ultima_situacao: 'vencida' })
     expect(venceu?.tipo).toBe('venceu')
     expect(avisoDoPlano({ ...base, papel: 'admin', dias_restantes: 1 })).toBeNull()
@@ -96,5 +97,8 @@ describe('planos', () => {
     expect(paraRenovar([a({ situacao: 'vencida', valido_ate: daqui(-5) })])?.id).toBe('a')
     expect(paraRenovar([a({ valido_ate: daqui(2), cortesia: true })])).toBeNull()
     expect(paraRenovar([a({ valor: 0, valido_ate: null })])).toBeNull()
+    // Cancelou: não oferece renovar enquanto vale; depois de vencer, sim.
+    expect(paraRenovar([a({ valido_ate: daqui(2), cancelado_em: daqui(-1) })])).toBeNull()
+    expect(paraRenovar([a({ situacao: 'vencida', valido_ate: daqui(-1), cancelado_em: daqui(-10) })])?.id).toBe('a')
   })
 })

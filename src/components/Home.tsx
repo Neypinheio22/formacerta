@@ -1,5 +1,5 @@
 import type { Perfil } from '../nuvem/conta'
-import { avisoDoPlano, type Direitos } from '../nuvem/planos'
+import { avisoDoPlano, type Direitos, type Servico } from '../nuvem/planos'
 import type { Assessment } from '../pose/types'
 import { Activity, AlertTriangle, ArrowRight, BadgeCheck, Brain, Clapperboard, Crown, Dumbbell, FileText, Footprints, HeartPulse, PersonStanding, PlayCircle, Ruler, Sparkles, type LucideIcon } from 'lucide-react'
 import { useState } from 'react'
@@ -9,6 +9,7 @@ import { CartaoReavaliacao } from './plano/Reavaliacoes'
 import { CartaoMeusDados } from './alunos/CartaoMeusDados'
 import { usePlanosLiberados } from './planos/usePlanosLiberados'
 import { travadoNoPro } from './planos/useDireitos'
+import { CartaoMensalidades } from './planos/CartaoMensalidades'
 import { AguaCartao, ProximoTreinoCartao, SemanaCartao } from './treino/CartoesAluno'
 import { useMeuTreino } from './treino/useMeuTreino'
 import { VitrineCarrossel } from './vitrine/VitrineCarrossel'
@@ -36,6 +37,8 @@ type Props = {
   onTreino: (letra?: string) => void
   onPersonais: () => void
   direitos?: Direitos | null
+  /** Renovar um serviço mensal do personal. */
+  onPagarServico?: (servico: Servico) => void
 }
 
 /** pro: recurso do Aluno Pro (mostra a coroa para quem está no grátis). */
@@ -67,7 +70,7 @@ function Grupo({ titulo, atalhos, personal, semPro = false }: { titulo: string; 
   )
 }
 
-export function Home({ history, onStart, onOpen, onEstudio, onExercicio, onCarga, onCorrida, onFlexibilidade, onAdams, onIdoso, perfil, onAdmin, onAlunos, onReavaliacoes, onEvolucao, onMeusDados, onVitrine, onPlanos, onRelatorio, onTreino, onPersonais, direitos = null }: Props) {
+export function Home({ history, onStart, onOpen, onEstudio, onExercicio, onCarga, onCorrida, onFlexibilidade, onAdams, onIdoso, perfil, onAdmin, onAlunos, onReavaliacoes, onEvolucao, onMeusDados, onVitrine, onPlanos, onRelatorio, onTreino, onPersonais, direitos = null, onPagarServico }: Props) {
   const verPlanos = usePlanosLiberados(perfil)
   const [todoHistorico, setTodoHistorico] = useState(false)
   // O aluno só vê o que ele mesmo usa; as ferramentas de avaliar e atender alunos ficam para o personal.
@@ -122,6 +125,8 @@ export function Home({ history, onStart, onOpen, onEstudio, onExercicio, onCarga
           </button>
         </section>
       )}
+
+      {aluno && perfil && onPagarServico && <CartaoMensalidades meuId={perfil.id} onPagar={onPagarServico} />}
 
       {aluno && perfil && <CartaoMeusDados meuId={perfil.id} onAbrir={onMeusDados} />}
 

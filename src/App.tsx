@@ -327,7 +327,7 @@ function Telas({ inicial }: { inicial: Screen }) {
 
     if (screen.name === 'pagamento') {
       const voltar = screen.voltar ?? { name: 'planos' }
-      return <Pagamento pedido={screen.pedido} textoPronto={screen.voltar ? 'Voltar para a conversa' : undefined} onVoltar={() => go(voltar)} onPronto={() => go(voltar)} />
+      return <Pagamento pedido={screen.pedido} textoPronto={screen.voltar ? (screen.voltar.name === 'inicio' ? 'Voltar ao início' : 'Voltar para a conversa') : undefined} onVoltar={() => go(voltar)} onPronto={() => go(voltar)} />
     }
 
     return (
@@ -354,6 +354,7 @@ function Telas({ inicial }: { inicial: Screen }) {
         onTreino={(abrir) => go({ name: 'treino', abrir })}
         onPersonais={() => go({ name: 'personais', voltar: screen })}
         direitos={direitos}
+        onPagarServico={(servico) => go({ name: 'pagamento', pedido: { tipo: 'avaliacao', servico }, voltar: { name: 'inicio' } })}
       />
     )
   }
