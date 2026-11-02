@@ -168,3 +168,19 @@ export async function ordenarTreinos(rotinaId: string, treinos: { id: string }[]
   if (error && /function|schema cache|não existe|does not exist/i.test(error.message)) return 'Para mudar a ordem dos treinos, falta rodar no Supabase o arquivo gerenciamento-de-treinos.sql.'
   return error ? erroAmigavel(error) : null
 }
+
+/** Dados do personal que aparecem na ficha em PDF (o aluno também lê, para exportar a dele). */
+export type PersonalDaFicha = { nome: string; registro: string; foto_url: string; whatsapp: string; cidade: string; email: string }
+
+export async function personalDaFicha(id: string | null): Promise<PersonalDaFicha | null> {
+  if (!id) return null
+  const { data } = await supabase.from('perfis').select('nome, registro, foto_url, whatsapp, cidade, email').eq('id', id).maybeSingle()
+  return (data as PersonalDaFicha | null) ?? null
+}
+
+/** E-mail da conta do aluno, para já vir preenchido no envio da ficha. */
+export async function emailDoAluno(alunoId: string | null): Promise<string> {
+  if (!alunoId) return ''
+  const { data } = await supabase.from('perfis').select('email').eq('id', alunoId).maybeSingle()
+  return (data as { email?: string } | null)?.email ?? ''
+}

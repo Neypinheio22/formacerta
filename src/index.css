@@ -5147,9 +5147,11 @@ p.selo-aluno {
   border-radius: 12px;
 }
 
-.rotina-do-aluno span:last-child {
+.rotina-do-aluno-texto {
   display: flex;
   flex-direction: column;
+  flex: 1;
+  min-width: 0;
 }
 
 .rotina-do-aluno small {
@@ -6475,4 +6477,218 @@ p.selo-aluno {
 .rotina-detalhe-nome {
   flex: 1;
   min-width: 0;
+}
+
+/* Exportar treino em PDF */
+.botao-pdf {
+  width: 100%;
+}
+
+.pdf-fundo {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgba(0, 4, 10, 0.72);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+}
+
+.pdf-janela {
+  width: 100%;
+  max-width: 520px;
+  max-height: 94dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 18px 16px calc(18px + env(safe-area-inset-bottom));
+  background: radial-gradient(circle at 100% 0%, rgba(54, 242, 148, 0.1), transparent 45%), #041826;
+  border: 1px solid var(--borda-verde);
+  border-radius: 24px 24px 0 0;
+  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.5);
+}
+
+@media (min-width: 600px) {
+  .pdf-fundo {
+    align-items: center;
+    padding: 16px;
+  }
+  .pdf-janela {
+    border-radius: 24px;
+  }
+}
+
+.pdf-topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.pdf-topo h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.pdf-topo h2 svg {
+  color: var(--verde);
+}
+
+.pdf-opcao,
+.pdf-opcao-bloco,
+.pdf-ajustes {
+  display: flex;
+  gap: 8px;
+  padding: 14px;
+  border-radius: 16px;
+  border: 1px solid var(--borda);
+  background: rgba(2, 11, 22, 0.55);
+}
+
+.pdf-opcao {
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+}
+
+.pdf-opcao.destaque-azul {
+  background: rgba(54, 242, 148, 0.08);
+  border-color: rgba(54, 242, 148, 0.35);
+}
+
+.pdf-opcao > span {
+  display: flex;
+  gap: 4px;
+}
+
+.pdf-opcao > span,
+.pdf-opcao-bloco,
+.pdf-ajustes {
+  flex-direction: column;
+}
+
+.pdf-opcao small,
+.pdf-opcao-bloco small {
+  color: var(--texto-sec);
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+
+.pdf-opcao-bloco .atalhos-data {
+  margin: 2px 0;
+}
+
+.interruptor {
+  appearance: none;
+  -webkit-appearance: none;
+  flex: none;
+  position: relative;
+  width: 48px;
+  height: 28px;
+  margin: 0;
+  border-radius: 999px;
+  background: #24384a;
+  border: 1px solid rgba(159, 179, 194, 0.3);
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.interruptor::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.2s ease;
+}
+
+.interruptor:checked {
+  background: var(--verde);
+  border-color: var(--verde);
+}
+
+.interruptor:checked::after {
+  transform: translateX(20px);
+}
+
+.interruptor:focus-visible {
+  outline: 2px solid var(--verde);
+  outline-offset: 2px;
+}
+
+.pdf-datas {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 8px;
+}
+
+.pdf-datas .campo {
+  min-width: 0;
+}
+
+.pdf-datas .campo input {
+  width: 100%;
+  min-width: 0;
+  padding-left: 10px;
+  padding-right: 6px;
+}
+
+.pdf-janela a.botao-sec {
+  text-decoration: none;
+}
+
+.pdf-marcar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+}
+
+.pdf-marcar input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--verde);
+}
+
+.pdf-pronto {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 16px;
+  background: rgba(54, 242, 148, 0.08);
+  border: 1px solid rgba(54, 242, 148, 0.35);
+}
+
+.pdf-pronto div {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.pdf-pronto small {
+  color: var(--texto-sec);
+  font-size: 0.8rem;
+  overflow-wrap: anywhere;
+}
+
+.pdf-icone {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: var(--verde);
+  color: var(--fundo);
 }

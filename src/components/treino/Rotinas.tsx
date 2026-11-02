@@ -18,6 +18,7 @@ import { useExercicios } from './useExercicios'
 import { DetalheRotina, type AcaoRotina } from './DetalheRotina'
 import { EvolucaoRotina } from './EvolucaoRotina'
 import { useAtualizacao } from './useAtualizacao'
+import { ExportarPdf } from './ExportarPdf'
 
 type Lista = 'ativas' | 'arquivada' | 'excluida'
 
@@ -443,6 +444,7 @@ export function TelaRotinas({ ficha, meuId, abrir, onVoltar }: { ficha: Ficha; m
   const [escolhendoModelo, setEscolhendoModelo] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
   const [aviso, setAviso] = useState<string | null>(null)
+  const [pdf, setPdf] = useState(false)
   const exercicios = useExercicios()
   const bib: Biblioteca = { meuId, lista: exercicios.lista, onMudou: exercicios.recarregar }
   const primeiro = ficha.nome.split(' ')[0]
@@ -617,8 +619,10 @@ export function TelaRotinas({ ficha, meuId, abrir, onVoltar }: { ficha: Ficha; m
           onOrdenar={(ordem) => ordenar(rotinaDaVista, ordem)}
           onAcao={(a) => acao(rotinaDaVista, a)}
           onEvolucao={() => ir({ tipo: 'evolucao', id: rotinaDaVista.id })}
+          onPdf={() => setPdf(true)}
           menu={<MenuRotina r={rotinaDaVista} onAcao={(a) => acao(rotinaDaVista, a)} />}
         />
+        {pdf && <ExportarPdf rotina={rotinaDaVista} treinos={treinosDe(rotinaDaVista)} ficha={ficha} quem="personal" exercicios={exercicios.lista} onFechar={() => setPdf(false)} />}
       </div>
     )
 

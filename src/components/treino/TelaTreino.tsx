@@ -1,4 +1,4 @@
-import { BadgeCheck, BookCopy, Camera, CheckCircle2, ChevronDown, ChevronUp, Dumbbell, HeartPulse, History, Medal, PlayCircle, Star, TriangleAlert, UserRound, Video } from 'lucide-react'
+import { BadgeCheck, BookCopy, Camera, CheckCircle2, ChevronDown, ChevronUp, Dumbbell, FileDown, HeartPulse, History, Medal, PlayCircle, Star, TriangleAlert, UserRound, Video } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { EXERCICIOS } from '../../movimento/exercicios'
 import type { ExercicioId } from '../../movimento/tipos'
@@ -24,6 +24,7 @@ import { AVISO_SUGERIDA } from '../../treino/sugerida'
 import { dataDia, resumoAerobico, rotuloNivel, rotuloTipo } from '../../treino/rotinas'
 import { IconeDaRotina } from './IconeRotina'
 import { TelaBiblioteca } from './BibliotecaTreinos'
+import { ExportarPdf } from './ExportarPdf'
 
 type Props = {
   perfil: Perfil | null
@@ -382,6 +383,7 @@ export function TelaTreino({ perfil, abrir, onVoltar, onCamera, onCarga, onPerso
   const profissionalId = t.ficha?.profissional_id ?? perfil?.profissional_id ?? perfil?.id
 
   const [biblioteca, setBiblioteca] = useState(false)
+  const [pdf, setPdf] = useState(false)
   const [anotacoes, setAnotacoes] = useState<Record<number, Anotacao[]>>({})
   const treino = t.lista.find((x) => x.letra === aberto) ?? null
   const anotar = !t.sugerida && !!t.ficha
@@ -451,6 +453,12 @@ export function TelaTreino({ perfil, abrir, onVoltar, onCamera, onCarga, onPerso
       />
     )
 
+  const podePdf = aluno && !t.sugerida && !!t.rotina && !!t.ficha && t.treinos.length > 0
+  const janelaPdf =
+    pdf && podePdf ? (
+      <ExportarPdf rotina={t.rotina!} treinos={t.treinos} ficha={t.ficha!} quem="aluno" letraInicial={treino?.letra} exercicios={exercicios.lista} onFechar={() => setPdf(false)} />
+    ) : null
+
   if (treino)
     return (
       <div className="tela">
@@ -464,6 +472,12 @@ export function TelaTreino({ perfil, abrir, onVoltar, onCamera, onCarga, onPerso
           {treino.nome && ` · ${treino.nome}`}
         </h1>
         {t.sugerida && <AvisoSugerida temFicha={!!t.ficha?.profissional_id} motivos={t.ajuste?.motivos} onPersonais={onPersonais} />}
+        {podePdf && (
+          <button className="link link-discreto" onClick={() => setPdf(true)}>
+            <FileDown size={14} /> Baixar este treino em PDF
+          </button>
+        )}
+        {janelaPdf}
         <p className="dica-sec">Toque em <Video size={14} /> para ver como fazer o exercício e na câmera para o app contar as repetições e corrigir o movimento.</p>
         <ol className="lista-treino">
           {treino.exercicios.map((ex, i) => (
@@ -517,12 +531,18 @@ export function TelaTreino({ perfil, abrir, onVoltar, onCamera, onCarga, onPerso
       {t.rotina && !t.sugerida && (
         <p className="rotina-do-aluno">
           <IconeDaRotina id={t.rotina.icone} objetivo={t.rotina.objetivo} size={18} />
-          <span>
+          <span className="rotina-do-aluno-texto">
             <strong>{t.rotina.nome}</strong>
             <small>{[rotuloTipo(t.rotina.icone, t.rotina.objetivo), t.rotina.objetivo, rotuloNivel(t.rotina.nivel), t.rotina.fim && `até ${dataDia(t.rotina.fim)}`].filter(Boolean).join(' · ')}</small>
           </span>
         </p>
       )}
+      {podePdf && (
+        <button className="botao-sec" onClick={() => setPdf(true)}>
+          <FileDown size={16} /> Baixar ficha em PDF
+        </button>
+      )}
+      {janelaPdf}
 
       {t.lista.length > 0 && (
         <div className="grade-treinos">

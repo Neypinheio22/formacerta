@@ -28,7 +28,7 @@ const COR_STATUS: Record<Status, Cor> = { ok: [18, 150, 90], atencao: [185, 140,
 // Cores oficiais do FormaCerta.
 const MARCA: Cor = [54, 242, 148]
 const FUNDO_MARCA: Cor = [2, 11, 22]
-const ALTURA_FAIXA = 24
+export const ALTURA_FAIXA = 24
 
 const A4 = { w: 210, h: 297 }
 const M = 16
@@ -307,10 +307,10 @@ export async function gerarPdf(dados: DadosRelatorio): Promise<Blob> {
   return doc.output('blob')
 }
 
-type Doc = InstanceType<typeof import('jspdf').jsPDF>
+export type Doc = InstanceType<typeof import('jspdf').jsPDF>
 
 /** Símbolo do FormaCerta (bolinha e check formando uma pessoa), no mesmo desenho do app. */
-function desenharSimbolo(doc: Doc, x: number, y: number, tamanho: number) {
+export function desenharSimbolo(doc: Doc, x: number, y: number, tamanho: number) {
   const k = tamanho / 64
   doc.setFillColor(MARCA[0], MARCA[1], MARCA[2])
   doc.circle(x + 30 * k, y + 12 * k, 8 * k, 'F')
@@ -331,7 +331,7 @@ function desenharSimbolo(doc: Doc, x: number, y: number, tamanho: number) {
 }
 
 /** Faixa escura com a logo FormaCerta e o slogan, no topo do relatório. */
-function faixaMarca(doc: Doc) {
+export function faixaMarca(doc: Doc, linha2 = 'Avaliação física com inteligência artificial') {
   doc.setFillColor(FUNDO_MARCA[0], FUNDO_MARCA[1], FUNDO_MARCA[2])
   doc.rect(0, 0, A4.w, ALTURA_FAIXA, 'F')
   doc.setFillColor(MARCA[0], MARCA[1], MARCA[2])
@@ -349,7 +349,7 @@ function faixaMarca(doc: Doc) {
   doc.setTextColor(200, 214, 224)
   doc.text('Treine certo. Evolua sempre.', A4.w - M, 11, { align: 'right' })
   doc.setTextColor(MARCA[0], MARCA[1], MARCA[2])
-  doc.text('Avaliação física com inteligência artificial', A4.w - M, 16, { align: 'right' })
+  doc.text(linha2, A4.w - M, 16, { align: 'right' })
 }
 
 /** Converte um SVG da tela (foto com o esqueleto e as medidas) em JPEG para o PDF. */
