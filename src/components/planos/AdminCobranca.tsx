@@ -178,7 +178,7 @@ function Travas({ planosParaTodos }: { planosParaTodos: boolean }) {
       </div>
       <p className="dica-sec">
         {travar
-          ? 'Travado: corrida, exercício em vídeo e Central de Inteligência só para o Aluno Pro (ou aluno de personal com plano pago). O personal fica no limite de alunos do plano e só vende serviços a partir do Essencial.'
+          ? 'Travado: corrida, exercício em vídeo e Central de Inteligência só para o Aluno Pro (ou aluno de personal que paga o plano; cortesia não conta). O personal fica no limite de alunos do plano e só vende serviços a partir do Essencial.'
           : 'Tudo liberado: ninguém fica travado, como antes dos planos.'}
         {travar && !planosParaTodos && ' Enquanto os planos estão escondidos, nada é travado.'}
       </p>
@@ -225,7 +225,7 @@ function Cortesias({ perfis, planos }: { perfis: Perfil[]; planos: Plano[] }) {
   return (
     <section className="cartao formulario">
       <h2>Plano de cortesia</h2>
-      <p className="dica-sec">Para parceiros e testadores: o plano vale na hora, sem pagamento, pelos dias que você escolher. Os alunos de um personal com plano ganham o Aluno Pro junto.</p>
+      <p className="dica-sec">Para parceiros e testadores: o plano vale na hora, sem pagamento, pelos dias que você escolher. A cortesia é só da pessoa: os alunos dela continuam assinando o Aluno Pro, e as vendas pagam a comissão normal.</p>
       <label className="campo">
         Quem
         <select
