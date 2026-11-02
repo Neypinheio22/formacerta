@@ -6,11 +6,16 @@ import {
   ROTULO_FORMA,
   ROTULO_PAGAMENTO,
   adicionarTestador,
+  darPlano,
   definirPagamento,
   emReais,
   lerConfig,
   lerReais,
+  lerTravas,
   listarPagamentos,
+  listarRepasses,
+  marcarRepasse,
+  planosDeTodos,
   listarPlanos,
   listarTestadores,
   salvarConfig,
@@ -19,6 +24,8 @@ import {
   type ConfigCobranca,
   type Pagamento,
   type Plano,
+  type PlanoDeAlguem,
+  type Repasse,
   type SituacaoPagamento,
 } from '../../nuvem/planos'
 import { AdminVideo } from '../video/AdminVideo'
@@ -62,6 +69,10 @@ export function AdminPlanos({ perfis }: { perfis: Perfil[] }) {
   return (
     <>
       <QuemVe config={config} perfis={perfis} onMudar={(planos_para) => setConfig({ ...config, planos_para })} />
+
+      <Travas planosParaTodos={config.planos_para === 'todos'} />
+
+      <Cortesias perfis={perfis} planos={planos} />
 
       <section className="cartao formulario">
         <h2>Pagamento pelo app</h2>
@@ -131,6 +142,206 @@ export function AdminPlanos({ perfis }: { perfis: Perfil[] }) {
         .map((p) => (
           <EditarPlano key={p.id} plano={p} onSalvo={(n) => setPlanos((ps) => ps.map((x) => (x.id === n.id ? n : x)))} />
         ))}
+    </>
+  )
+}
+
+/** Liga ou desliga as travas do plano pago (Aluno Pro, limite de alunos, venda de serviços). */
+function Travas({ planosParaTodos }: { planosParaTodos: boolean }) {
+  const [travar, setTravar] = useState<boolean | null>(null)
+  const [erro, setErro] = useState<string | null>(null)
+
+  useEffect(() => {
+    lerTravas().then(setTravar)
+  }, [])
+
+  // Sem o SQL novo a coluna não existe: o quadro não aparece.
+  if (travar === null) return null
+
+  async function mudar(v: boolean) {
+    if (!v && !confirm('Desligar as travas? Todo mundo volta a usar tudo, mesmo sem pagar.')) return
+    const e = await salvarConfig({ travar_recursos: v })
+    setErro(e)
+    if (!e) setTravar(v)
+  }
+
+  return (
+    <section className="cartao formulario">
+      <h2>O que é só do plano pago</h2>
+      <div className="escolha">
+        <button className={travar ? 'ativo' : ''} onClick={() => mudar(true)}>
+          Travado
+        </button>
+        <button className={!travar ? 'ativo' : ''} onClick={() => mudar(false)}>
+          Tudo liberado
+        </button>
+      </div>
+      <p className="dica-sec">
+        {travar
+          ? 'Travado: corrida, exercício em vídeo e Central de Inteligência só para o Aluno Pro (ou aluno de personal com plano pago). O personal fica no limite de alunos do plano e só vende serviços a partir do Essencial.'
+          : 'Tudo liberado: ninguém fica travado, como antes dos planos.'}
+        {travar && !planosParaTodos && ' Enquanto os planos estão escondidos, nada é travado.'}
+      </p>
+      {erro && <p className="mensagem erro">{erro}</p>}
+    </section>
+  )
+}
+
+/** Plano de cortesia: o administrador dá um plano por tantos dias, sem pagamento (parceiros, testadores). */
+function Cortesias({ perfis, planos }: { perfis: Perfil[]; planos: Plano[] }) {
+  const [lista, setLista] = useState<PlanoDeAlguem[]>([])
+  const [quem, setQuem] = useState('')
+  const [plano, setPlano] = useState('')
+  const [dias, setDias] = useState('30')
+  const [msg, setMsg] = useState<{ ok: boolean; texto: string } | null>(null)
+
+  useEffect(() => {
+    planosDeTodos().then(setLista)
+  }, [])
+
+  const pessoa = perfis.find((p) => p.id === quem)
+  const publico = pessoa ? (pessoa.papel === 'aluno' ? 'aluno' : 'profissional') : null
+  const opcoes = planos.filter((p) => p.publico === publico && p.preco_mensal > 0)
+  const nome = (id: string) => {
+    const p = perfis.find((x) => x.id === id)
+    return p ? p.nome || p.email : 'conta excluída'
+  }
+  const cortesias = lista.filter((a) => a.cortesia && (a.situacao === 'ativa' || a.situacao === 'vencida'))
+
+  async function dar() {
+    const n = Math.round(lerReais(dias) ?? 0)
+    if (!quem || !plano || n < 1) return setMsg({ ok: false, texto: 'Escolha a pessoa, o plano e os dias.' })
+    const p = planos.find((x) => x.id === plano)
+    if (!confirm(`Dar o plano ${p?.nome ?? ''} de cortesia para ${nome(quem)} por ${n} dias?`)) return
+    const e = await darPlano(quem, plano, n)
+    setMsg(e ? { ok: false, texto: e } : { ok: true, texto: 'Pronto: o plano já está valendo.' })
+    if (!e) {
+      setQuem('')
+      setPlano('')
+      setLista(await planosDeTodos())
+    }
+  }
+
+  return (
+    <section className="cartao formulario">
+      <h2>Plano de cortesia</h2>
+      <p className="dica-sec">Para parceiros e testadores: o plano vale na hora, sem pagamento, pelos dias que você escolher. Os alunos de um personal com plano ganham o Aluno Pro junto.</p>
+      <label className="campo">
+        Quem
+        <select
+          value={quem}
+          onChange={(e) => {
+            setQuem(e.target.value)
+            setPlano('')
+          }}
+        >
+          <option value="">Escolha um profissional ou aluno</option>
+          {perfis
+            .filter((p) => p.papel !== 'admin')
+            .map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.nome || p.email} ({ROTULO_PAPEL[p.papel].toLowerCase()})
+              </option>
+            ))}
+        </select>
+      </label>
+      <div className="linha-campos">
+        <label className="campo">
+          Plano
+          <select value={plano} onChange={(e) => setPlano(e.target.value)} disabled={!quem}>
+            <option value="">Escolha</option>
+            {opcoes.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.nome}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="campo">
+          Dias
+          <input inputMode="numeric" value={dias} onChange={(e) => setDias(e.target.value)} />
+        </label>
+      </div>
+      {msg && <p className={`mensagem ${msg.ok ? 'ok' : 'erro'}`}>{msg.texto}</p>}
+      <button className="botao" onClick={dar}>
+        Dar plano
+      </button>
+      {cortesias.length > 0 && (
+        <ul className="historico">
+          {cortesias.map((a) => (
+            <li key={a.usuario_id}>
+              <span className="linha">
+                <span>
+                  {nome(a.usuario_id)}
+                  <br />
+                  <small className="dica-sec">
+                    {planos.find((p) => p.id === a.plano_id)?.nome ?? a.plano_id} · {a.situacao === 'vencida' ? 'venceu em' : 'até'} {a.valido_ate ? new Date(a.valido_ate).toLocaleDateString('pt-BR') : '—'}
+                  </small>
+                </span>
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  )
+}
+
+/** Administrador: quanto falta repassar a cada personal e o botão de marcar o repasse feito. */
+export function AdminRepasses() {
+  const [lista, setLista] = useState<Repasse[] | null>(null)
+  const [erro, setErro] = useState<string | null>(null)
+
+  async function carregar() {
+    const r = await listarRepasses()
+    setLista(r.lista)
+    setErro(r.erro)
+  }
+
+  useEffect(() => {
+    carregar()
+  }, [])
+
+  const aReceber = (r: Repasse) => Math.round((r.servicos_valor + r.chamadas_valor) * 100) / 100
+  const total = (lista ?? []).reduce((t, r) => t + aReceber(r), 0)
+
+  async function marcar(r: Repasse) {
+    if (!confirm(`Você já mandou ${emReais(aReceber(r))} para ${r.nome}? Marcar como repassado?`)) return
+    const { erro } = await marcarRepasse(r.profissional_id)
+    if (erro) setErro(erro)
+    else carregar()
+  }
+
+  return (
+    <>
+      <div className="numeros">
+        <div>
+          <strong>{emReais(total)}</strong> a repassar
+        </div>
+        <div>
+          <strong>{(lista ?? []).filter((r) => aReceber(r) > 0).length}</strong> personais
+        </div>
+      </div>
+      <p className="dica-sec">O dinheiro de serviços e chamadas de vídeo cai inteiro na conta do FormaCerta. Aqui está a parte de cada personal, já sem a comissão e as taxas. Depois de mandar o Pix para ele, marque o repasse como feito.</p>
+      {erro && <p className="mensagem erro">{erro}</p>}
+      {lista === null && !erro && <p className="carregando">Carregando…</p>}
+      {lista?.length === 0 && <p className="dica-sec">Nenhuma venda de personal ainda.</p>}
+      {lista?.map((r) => (
+        <section className="cartao pessoa repasse" key={r.profissional_id}>
+          <h3>{r.nome}</h3>
+          <p className="dica-sec">
+            {r.servicos} {r.servicos === 1 ? 'serviço' : 'serviços'}: {emReais(r.servicos_valor)} · {r.chamadas} {r.chamadas === 1 ? 'chamada' : 'chamadas'} de vídeo: {emReais(r.chamadas_valor)}
+          </p>
+          {r.repassado_total > 0 && <p className="dica-sec">Já repassado: {emReais(r.repassado_total)}</p>}
+          {aReceber(r) > 0 ? (
+            <button className="botao" onClick={() => marcar(r)}>
+              Marcar repasse de {emReais(aReceber(r))} como feito
+            </button>
+          ) : (
+            <small className="dica-sec">Nada a repassar.</small>
+          )}
+        </section>
+      ))}
     </>
   )
 }

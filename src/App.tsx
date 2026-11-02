@@ -30,6 +30,8 @@ import { TelaTreino } from './components/treino/TelaTreino'
 import { Vitrine } from './components/vitrine/Vitrine'
 import { Pagamento, type Pedido } from './components/planos/Pagamento'
 import { Planos } from './components/planos/Planos'
+import { TravaPro, type RecursoPro } from './components/planos/TravaPro'
+import { travadoNoPro, useDireitos } from './components/planos/useDireitos'
 import { PostureAssessment } from './components/PostureAssessment'
 import { PerfilProfissional } from './components/relatorio/PerfilProfissional'
 import { Relatorio } from './components/relatorio/Relatorio'
@@ -78,6 +80,16 @@ type Screen =
   | { name: 'perfil'; voltar: Screen }
   | { name: 'relatorio'; avaliado?: string; marcados?: string[]; voltar: Screen }
 
+// Telas do Aluno Pro: no plano grátis, o aluno vê o convite para assinar no lugar delas.
+const TELAS_PRO: Partial<Record<Screen['name'], RecursoPro>> = {
+  corrida: 'corrida',
+  'corrida-arquivo': 'corrida',
+  exercicio: 'exercicio',
+  'exercicio-vivo': 'exercicio',
+  'exercicio-arquivo': 'exercicio',
+  evolucao: 'evolucao',
+}
+
 // Link enviado pelo celular de controle: ...?estudio=123456 abre direto como câmera.
 function telaInicial(): Screen {
   const codigo = new URLSearchParams(window.location.search).get('estudio')
@@ -98,6 +110,7 @@ export default function App() {
 function Telas({ inicial }: { inicial: Screen }) {
   const [screen, setScreen] = useState<Screen>(inicial)
   const { perfil } = useConta()
+  const direitos = useDireitos(perfil)
   const [history, setHistory] = useState(loadAssessments)
   const [dadosOk, setDadosOk] = useState(true)
   const [versaoDados, setVersaoDados] = useState(0)
@@ -114,6 +127,8 @@ function Telas({ inicial }: { inicial: Screen }) {
   }, [])
   /** Abre o teste, passando antes por "Meus dados" se faltar o básico (uma vez por visita). */
   const comDados = (s: Screen) => {
+    // Recurso do Aluno Pro no plano grátis: mostra o convite antes de pedir os dados.
+    if (TELAS_PRO[s.name] && travadoNoPro(perfil, direitos)) return go(s)
     let pulou = false
     try {
       pulou = sessionStorage.getItem('formacerta:pulou-dados') === '1'
@@ -145,6 +160,9 @@ function Telas({ inicial }: { inicial: Screen }) {
   )
 
   function desenhar() {
+    const recursoPro = TELAS_PRO[screen.name]
+    if (recursoPro && travadoNoPro(perfil, direitos)) return <TravaPro recurso={recursoPro} onPlanos={() => go({ name: 'planos' })} onVoltar={() => go({ name: 'inicio' })} />
+
     if (screen.name === 'avaliacao') {
       return (
         <PostureAssessment
@@ -271,7 +289,7 @@ function Telas({ inicial }: { inicial: Screen }) {
 
     if (screen.name === 'admin') return <Admin onVoltar={() => go({ name: 'inicio' })} />
 
-    if (screen.name === 'alunos' && perfil) return <MeusAlunos meuId={perfil.id} onVoltar={() => go({ name: 'inicio' })} />
+    if (screen.name === 'alunos' && perfil) return <MeusAlunos meuId={perfil.id} onVoltar={() => go({ name: 'inicio' })} onPlanos={() => go({ name: 'planos' })} />
 
     if (screen.name === 'reavaliacoes' && perfil) return <Reavaliacoes perfil={perfil} onVoltar={() => go({ name: 'inicio' })} />
 
@@ -335,6 +353,7 @@ function Telas({ inicial }: { inicial: Screen }) {
         onRelatorio={() => go({ name: 'relatorio', voltar: screen })}
         onTreino={(abrir) => go({ name: 'treino', abrir })}
         onPersonais={() => go({ name: 'personais', voltar: screen })}
+        direitos={direitos}
       />
     )
   }

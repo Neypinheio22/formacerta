@@ -17,6 +17,8 @@ import {
 } from '../../nuvem/planos'
 import { aceitouTermoVideo, lerRegrasVideo, REGRAS_PADRAO, type RegrasVideo } from '../../nuvem/video'
 import { TermoVideo } from '../video/TermoVideo'
+import { useConta } from '../../nuvem/conta'
+import { useDireitos } from '../planos/useDireitos'
 
 const GRUPOS: { grupo: ItemCatalogo['grupo']; titulo: string }[] = [
   { grupo: 'avaliacao', titulo: 'Avaliações' },
@@ -63,7 +65,10 @@ function PedirValor({ pedido, novo, onMudar, onEnviar, onCancelar }: { pedido: P
 }
 
 /** O personal liga os serviços da lista do FormaCerta. O preço é o sugerido; outro valor passa pela aprovação do administrador. */
-export function MeusServicos({ meuId, onMudou }: { meuId: string; onMudou?: () => void }) {
+export function MeusServicos({ meuId, onMudou, onPlanos }: { meuId: string; onMudou?: () => void; onPlanos?: () => void }) {
+  const { perfil } = useConta()
+  const direitos = useDireitos(perfil)
+  const semVenda = !!direitos && direitos.travado && !direitos.vende_servicos
   const [catalogo, setCatalogo] = useState<ItemCatalogo[] | null>(null)
   const [meus, setMeus] = useState<Servico[]>([])
   const [pedidos, setPedidos] = useState<PedidoPreco[]>([])
@@ -149,6 +154,19 @@ export function MeusServicos({ meuId, onMudou }: { meuId: string; onMudou?: () =
       <p className="dica-sec">
         Ligue o que você faz. Cada serviço já vem com o <b>preço do FormaCerta</b>. Quer cobrar um valor diferente? Toque em <b>Pedir outro valor</b> e a gente confere. O aluno vê seus serviços quando abre a conversa com você no chat.
       </p>
+
+      {semVenda && (
+        <div className="mensagem aviso">
+          <p>
+            Vender serviços pelo app faz parte dos planos <b>Essencial, Pro e Estúdio</b>. No seu plano {direitos?.plano_nome ?? 'Grátis'}, os serviços ficam desligados e o aluno não consegue pagar por eles.
+          </p>
+          {onPlanos && (
+            <button className="botao" onClick={onPlanos}>
+              Ver planos
+            </button>
+          )}
+        </div>
+      )}
 
       {GRUPOS.map(({ grupo, titulo }) => (
         <div key={grupo} className="servicos-grupo">

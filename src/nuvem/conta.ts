@@ -75,6 +75,8 @@ export function erroAmigavel(e: { message?: string } | null | undefined): string
   if (/password should be at least|weak password/i.test(m)) return 'A senha precisa ter pelo menos 8 caracteres, com letras e números.'
   if (/rate limit|too many/i.test(m)) return 'Muitas tentativas seguidas. Espere alguns minutos e tente de novo.'
   if (/failed to fetch|network/i.test(m)) return 'Sem internet. Confira a conexão e tente de novo.'
+  // Regras do plano: a mensagem do banco já diz o que fazer.
+  if (/^(Seu plano .* permite até|Vender serviços pelo app|Este personal não está vendendo)/.test(m)) return m
   return `${m || 'Não deu certo.'} Se continuar, fale com o suporte: ${SUPORTE}`
 }
 

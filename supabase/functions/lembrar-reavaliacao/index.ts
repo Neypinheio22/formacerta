@@ -1,4 +1,6 @@
-// Lembrete de reavaliação. Chamada todo dia às 8h (Brasília) pelo pg_cron.
+// Lembrete de reavaliação e aviso de plano vencendo. Chamada todo dia às 8h (Brasília) pelo pg_cron.
+// Plano: 3 dias antes de o plano pago ou o teste grátis acabar, manda um e-mail
+// (uma vez por assinatura, marcado em assinaturas.aviso_vencimento_em).
 // Procura os testes cuja data de refazer (resultados.reavaliar_em) chegou e
 // manda um e-mail ao aluno e um ao profissional dele, com todos os testes do
 // dia. Cada resultado só é lembrado uma vez (lembrete_em), então chamar de
@@ -74,6 +76,78 @@ function emailHtml(nome: string, itens: Item[], profissional: boolean) {
     </div>`
 }
 
+const DIAS_AVISO_PLANO = 3
+
+function emailPlanoHtml(nome: string, plano: string, teste: boolean, data: string) {
+  const primeiro = escapar(nome.trim().split(' ')[0] || 'Olá')
+  const texto = teste
+    ? `O seu teste grátis do <strong>${escapar(plano)}</strong> acaba em <strong>${data}</strong>. Para continuar com tudo liberado, assine no app em "Planos".`
+    : `O seu plano <strong>${escapar(plano)}</strong> vence em <strong>${data}</strong>. Para não perder o acesso, renove no app em "Planos".`
+  return `
+    <div style="font-family:Arial,sans-serif;font-size:15px;color:#111;max-width:520px">
+      <p>Oi, ${primeiro}!</p>
+      <p>${texto}</p>
+      <p>Se não renovar, você volta para o plano grátis e não perde nada do que já guardou.</p>
+      <p><a href="${APP}" style="background:#36f294;color:#020b16;padding:10px 18px;border-radius:999px;text-decoration:none;font-weight:bold">Abrir o FormaCerta</a></p>
+      <p style="color:#777;font-size:12px">Dúvidas: ${SUPORTE}.</p>
+    </div>`
+}
+
+type SupabaseBanco = ReturnType<typeof createClient>
+
+/** Vence os planos que passaram da data e avisa quem vence nos próximos dias. Devolve quantos e-mails saíram. */
+async function avisarPlanos(banco: SupabaseBanco, chave: string, remetente: string) {
+  await banco.rpc('vencer_assinaturas')
+  const agora = new Date()
+  const limite = new Date(agora.getTime() + DIAS_AVISO_PLANO * 86_400_000)
+  const { data, error } = await banco
+    .from('assinaturas')
+    .select('id, usuario_id, plano_id, situacao, valor, valido_ate')
+    .in('situacao', ['ativa', 'teste'])
+    .eq('cortesia', false)
+    .is('aviso_vencimento_em', null)
+    .gt('valido_ate', agora.toISOString())
+    .lte('valido_ate', limite.toISOString())
+    .limit(200)
+  // Sem o SQL dos planos (coluna nova) não faz nada.
+  if (error || !data?.length) return 0
+  const lista = (data as { id: string; usuario_id: string; plano_id: string; situacao: string; valor: number; valido_ate: string }[]).filter(
+    (a) => a.situacao === 'teste' || Number(a.valor) > 0,
+  )
+  if (!lista.length) return 0
+  await banco
+    .from('assinaturas')
+    .update({ aviso_vencimento_em: agora.toISOString() })
+    .in(
+      'id',
+      lista.map((a) => a.id),
+    )
+
+  let enviados = 0
+  for (const a of lista) {
+    const { data: p } = await banco.from('perfis').select('email, nome, situacao').eq('id', a.usuario_id).maybeSingle()
+    const { data: pl } = await banco.from('planos').select('nome').eq('id', a.plano_id).maybeSingle()
+    if (!p?.email || p.situacao !== 'liberado') continue
+    const dia = new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Sao_Paulo' }).format(new Date(a.valido_ate))
+    const teste = a.situacao === 'teste'
+    const nomePlano = (pl?.nome as string | undefined) ?? 'FormaCerta'
+    const r = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${chave}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        from: remetente,
+        to: [p.email],
+        reply_to: SUPORTE,
+        subject: teste ? `Seu teste grátis do ${nomePlano} acaba em ${dia}` : `Seu plano ${nomePlano} vence em ${dia}`,
+        html: emailPlanoHtml((p.nome as string) || (p.email as string), nomePlano, teste, dia),
+      }),
+    })
+    if (r.ok) enviados++
+    await new Promise((espera) => setTimeout(espera, 600))
+  }
+  return enviados
+}
+
 Deno.serve(async (req) => {
   if (req.method !== 'POST') return ok({ erro: 'Método não permitido' }, 405)
 
@@ -84,6 +158,7 @@ Deno.serve(async (req) => {
 
   const banco = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, { auth: { persistSession: false } })
   const hoje = hojeBrasil()
+  const avisosPlano = await avisarPlanos(banco, chave, remetente)
 
   const { data: vencidos, error } = await banco
     .from('resultados')
@@ -93,7 +168,7 @@ Deno.serve(async (req) => {
     .gte('reavaliar_em', menosDias(hoje, JANELA_DIAS))
     .limit(500)
   if (error) return ok({ erro: error.message }, 500)
-  if (!vencidos?.length) return ok({ enviados: 0 })
+  if (!vencidos?.length) return ok({ enviados: 0, avisosPlano })
 
   const perfis = new Map<string, Perfil | null>()
   async function perfil(id: string | null) {
@@ -169,5 +244,5 @@ Deno.serve(async (req) => {
     await new Promise((p) => setTimeout(p, 600))
   }
 
-  return ok({ resultados: vencidos.length, enviados, falhas: falhas.length })
+  return ok({ resultados: vencidos.length, enviados, falhas: falhas.length, avisosPlano })
 })

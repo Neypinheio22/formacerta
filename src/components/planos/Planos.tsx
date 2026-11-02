@@ -8,6 +8,8 @@ import {
   ROTULO_FORMA,
   ROTULO_PAGAMENTO,
   assinaturaAtual,
+  assinaturaVencida,
+  paraRenovar,
   cancelarAssinatura,
   economiaAnual,
   emReais,
@@ -27,6 +29,7 @@ import {
   type Servico,
 } from '../../nuvem/planos'
 import { MinhasAvaliacoes } from './MinhasAvaliacoes'
+import { recarregarDireitos, useDireitos } from './useDireitos'
 import type { Pedido } from './Pagamento'
 
 type Props = {
@@ -45,9 +48,11 @@ export function Planos({ onVoltar, onPagar }: Props) {
   const [servicos, setServicos] = useState<Servico[]>([])
   const [pagamentos, setPagamentos] = useState<Pagamento[]>([])
   const [erro, setErro] = useState<string | null>(null)
+  const direitos = useDireitos(perfil)
 
   async function carregar() {
     if (!perfil) return
+    recarregarDireitos()
     const [p, c, a, s, pg] = await Promise.all([listarPlanos(), lerConfig(), minhasAssinaturas(perfil.id), listarServicos(), listarPagamentos()])
     setPlanos(p.planos)
     setErro(p.erro)
@@ -66,6 +71,9 @@ export function Planos({ onVoltar, onPagar }: Props) {
 
   const atual = assinaturaAtual(assinaturas)
   const planoAtual = atual ? planos.find((p) => p.id === atual.plano_id) : null
+  const vencida = atual ? null : assinaturaVencida(assinaturas)
+  const renovar = paraRenovar(assinaturas)
+  const planoRenovar = renovar ? planos.find((p) => p.id === renovar.plano_id && p.ativo) : null
   const jaPagou = assinaturas.some((a) => a.valor > 0)
   const visiveis = planos.filter((p) => p.publico === publico && p.ativo)
   const ehAdmin = perfil.papel === 'admin'
@@ -120,17 +128,41 @@ export function Planos({ onVoltar, onPagar }: Props) {
           <h2>{planoAtual ? planoAtual.nome : 'Grátis'}</h2>
           {atual ? (
             <p className="dica-sec">
-              {ROTULO_ASSINATURA[atual.situacao]}
+              {atual.cortesia ? 'Cortesia do FormaCerta' : ROTULO_ASSINATURA[atual.situacao]}
               {atual.valor > 0 && ` · ${emReais(atual.valor)} por ${atual.ciclo === 'anual' ? 'ano' : 'mês'}`}
               {atual.valido_ate && ` · ${atual.situacao === 'teste' ? 'grátis até' : 'vale até'} ${new Date(atual.valido_ate).toLocaleDateString('pt-BR')}`}
             </p>
           ) : (
             <p className="dica-sec">Você está no plano grátis.</p>
           )}
+          {direitos?.pro_pelo_personal && <p className="mensagem ok">Você ganha o Aluno Pro porque o seu personal tem plano no FormaCerta.</p>}
+          {atual && atual.situacao === 'aguardando' && config.gateway === 'mercadopago' && (
+            <p className="dica-sec">O plano começa a valer assim que o pagamento cair. Ele está em "Meus pagamentos", abaixo.</p>
+          )}
           {atual && atual.valor > 0 && (
             <button className="link" onClick={cancelar}>
               Cancelar plano
             </button>
+          )}
+        </section>
+      )}
+
+      {!ehAdmin && renovar && (
+        <section className="cartao destaque plano-vencido">
+          <span className="etiqueta">{vencida ? 'Plano vencido' : renovar.situacao === 'teste' ? 'Teste grátis acabando' : 'Plano vencendo'}</span>
+          <h2>
+            {vencida ? `Seu plano ${planoRenovar?.nome ?? ''} venceu` : renovar.situacao === 'teste' ? `Seu teste grátis do ${planoRenovar?.nome ?? ''} está acabando` : `Seu plano ${planoRenovar?.nome ?? ''} está vencendo`}
+          </h2>
+          <p className="dica-sec">
+            {renovar.valido_ate && `${vencida ? 'Valeu' : 'Vale'} até ${new Date(renovar.valido_ate).toLocaleDateString('pt-BR')}. `}
+            {vencida ? 'Você voltou para o plano grátis. Renove para liberar tudo de novo.' : 'Pague agora e o novo período começa quando este acabar: você não perde nenhum dia.'}
+          </p>
+          {planoRenovar ? (
+            <button className="botao grande" onClick={() => onPagar({ tipo: 'renovacao', plano: planoRenovar, ciclo: renovar.ciclo })}>
+              {renovar.situacao === 'teste' ? 'Assinar' : 'Renovar'} o {planoRenovar.nome}: {emReais(renovar.ciclo === 'anual' ? planoRenovar.preco_anual : planoRenovar.preco_mensal)}
+            </button>
+          ) : (
+            <p className="dica-sec">Este plano saiu de venda. Escolha um dos planos abaixo.</p>
           )}
         </section>
       )}

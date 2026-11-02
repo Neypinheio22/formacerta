@@ -14,6 +14,7 @@ import {
   minhasAssinaturas,
   pagamentoDaAssinatura,
   precoDo,
+  renovarPlano,
   type Assinatura,
   type Ciclo,
   type Cobranca,
@@ -23,9 +24,12 @@ import {
   type Plano,
   type Servico,
 } from '../../nuvem/planos'
+import { recarregarDireitos } from './useDireitos'
 
 export type Pedido =
   | { tipo: 'assinatura'; plano: Plano; ciclo: Ciclo }
+  /** Mais um período do plano atual (ou do que venceu), sem perder o acesso. */
+  | { tipo: 'renovacao'; plano: Plano; ciclo: Ciclo }
   | { tipo: 'avaliacao'; servico: Servico }
   /** Pagar um pedido que ficou pendente. */
   | { tipo: 'pendente'; pagamento: PagamentoNuvem }
@@ -44,7 +48,7 @@ const FORMAS: { forma: Forma; icone: typeof QrCode; texto: string }[] = [
   { forma: 'boleto', icone: Barcode, texto: 'Vence em 3 dias úteis. Libera quando o banco confirmar.' },
 ]
 
-type Fim = { tipo: 'assinatura'; assinatura: Assinatura | null } | { tipo: 'pedido' } | { tipo: 'pix'; pagamento: string; cobranca: Cobranca }
+type Fim = { tipo: 'assinatura'; assinatura: Assinatura | null } | { tipo: 'pedido' } | { tipo: 'renovacao' } | { tipo: 'pix'; pagamento: string; cobranca: Cobranca }
 
 /** Resumo do pedido e forma de pagamento. Com o Mercado Pago ligado gera o Pix ou abre a página dele; sem, só registra o pedido. */
 export function Pagamento({ pedido, onVoltar, onPronto, textoPronto = 'Ver meus planos' }: Props) {
@@ -61,10 +65,18 @@ export function Pagamento({ pedido, onVoltar, onPronto, textoPronto = 'Ver meus 
     if (perfil) minhasAssinaturas(perfil.id).then((a) => setJaPagou(a.some((x) => x.valor > 0)))
   }, [perfil])
 
-  const valor = pedido.tipo === 'assinatura' ? precoDo(pedido.plano, pedido.ciclo) : pedido.tipo === 'avaliacao' ? pedido.servico.preco : pedido.pagamento.valor
+  const valor =
+    pedido.tipo === 'assinatura' || pedido.tipo === 'renovacao' ? precoDo(pedido.plano, pedido.ciclo) : pedido.tipo === 'avaliacao' ? pedido.servico.preco : pedido.pagamento.valor
   const gratis = valor === 0
   const comTeste = pedido.tipo === 'assinatura' && !gratis && config.dias_gratis > 0 && !jaPagou
-  const titulo = pedido.tipo === 'assinatura' ? `Plano ${pedido.plano.nome}` : pedido.tipo === 'avaliacao' ? pedido.servico.nome : pedido.pagamento.descricao
+  const titulo =
+    pedido.tipo === 'assinatura'
+      ? `Plano ${pedido.plano.nome}`
+      : pedido.tipo === 'renovacao'
+        ? `Renovação do ${pedido.plano.nome}`
+        : pedido.tipo === 'avaliacao'
+          ? pedido.servico.nome
+          : pedido.pagamento.descricao
   const mercadoPago = config.gateway === 'mercadopago'
 
   /** Leva ao Pix ou à página do Mercado Pago. Devolve false se deu erro. */
@@ -85,6 +97,10 @@ export function Pagamento({ pedido, onVoltar, onPronto, textoPronto = 'Ver meus 
     setErro(null)
     if (pedido.tipo === 'pendente') {
       await pagarAgora(pedido.pagamento.id)
+    } else if (pedido.tipo === 'renovacao') {
+      const { id, erro: e } = await renovarPlano(forma)
+      if (e || !id) setErro(e)
+      else if (!mercadoPago || !(await pagarAgora(id))) setFim({ tipo: 'renovacao' })
     } else if (pedido.tipo === 'assinatura') {
       const e = await escolherPlano(pedido.plano.id, pedido.ciclo, forma)
       if (e) setErro(e)
@@ -124,6 +140,7 @@ export function Pagamento({ pedido, onVoltar, onPronto, textoPronto = 'Ver meus 
         <span className="dica-sec">Você está contratando</span>
         <h2>{titulo}</h2>
         {pedido.tipo === 'assinatura' && !gratis && <p className="dica-sec">Cobrança {pedido.ciclo === 'anual' ? 'anual' : 'mensal'} · cancele quando quiser</p>}
+        {pedido.tipo === 'renovacao' && <p className="dica-sec">Mais {pedido.ciclo === 'anual' ? '1 ano' : '1 mês'}, contado a partir do fim do plano atual. Você não perde nenhum dia.</p>}
         {pedido.tipo === 'avaliacao' && pedido.servico.descricao && <p className="dica-sec">{pedido.servico.descricao}</p>}
         <div className="linha-total">
           <span>Hoje</span>
@@ -131,7 +148,7 @@ export function Pagamento({ pedido, onVoltar, onPronto, textoPronto = 'Ver meus 
         </div>
         {comTeste && (
           <p className="dica-sec">
-            {config.dias_gratis} dias grátis. Depois, {emReais(valor)} por {pedido.ciclo === 'anual' ? 'ano' : 'mês'}. Avisamos antes da primeira cobrança.
+            {config.dias_gratis} dias grátis. Depois, {emReais(valor)} por {pedido.ciclo === 'anual' ? 'ano' : 'mês'}. Avisamos 3 dias antes de acabar, no app e por e-mail.
           </p>
         )}
       </section>
@@ -173,7 +190,10 @@ function PagarPix({ titulo, valor, pagamento, cobranca, textoPronto, onPronto }:
   useEffect(() => {
     if (pago) return
     const vez = setInterval(async () => {
-      if ((await lerPagamento(pagamento))?.situacao === 'pago') setPago(true)
+      if ((await lerPagamento(pagamento))?.situacao === 'pago') {
+        setPago(true)
+        recarregarDireitos()
+      }
     }, 5000)
     return () => clearInterval(vez)
   }, [pagamento, pago])
@@ -223,9 +243,16 @@ function PagarPix({ titulo, valor, pagamento, cobranca, textoPronto, onPronto }:
 }
 
 function Pronto({ fim, titulo, mercadoPago, textoPronto, onPronto }: { fim: Exclude<Fim, { tipo: 'pix' }>; titulo: string; mercadoPago: boolean; textoPronto: string; onPronto: () => void }) {
+  useEffect(() => {
+    recarregarDireitos()
+  }, [])
   let texto: string
   const a = fim.tipo === 'assinatura' ? fim.assinatura : null
-  if (fim.tipo === 'pedido')
+  if (fim.tipo === 'renovacao')
+    texto = mercadoPago
+      ? 'Pedido de renovação registrado. Assim que o pagamento cair, o plano ganha mais um período. Dá para pagar em Planos → Meus pagamentos.'
+      : 'Pedido de renovação registrado. O administrador confirma o pagamento e o plano ganha mais um período.'
+  else if (fim.tipo === 'pedido')
     texto = mercadoPago
       ? 'Pedido registrado. Assim que o pagamento for confirmado, ele aparece para o seu personal.'
       : 'Pedido registrado. O pagamento pelo app ainda vai ser ligado: combine com o seu personal e ele marca a avaliação.'
