@@ -11,7 +11,7 @@ import { MeuCorpoCartao } from '../corpo/MeuCorpoCartao'
 import { PainelEvolucao } from './PainelEvolucao'
 import { CentralInteligencia } from '../plano/CentralInteligencia'
 import { EditorTreinos } from '../treino/EditorTreinos'
-import { TelaRotinas } from '../treino/Rotinas'
+import { TelaRotinas, type Vista } from '../treino/Rotinas'
 
 type Props = {
   /** Null quando o aluno entrou sozinho no app e ainda não tem ficha de um profissional. */
@@ -38,6 +38,7 @@ export function FichaAluno({ ficha, meuId, podeEditar, nome, textoVoltar, onVolt
   const [modo, setModo] = useState<Modo>('ver')
   const [aba, setAba] = useState<'analise' | 'evolucao' | 'treino'>('analise')
   const [dados, setDados] = useState(ficha)
+  const [abrirRotina, setAbrirRotina] = useState<Vista | undefined>()
 
   const carregar = useCallback(async () => {
     const r = await listarResultados(ficha ? { fichaId: ficha.id } : { alunoId: meuId })
@@ -78,6 +79,7 @@ export function FichaAluno({ ficha, meuId, podeEditar, nome, textoVoltar, onVolt
       <TelaRotinas
         ficha={dados}
         meuId={meuId}
+        abrir={abrirRotina}
         onVoltar={() => {
           setModo('ver')
           window.scrollTo(0, 0)
@@ -246,7 +248,15 @@ export function FichaAluno({ ficha, meuId, podeEditar, nome, textoVoltar, onVolt
             )}
           </div>
           {aba === 'treino' && podeEditar && dados ? (
-            <EditorTreinos ficha={dados} meuId={meuId} onAbrirRotinas={() => setModo('rotinas')} />
+            <EditorTreinos
+              ficha={dados}
+              meuId={meuId}
+              onAbrirRotinas={(v) => {
+                setAbrirRotina(v)
+                setModo('rotinas')
+                window.scrollTo(0, 0)
+              }}
+            />
           ) : aba === 'analise' ? (
             <CentralInteligencia resultados={resultados} nome={dados?.nome ?? nome} ficha={dados} podeEditar={podeEditar} onSalvo={carregar} />
           ) : (

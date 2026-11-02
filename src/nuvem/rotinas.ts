@@ -16,7 +16,7 @@ export type Rotina = RotinaBase & {
 export type DadosRotina = Pick<Rotina, 'nome' | 'inicio' | 'fim' | 'objetivo' | 'nivel' | 'icone'>
 
 /** Treino como o editor da rotina guarda: com id quando já existia. */
-export type TreinoRascunho = { id?: string; letra: string; nome: string; exercicios: ExercicioTreino[] }
+export type TreinoRascunho = { id?: string; letra: string; nome: string; foco?: string; exercicios: ExercicioTreino[] }
 
 export type Aerobico = {
   id: string
@@ -65,6 +65,7 @@ function limparDados(d: DadosRotina) {
  */
 export async function salvarRotina(fichaId: string, rotinaId: string | undefined, dados: DadosRotina, treinos: TreinoRascunho[]): Promise<{ id: string | null; erro: string | null }> {
   const linha = limparDados(dados)
+  if (treinos.length > 10) return { id: null, erro: 'No máximo 10 treinos (A a J) por rotina.' }
   const r = rotinaId
     ? await supabase.from('rotinas').update(linha).eq('id', rotinaId).select('id').single()
     : await supabase.from('rotinas').insert({ ...linha, ficha_id: fichaId }).select('id').single()
@@ -73,26 +74,50 @@ export async function salvarRotina(fichaId: string, rotinaId: string | undefined
   // Treino da divisão sem nenhum exercício não vai para o aluno.
   const validos = treinos.filter((t) => t.exercicios.some((e) => e.nome.trim()))
 
+  let antes: { id: string; letra: string }[] = []
   if (rotinaId) {
     const ficam = validos.filter((t) => t.id).map((t) => t.id!)
-    const { data: antes } = await supabase.from('treinos').select('id').eq('rotina_id', id)
-    const sair = ((antes ?? []) as { id: string }[]).map((t) => t.id).filter((x) => !ficam.includes(x))
+    const { data } = await supabase.from('treinos').select('id, letra').eq('rotina_id', id)
+    antes = (data ?? []) as { id: string; letra: string }[]
+    const sair = antes.map((t) => t.id).filter((x) => !ficam.includes(x))
     if (sair.length) {
       const { error } = await supabase.from('treinos').delete().in('id', sair)
       if (error) return { id, erro: erroAmigavel(error) }
     }
   }
 
-  for (const t of validos) {
-    const dadosTreino = {
-      ficha_id: fichaId,
-      rotina_id: id,
-      letra: t.letra,
-      nome: t.nome.trim().slice(0, 60),
-      exercicios: t.exercicios.filter((e) => e.nome.trim()).map(limparExercicio),
-      atualizado_em: new Date().toISOString(),
+  const conteudo = (t: TreinoRascunho, comFoco: boolean) => ({
+    nome: t.nome.trim().slice(0, 60),
+    ...(comFoco ? { foco: (t.foco ?? '').trim().slice(0, 80) } : {}),
+    exercicios: t.exercicios.filter((e) => e.nome.trim()).map(limparExercicio),
+    atualizado_em: new Date().toISOString(),
+  })
+  // Banco sem o SQL do gerenciamento: guarda sem o foco.
+  let comFoco = true
+  async function gravar(t: TreinoRascunho, fazer: (dados: ReturnType<typeof conteudo>) => PromiseLike<{ error: { message: string } | null }>) {
+    let { error } = await fazer(conteudo(t, comFoco))
+    if (error && comFoco && /foco|column|schema cache/i.test(error.message)) {
+      comFoco = false
+      ;({ error } = await fazer(conteudo(t, false)))
     }
-    const { error } = t.id ? await supabase.from('treinos').update(dadosTreino).eq('id', t.id) : await supabase.from('treinos').insert(dadosTreino)
+    return error
+  }
+
+  // 1. Treinos que já existiam: conteúdo novo, mesma letra por enquanto.
+  for (const t of validos.filter((x) => x.id)) {
+    const error = await gravar(t, (d) => supabase.from('treinos').update(d).eq('id', t.id!))
+    if (error) return { id, erro: erroAmigavel(error) }
+  }
+  // 2. Ordem nova: as letras trocam de lugar numa operação só, e o histórico de cada treino vai junto.
+  const mudou = validos.filter((t) => t.id && antes.find((a) => a.id === t.id)?.letra !== t.letra)
+  if (mudou.length) {
+    const ficam = validos.filter((t) => t.id)
+    const { error } = await supabase.rpc('ordenar_treinos', { rotina: id, ids: ficam.map((t) => t.id), letras: ficam.map((t) => t.letra) })
+    if (error) return { id, erro: /function|schema cache|não existe|does not exist/i.test(error.message) ? 'Para mudar a ordem dos treinos, falta rodar no Supabase o arquivo gerenciamento-de-treinos.sql. O resto foi guardado.' : erroAmigavel(error) }
+  }
+  // 3. Treinos novos.
+  for (const t of validos.filter((x) => !x.id)) {
+    const error = await gravar(t, (d) => supabase.from('treinos').insert({ ...d, ficha_id: fichaId, rotina_id: id, letra: t.letra }))
     if (error) return { id, erro: erroAmigavel(error) }
   }
   return { id, erro: null }
@@ -135,4 +160,11 @@ export async function fotoDoAluno(alunoId: string | null): Promise<string> {
   if (!alunoId) return ''
   const { data } = await supabase.from('perfis').select('foto_url').eq('id', alunoId).maybeSingle()
   return (data as { foto_url?: string } | null)?.foto_url ?? ''
+}
+
+/** Nova ordem dos treinos da rotina (A, B, C... na ordem da lista). O histórico vai junto com cada treino. */
+export async function ordenarTreinos(rotinaId: string, treinos: { id: string }[]) {
+  const { error } = await supabase.rpc('ordenar_treinos', { rotina: rotinaId, ids: treinos.map((t) => t.id), letras: treinos.map((_, i) => 'ABCDEFGHIJ'[i]) })
+  if (error && /function|schema cache|não existe|does not exist/i.test(error.message)) return 'Para mudar a ordem dos treinos, falta rodar no Supabase o arquivo gerenciamento-de-treinos.sql.'
+  return error ? erroAmigavel(error) : null
 }

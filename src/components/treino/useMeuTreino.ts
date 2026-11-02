@@ -82,7 +82,7 @@ export function useMeuTreino(perfil: Perfil | null) {
     async function buscar() {
       const f = perfil?.papel === 'aluno' ? await minhaFicha(perfil.id) : null
       const [t, fe, m, ae] = f
-        ? await Promise.all([treinosDaRotina(f.id), listarFeitos(f.id), listarResultados({ fichaId: f.id, tipo: 'medidas' }), listarAerobicos(f.id)])
+        ? await Promise.all([treinosDaRotina(f.id), listarFeitos(f.id, 365), listarResultados({ fichaId: f.id, tipo: 'medidas' }), listarAerobicos(f.id)])
         : [{ treinos: [] as Treino[], rotina: null }, [] as TreinoFeito[], { lista: [] as ResultadoNuvem[] }, { lista: [] as Aerobico[] }]
       if (!vivo) return
       setFicha(f)

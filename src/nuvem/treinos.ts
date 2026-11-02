@@ -2,6 +2,7 @@ import { supabase } from './cliente'
 import { erroAmigavel } from './conta'
 import type { Ficha } from './fichas'
 import { limparLinha, linhasDe, linhaVazia, linhaVaziaDe, type LinhaSerie } from '../treino/linhas'
+import { intensidadeDoEsforco, limparCargas, type CargaExercicio, type Execucao, type Feedback } from '../treino/execucao'
 
 /**
  * Um exercício da ficha de treino, como o personal escreveu. Os treinos novos
@@ -17,6 +18,8 @@ export type Treino = {
   rotina_id?: string
   letra: string
   nome: string
+  /** Grupos musculares ou objetivo do treino ("Peito, Tríceps"). Vazio antes do SQL do gerenciamento. */
+  foco?: string
   exercicios: ExercicioTreino[]
   atualizado_em: string
 }
@@ -24,7 +27,7 @@ export type Treino = {
 /** O que o aluno conta ao terminar o treino. */
 export type Retorno = { inicio: string; fim: string; intensidade: string; comentario: string }
 
-export type TreinoFeito = { id: string; ficha_id: string; treino_id: string | null; letra: string; feito_em: string } & Partial<Retorno>
+export type TreinoFeito = Execucao & { ficha_id: string }
 
 export const INTENSIDADES = ['Muito leve', 'Leve', 'Moderada', 'Intensa', 'Muito intensa'] as const
 
@@ -68,14 +71,62 @@ export async function listarFeitos(fichaId: string, dias = 45): Promise<TreinoFe
   return (data ?? []) as TreinoFeito[]
 }
 
-/** Guarda o treino concluído com início, fim, intensidade e comentário do aluno. */
-export async function marcarFeito(meuId: string, t: Treino, retorno?: Retorno) {
+/** Colunas que só existem depois do SQL do gerenciamento de treinos. */
+const semColuna = (msg: string) => /column|coluna|schema cache/i.test(msg)
+
+/** Feedback pronto para o banco: a intensidade antiga sai do esforço, para o Retorno dos treinos continuar valendo. */
+function linhaFeedback(f: Feedback) {
+  return {
+    dificuldade: f.dificuldade,
+    esforco: f.esforco,
+    dor: f.dor,
+    dor_local: f.dor ? f.dor_local.slice(0, 120) : '',
+    dor_nivel: f.dor ? f.dor_nivel : null,
+    comentario: f.comentario.trim().slice(0, 500),
+    ...(f.esforco !== null ? { intensidade: intensidadeDoEsforco(f.esforco) } : {}),
+    avaliado_em: new Date().toISOString(),
+  }
+}
+
+/**
+ * Guarda o treino concluído: início, fim, cargas anotadas e o feedback do
+ * aluno. Banco sem as colunas novas: guarda o que der (retorno antigo ou só o
+ * treino feito).
+ */
+export async function marcarFeito(meuId: string, t: Treino, retorno?: Retorno, extra?: { cargas?: CargaExercicio[]; feedback?: Feedback }) {
   const base = { ficha_id: t.ficha_id, treino_id: t.id, letra: t.letra, feito_por: meuId }
-  const extra = retorno ? { inicio: retorno.inicio, fim: retorno.fim, intensidade: retorno.intensidade.slice(0, 30), comentario: retorno.comentario.trim().slice(0, 500) } : {}
-  let { error } = await supabase.from('treinos_feitos').insert({ ...base, ...extra })
+  const antigo = retorno ? { inicio: retorno.inicio, fim: retorno.fim, intensidade: retorno.intensidade.slice(0, 30), comentario: retorno.comentario.trim().slice(0, 500) } : {}
+  const novo = { ...(extra?.cargas ? { cargas: limparCargas(extra.cargas) } : {}), ...(extra?.feedback ? linhaFeedback(extra.feedback) : {}) }
+  let { error } = await supabase.from('treinos_feitos').insert({ ...base, ...antigo, ...novo })
+  if (error && Object.keys(novo).length && semColuna(error.message)) ({ error } = await supabase.from('treinos_feitos').insert({ ...base, ...antigo, ...(novo.intensidade ? { intensidade: novo.intensidade } : {}), ...('comentario' in novo ? { comentario: novo.comentario } : {}) }))
   // Banco ainda sem as colunas do retorno: guarda pelo menos o treino feito.
-  if (error && retorno && /column|coluna|schema cache/i.test(error.message)) ({ error } = await supabase.from('treinos_feitos').insert(base))
+  if (error && retorno && semColuna(error.message)) ({ error } = await supabase.from('treinos_feitos').insert(base))
   return error ? erroAmigavel(error) : null
+}
+
+/** O aluno avalia depois um treino que já concluiu (botão Avaliar). */
+export async function avaliarTreino(id: string, f: Feedback) {
+  const { error } = await supabase.from('treinos_feitos').update(linhaFeedback(f)).eq('id', id)
+  if (error && semColuna(error.message)) return 'Falta rodar no Supabase o arquivo gerenciamento-de-treinos.sql para guardar a avaliação.'
+  return error ? erroAmigavel(error) : null
+}
+
+/** Observação do personal sobre um treino feito (o aluno também vê). */
+export async function anotarObservacao(id: string, texto: string) {
+  const t = texto.trim().slice(0, 500)
+  const { error } = await supabase
+    .from('treinos_feitos')
+    .update({ obs_personal: t, obs_personal_em: t ? new Date().toISOString() : null })
+    .eq('id', id)
+  if (error && semColuna(error.message)) return 'Falta rodar no Supabase o arquivo gerenciamento-de-treinos.sql para guardar a observação.'
+  return error ? erroAmigavel(error) : null
+}
+
+/** Todas as vezes que estes treinos foram feitos (histórico da rotina), mais novas primeiro. */
+export async function listarFeitosDosTreinos(ids: string[]): Promise<TreinoFeito[]> {
+  if (!ids.length) return []
+  const { data } = await supabase.from('treinos_feitos').select('*').in('treino_id', ids).order('feito_em', { ascending: false }).limit(1000)
+  return (data ?? []) as TreinoFeito[]
 }
 
 /** Meta de treinos por semana na ficha. Null volta ao padrão (número de treinos). */
