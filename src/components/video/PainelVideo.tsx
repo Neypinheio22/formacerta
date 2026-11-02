@@ -1,7 +1,7 @@
-import { Video, VideoOff } from 'lucide-react'
+import { Users, Video, VideoOff } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { emReais, listarCatalogo, listarServicos } from '../../nuvem/planos'
-import { aceitouTermoVideo, disponivelAte, ficarDisponivel, lerRegrasVideo, minhasChamadas, resumoGanhos, REGRAS_PADRAO, type Chamada, type RegrasVideo } from '../../nuvem/video'
+import { aceitouTermoVideo, disponibilidade, ficarDisponivel, VAGAS_MAXIMO, lerRegrasVideo, minhasChamadas, resumoGanhos, REGRAS_PADRAO, type Chamada, type RegrasVideo } from '../../nuvem/video'
 import { TermoVideo } from './TermoVideo'
 
 const TEMPOS = [
@@ -26,17 +26,19 @@ export function PainelVideo({ meuId, curto = false, onMudou }: Props) {
   const [aceito, setAceito] = useState<boolean | null>(null)
   const [temServico, setTemServico] = useState(false)
   const [ate, setAte] = useState<Date | null>(null)
+  const [vagas, setVagas] = useState(1)
   const [chamadas, setChamadas] = useState<Chamada[]>([])
   const [termo, setTermo] = useState(false)
   const [mudando, setMudando] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
 
   const carregar = useCallback(async () => {
-    const [r, a, d, c, s, cat] = await Promise.all([lerRegrasVideo(), aceitouTermoVideo(meuId), disponivelAte(meuId), minhasChamadas(), listarServicos(), listarCatalogo()])
+    const [r, a, d, c, s, cat] = await Promise.all([lerRegrasVideo(), aceitouTermoVideo(meuId), disponibilidade(meuId), minhasChamadas(), listarServicos(), listarCatalogo()])
     const deVideo = new Set(cat.filter((i) => i.grupo === 'video').map((i) => i.id))
     setRegras(r)
     setAceito(a)
-    setAte(d)
+    setAte(d?.ate ?? null)
+    if (d) setVagas(d.vagas)
     setChamadas(c.filter((x) => x.profissional_id === meuId))
     setTemServico(s.some((x) => x.profissional_id === meuId && x.ativo && !!x.catalogo_id && deVideo.has(x.catalogo_id)))
   }, [meuId])
@@ -50,14 +52,36 @@ export function PainelVideo({ meuId, curto = false, onMudou }: Props) {
   // Sem o SQL novo, nada aparece.
   if (aceito === null) return null
 
-  async function mudar(minutos: number) {
+  async function mudar(minutos: number, nVagas = vagas) {
     setMudando(true)
     setErro(null)
-    const r = await ficarDisponivel(minutos)
+    const r = await ficarDisponivel(minutos, nVagas)
     setMudando(false)
     if (r.erro) return setErro(r.erro)
     setAte(r.ate)
   }
+
+  /** Muda quantos alunos ao mesmo tempo. Já disponível: grava na hora, mantendo o horário. */
+  function escolherVagas(n: number) {
+    setVagas(n)
+    if (ate) mudar(Math.max(1, Math.round((ate.getTime() - Date.now()) / 60000)), n)
+  }
+
+  const seletorVagas = (
+    <div className="vagas-video">
+      <span className="dica-sec">
+        <Users size={14} /> Alunos ao mesmo tempo na sua sala
+      </span>
+      <div className="escolha">
+        {Array.from({ length: VAGAS_MAXIMO }, (_, i) => i + 1).map((n) => (
+          <button key={n} className={vagas === n ? 'ativo' : ''} disabled={mudando} onClick={() => escolherVagas(n)}>
+            {n}
+          </button>
+        ))}
+      </div>
+      <span className="dica-sec">{vagas === 1 ? 'Um aluno por vez.' : `Até ${vagas} alunos juntos, cada um no seu quadro. Cada aluno paga a chamada dele e cada chamada tem a taxa de ${emReais(regras.taxa_video)}.`}</span>
+    </div>
+  )
 
   const ganhos = resumoGanhos(chamadas)
   const creditos = chamadas.filter((c) => c.situacao === 'credito').length
@@ -98,6 +122,7 @@ export function PainelVideo({ meuId, curto = false, onMudou }: Props) {
             <span className="ponto-vivo" /> Disponível para vídeo até {hora(ate)}
           </p>
           <p className="dica-sec">Deixe o app aberto. Quando um aluno chamar, o celular toca e você tem 2 minutos para atender.</p>
+          {seletorVagas}
           <button className="botao-sec" disabled={mudando} onClick={() => mudar(0)}>
             <VideoOff size={16} /> Ficar indisponível
           </button>
@@ -105,6 +130,7 @@ export function PainelVideo({ meuId, curto = false, onMudou }: Props) {
       ) : (
         <>
           <p className="dica-sec">Fique disponível e os alunos que compraram chamada podem ligar para você agora.</p>
+          {seletorVagas}
           <div className="acoes-linha">
             {TEMPOS.map((t) => (
               <button key={t.min} className="botao-sec" disabled={mudando} onClick={() => mudar(t.min)}>
