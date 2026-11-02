@@ -2,8 +2,9 @@ import { EyeOff, Handshake, Lock, Send, ShoppingBag, Sparkles, X } from 'lucide-
 import { useEffect, useRef, useState } from 'react'
 import type { Perfil } from '../../nuvem/conta'
 import { MENSAGEM_MAXIMO, enviarMensagem, lerBloqueio, lerMensagens, marcarLida, outroLado, quando, temContato, type BloqueioChat, type Conversa as ConversaNuvem, type Mensagem } from '../../nuvem/chat'
-import { precoServico, listarServicos, type Servico } from '../../nuvem/planos'
+import { listarCatalogo, precoServico, listarServicos, type Servico } from '../../nuvem/planos'
 import { usePlanosLiberados } from '../planos/usePlanosLiberados'
+import { CartaoVideoAluno } from '../video/CartaoVideoAluno'
 
 type Props = {
   perfil: Perfil
@@ -45,6 +46,7 @@ export function Conversa({ perfil, conversa, onVoltar, onPagar }: Props) {
   const [erro, setErro] = useState<string | null>(null)
   const [painel, setPainel] = useState(false)
   const [escolheu, setEscolheu] = useState(false)
+  const [deVideo, setDeVideo] = useState<Set<string>>(new Set())
   const fim = useRef<HTMLDivElement>(null)
   const contratacaoLiberada = usePlanosLiberados(perfil)
 
@@ -66,6 +68,7 @@ export function Conversa({ perfil, conversa, onVoltar, onPagar }: Props) {
     ler()
     listarServicos().then((s) => vivo && setServicos(s))
     lerBloqueio().then((b) => vivo && setBloqueio(b))
+    listarCatalogo().then((c) => vivo && setDeVideo(new Set(c.filter((i) => i.grupo === 'video').map((i) => i.id))))
     const vez = setInterval(ler, 4000)
     return () => {
       vivo = false
@@ -121,6 +124,17 @@ export function Conversa({ perfil, conversa, onVoltar, onPagar }: Props) {
         <p className="mensagem aviso chat-aviso">
           <Lock size={14} /> {avisoBloqueio}
         </p>
+      )}
+
+      {souAluno && (
+        <CartaoVideoAluno
+          meuId={perfil.id}
+          profissionalId={conversa.profissional_id}
+          nomePersonal={outro.nome}
+          servicos={aVenda.filter((s) => !!s.catalogo_id && deVideo.has(s.catalogo_id))}
+          contratacaoLiberada={contratacaoLiberada}
+          onPagar={onPagar}
+        />
       )}
 
       {souPersonal && contratacaoLiberada && (
