@@ -1,5 +1,6 @@
 import { LineChart, UserPlus } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { linkWhatsApp, telefoneValido } from '../../compartilhar/whatsapp'
 import { criarFicha, fichaVazia, listarFichas, type Ficha } from '../../nuvem/fichas'
 import { listarResultados, type ResultadoNuvem } from '../../nuvem/resultados'
 import { dataCurta } from '../../testes/formato'
@@ -92,21 +93,52 @@ export function MeusAlunos({ onVoltar, meuId }: { onVoltar: () => void; meuId: s
         const dele = resultados.filter((r) => r.ficha_id === f.id)
         const ultima = dele[0]
         return (
-          <button className="cartao pessoa sem-botao" key={f.id} onClick={() => setAberta(f)}>
-            <div className="pessoa-topo">
-              <div>
-                <h3>{f.nome}</h3>
-                <p className="dica-sec">
-                  {dele.length === 0 ? 'Nenhuma avaliação guardada' : `${dele.length} ${dele.length === 1 ? 'avaliação' : 'avaliações'} · última em ${dataCurta(ultima.feito_em)}`}
-                </p>
-              </div>
-              <span className="chip chip-ok">
+          <div className="cartao pessoa sem-botao aluno-cartao" key={f.id}>
+            <button className="sem-botao aluno-abrir" onClick={() => setAberta(f)}>
+              <h3>{f.nome}</h3>
+              <p className="dica-sec">
+                {dele.length === 0 ? 'Nenhuma avaliação guardada' : `${dele.length} ${dele.length === 1 ? 'avaliação' : 'avaliações'} · última em ${dataCurta(ultima.feito_em)}`}
+              </p>
+            </button>
+            <div className="aluno-acoes">
+              {telefoneValido(f.telefone ?? '') ? (
+                <a
+                  className="whats-redondo"
+                  href={linkWhatsApp(`Olá, ${f.nome.trim().split(/\s+/)[0]}! Tudo bem?`, f.telefone)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title={`Mandar mensagem no WhatsApp para ${f.nome}`}
+                  aria-label={`Mandar mensagem no WhatsApp para ${f.nome}`}
+                >
+                  <IconeWhatsApp />
+                </a>
+              ) : (
+                <button
+                  className="whats-redondo sem-numero"
+                  onClick={() => setAberta(f)}
+                  title="Sem WhatsApp na ficha. Toque para abrir a ficha e colocar o número."
+                  aria-label={`${f.nome} sem WhatsApp na ficha`}
+                >
+                  <IconeWhatsApp />
+                </button>
+              )}
+              <button className="chip chip-ok" onClick={() => setAberta(f)}>
                 <LineChart size={12} /> Evolução
-              </span>
+              </button>
             </div>
-          </button>
+          </div>
         )
       })}
     </div>
+  )
+}
+
+/** Logo do WhatsApp (balão com telefone). */
+function IconeWhatsApp() {
+  return (
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true">
+      <path d="M17.47 14.38c-.3-.15-1.75-.86-2.02-.96-.27-.1-.47-.15-.66.15-.2.3-.76.96-.93 1.16-.17.2-.34.22-.64.07-.3-.15-1.25-.46-2.38-1.47-.88-.79-1.47-1.76-1.65-2.06-.17-.3-.02-.46.13-.6.13-.14.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.03-.52-.07-.15-.66-1.6-.91-2.19-.24-.58-.48-.5-.66-.5h-.57c-.2 0-.52.07-.79.37-.27.3-1.04 1.02-1.04 2.48s1.07 2.88 1.21 3.08c.15.2 2.1 3.2 5.08 4.49.71.31 1.26.49 1.7.63.71.23 1.36.2 1.87.12.57-.09 1.75-.72 2-1.41.25-.69.25-1.29.17-1.41-.07-.12-.27-.2-.57-.35z" />
+      <path d="M12.04 2C6.5 2 2 6.48 2 12c0 1.77.47 3.5 1.36 5.02L2 22l5.12-1.34A10.04 10.04 0 0 0 12.04 22C17.58 22 22 17.52 22 12S17.58 2 12.04 2zm0 18.2c-1.6 0-3.17-.43-4.54-1.24l-.33-.2-3.04.8.81-2.96-.21-.34A8.15 8.15 0 0 1 3.84 12c0-4.53 3.68-8.2 8.2-8.2 4.52 0 8.16 3.67 8.16 8.2 0 4.52-3.64 8.2-8.16 8.2z" />
+    </svg>
   )
 }
