@@ -16,6 +16,8 @@ export type Ligacao = {
   virarCamera: () => Promise<void>
   ligarMicrofone: (ligado: boolean) => void
   ligarCamera: (ligada: boolean) => void
+  /** Troca a imagem enviada (câmera virada na sala com vários alunos). */
+  trocarVideo: (trilha: MediaStreamTrack) => Promise<void>
   fechar: () => void
 }
 
@@ -33,26 +35,36 @@ const HOST = import.meta.env.VITE_PEERJS_HOST as string | undefined
 const opcoesPeer = () =>
   HOST ? { host: HOST, port: Number(import.meta.env.VITE_PEERJS_PORT ?? 443), path: (import.meta.env.VITE_PEERJS_PATH as string | undefined) ?? '/', secure: import.meta.env.VITE_PEERJS_SECURE !== 'false' } : {}
 
-async function abrirCamera(frente: boolean) {
+export async function abrirCamera(frente: boolean) {
   return navigator.mediaDevices.getUserMedia({
     audio: { echoCancellation: true, noiseSuppression: true },
     video: { facingMode: frente ? 'user' : 'environment', width: { ideal: 640 }, height: { ideal: 480 } },
   })
 }
 
-/** sinal: a tela fechou antes de conectar (desiste e libera a câmera). */
-export async function iniciarLigacao(chamada: string, lado: Lado, ev: Eventos, sinal?: AbortSignal): Promise<Ligacao> {
+/** Só uma câmera nova com a câmera da frente ou de trás. */
+export const novaTrilhaVideo = async (frente: boolean) =>
+  (await navigator.mediaDevices.getUserMedia({ video: { facingMode: frente ? 'user' : 'environment', width: { ideal: 640 }, height: { ideal: 480 } } })).getVideoTracks()[0]
+
+/**
+ * sinal: a tela fechou antes de conectar (desiste e libera a câmera).
+ * externo: câmera já aberta e dividida entre várias ligações (sala do personal); fica aberta ao fechar.
+ */
+export async function iniciarLigacao(chamada: string, lado: Lado, ev: Eventos, sinal?: AbortSignal, externo?: MediaStream): Promise<Ligacao> {
   ev.aoEstado('abrindo-camera')
   let frente = true
   let local: MediaStream
   try {
-    local = await abrirCamera(frente)
+    local = externo ?? (await abrirCamera(frente))
   } catch {
     ev.aoEstado('erro', 'Libere a câmera e o microfone para o FormaCerta nas configurações do navegador.')
     throw new Error('sem-camera')
   }
+  const pararCamera = () => {
+    if (!externo) local.getTracks().forEach((t) => t.stop())
+  }
   const desistir = () => {
-    local.getTracks().forEach((t) => t.stop())
+    pararCamera()
     return new Error('cancelada')
   }
   if (sinal?.aborted) throw desistir()
@@ -133,7 +145,7 @@ export async function iniciarLigacao(chamada: string, lado: Lado, ev: Eventos, s
     throw desistir()
   }
   if (!peer) {
-    local.getTracks().forEach((t) => t.stop())
+    pararCamera()
     ev.aoEstado('erro', 'Não deu para conectar. Confira a internet e tente de novo.')
     throw new Error('sem-conexao')
   }
@@ -141,16 +153,19 @@ export async function iniciarLigacao(chamada: string, lado: Lado, ev: Eventos, s
 
   return {
     local,
+    async trocarVideo(trilha) {
+      const envio = atual?.peerConnection?.getSenders().find((s) => s.track?.kind === 'video')
+      await envio?.replaceTrack(trilha)
+    },
     async virarCamera() {
       frente = !frente
-      let nova: MediaStream
+      let trilha: MediaStreamTrack
       try {
-        nova = await navigator.mediaDevices.getUserMedia({ video: { facingMode: frente ? 'user' : 'environment', width: { ideal: 640 }, height: { ideal: 480 } } })
+        trilha = await novaTrilhaVideo(frente)
       } catch {
         frente = !frente
         return
       }
-      const trilha = nova.getVideoTracks()[0]
       const velha = local.getVideoTracks()[0]
       trilha.enabled = velha?.enabled ?? true
       const envio = atual?.peerConnection?.getSenders().find((s) => s.track?.kind === 'video')
@@ -168,7 +183,7 @@ export async function iniciarLigacao(chamada: string, lado: Lado, ev: Eventos, s
       clearTimeout(tentativa)
       atual?.close()
       peer?.destroy()
-      local.getTracks().forEach((t) => t.stop())
+      pararCamera()
     },
   }
 }

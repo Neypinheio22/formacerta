@@ -6973,3 +6973,174 @@ p.selo-aluno {
 .estrelas button.acesa svg {
   fill: currentColor;
 }
+
+/* ---------- Sala de treino (vários alunos) ---------- */
+.vagas-video {
+  display: grid;
+  gap: 6px;
+  margin: 10px 0;
+}
+.vagas-video .escolha button {
+  min-width: 44px;
+}
+.sala-tela {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  background: #000;
+  display: flex;
+  flex-direction: column;
+  padding: 10px 10px calc(96px + env(safe-area-inset-bottom));
+  gap: 8px;
+  overflow-y: auto;
+}
+.sala-topo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #fff;
+}
+.sala-topo strong {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.sala-chegando {
+  background: rgba(54, 242, 148, 0.12);
+  border: 1px solid var(--verde);
+  border-radius: 14px;
+  padding: 10px 12px;
+  display: grid;
+  gap: 8px;
+  color: #fff;
+  font-size: 0.9rem;
+}
+.sala-chegando .botao,
+.sala-chegando .botao-sec {
+  padding: 8px 14px;
+}
+.sala-grade {
+  flex: 1;
+  display: grid;
+  gap: 6px;
+  grid-template-columns: 1fr;
+  grid-auto-rows: 1fr;
+  min-height: 0;
+}
+.sala-grade.n-3,
+.sala-grade.n-4,
+.sala-grade.n-5 {
+  grid-template-columns: 1fr 1fr;
+}
+.sala-grade.n-3 .sala-quadro:first-child,
+.sala-grade.n-5 .sala-quadro:first-child {
+  grid-column: span 2;
+}
+.com-foco .sala-grade {
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: 3fr 1fr;
+}
+.com-foco .sala-grade .sala-quadro:not(.foco),
+.com-foco .sala-grade.n-3 .sala-quadro:first-child:not(.foco),
+.com-foco .sala-grade.n-5 .sala-quadro:first-child:not(.foco) {
+  grid-column: auto;
+  min-height: 0;
+}
+.com-foco .sala-quadro:not(.foco) .sala-quadro-topo {
+  font-size: 0.7rem;
+  padding: 4px;
+}
+.com-foco .sala-quadro:not(.foco) .sala-quadro-botoes {
+  display: none;
+}
+.com-foco .sala-quadro:not(.foco) .chamada-tempo {
+  display: none;
+}
+.com-foco .sala-grade.x {
+  grid-template-rows: 3fr 1fr;
+  grid-auto-rows: 1fr;
+}
+.com-foco .sala-grade .sala-quadro {
+  grid-column: auto;
+}
+.com-foco .sala-grade .sala-quadro.foco {
+  grid-column: 1 / -1;
+  grid-row: 1;
+}
+.sala-quadro {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #0a1622;
+  min-height: 120px;
+  border: 2px solid transparent;
+}
+.sala-quadro.foco {
+  border-color: var(--verde);
+}
+.sala-quadro video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.sala-quadro-topo {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 8px;
+  color: #fff;
+  font-size: 0.85rem;
+  background: linear-gradient(rgba(0, 0, 0, 0.6), transparent);
+}
+.sala-quadro-estado {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #fff;
+  font-size: 0.8rem;
+  background: rgba(0, 0, 0, 0.6);
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+.sala-quadro-botoes {
+  position: absolute;
+  bottom: 6px;
+  right: 6px;
+  display: flex;
+  gap: 4px;
+}
+.sala-quadro-botoes button {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+.sala-quadro-botoes button.sair {
+  background: var(--vermelho);
+}
+.sala-topo-direita {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.sala-meu {
+  width: 54px;
+  height: 72px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 2px solid var(--verde);
+  background: #0a1622;
+}
+.sala-tela .chamada-botoes {
+  position: fixed;
+}

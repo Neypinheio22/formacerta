@@ -17,48 +17,8 @@ import {
   type RegrasVideo,
 } from '../../nuvem/video'
 import { iniciarLigacao, type EstadoLigacao, type Ligacao } from '../../video/ligacao'
-
-/** Toque de chamada simples, feito pelo próprio navegador. */
-function useToque(tocando: boolean) {
-  useEffect(() => {
-    if (!tocando) return
-    let ctx: AudioContext | null = null
-    try {
-      ctx = new AudioContext()
-    } catch {
-      ctx = null
-    }
-    const tocar = () => {
-      navigator.vibrate?.([400, 200, 400])
-      if (!ctx) return
-      for (const [i, f] of [880, 660].entries()) {
-        const o = ctx.createOscillator()
-        const g = ctx.createGain()
-        o.frequency.value = f
-        g.gain.value = 0.15
-        o.connect(g).connect(ctx.destination)
-        o.start(ctx.currentTime + i * 0.25)
-        o.stop(ctx.currentTime + i * 0.25 + 0.2)
-      }
-    }
-    tocar()
-    const vez = setInterval(tocar, 1800)
-    return () => {
-      clearInterval(vez)
-      ctx?.close()
-    }
-  }, [tocando])
-}
-
-function useAgora(ativo: boolean) {
-  const [agora, setAgora] = useState(() => Date.now())
-  useEffect(() => {
-    if (!ativo) return
-    const vez = setInterval(() => setAgora(Date.now()), 1000)
-    return () => clearInterval(vez)
-  }, [ativo])
-  return agora
-}
+import { SalaPersonal } from './SalaPersonal'
+import { useAgora, useToque } from './ganchos'
 
 const ROTULO_LIGACAO: Record<EstadoLigacao, string> = {
   'abrindo-camera': 'Abrindo a câmera…',
@@ -165,7 +125,7 @@ function TelaChamada({ chamada, souAluno, onFim }: { chamada: Chamada; souAluno:
   )
 }
 
-type Aviso = { tipo: 'nao-atendeu' | 'recusou' | 'nota' | 'fim-personal'; chamada: Chamada }
+type Aviso = { tipo: 'nao-atendeu' | 'recusou' | 'nota' | 'fim-sala'; chamada: Chamada; atendidas?: Chamada[] }
 
 /**
  * Fica por cima de qualquer tela: toca no celular do personal quando um aluno
@@ -173,6 +133,10 @@ type Aviso = { tipo: 'nao-atendeu' | 'recusou' | 'nota' | 'fim-personal'; chamad
  */
 export function CentralChamadas({ perfil }: { perfil: Perfil }) {
   const [ativa, setAtiva] = useState<Chamada | null>(null)
+  // Personal: alunos na sala agora e alunos chamando para entrar.
+  const [sala, setSala] = useState<Chamada[]>([])
+  const [fila, setFila] = useState<Chamada[]>([])
+  const naSala = useRef<string[]>([])
   const [aviso, setAviso] = useState<Aviso | null>(null)
   const [regras, setRegras] = useState<RegrasVideo>(REGRAS_PADRAO)
   const [erro, setErro] = useState<string | null>(null)
@@ -182,17 +146,29 @@ export function CentralChamadas({ perfil }: { perfil: Perfil }) {
 
   const ler = useCallback(async () => {
     const lista = await minhasChamadas()
-    const minhas = lista.filter((c) => c.aluno_id === perfil.id || c.profissional_id === perfil.id)
-    const agora = minhas.find((c) => c.situacao === 'em_andamento') ?? minhas.find((c) => c.situacao === 'chamando') ?? null
+    const comoAluno = lista.filter((c) => c.aluno_id === perfil.id)
+    const doPersonal = lista.filter((c) => c.profissional_id === perfil.id)
+    const salaAgora = doPersonal.filter((c) => c.situacao === 'em_andamento')
+    const filaAgora = doPersonal.filter((c) => c.situacao === 'chamando')
+    const agoraAluno = comoAluno.find((c) => c.situacao === 'em_andamento') ?? comoAluno.find((c) => c.situacao === 'chamando') ?? null
+    const agora = agoraAluno ?? (salaAgora.length ? null : (filaAgora[0] ?? null))
+    // A sala do personal fechou: mostra o resumo dos alunos atendidos.
+    if (naSala.current.length && !salaAgora.length) {
+      const atendidas = doPersonal.filter((c) => naSala.current.includes(c.id) && c.situacao === 'feita')
+      if (atendidas.length) setAviso({ tipo: 'fim-sala', chamada: atendidas[0], atendidas })
+    }
+    naSala.current = salaAgora.map((c) => c.id)
+    setSala(salaAgora)
+    setFila(filaAgora)
     const antes = anterior.current
     // A chamada que estava na tela mudou de situação.
-    if (antes && antes.id !== agora?.id) {
-      const nova = minhas.find((c) => c.id === antes.id)
-      if (antes.situacao === 'chamando' && nova?.situacao === 'credito' && aluno)
+    if (antes && antes.id !== agoraAluno?.id) {
+      const nova = comoAluno.find((c) => c.id === antes.id)
+      if (antes.situacao === 'chamando' && nova?.situacao === 'credito')
         setAviso({ tipo: segundosParaAtender(antes) > 3 ? 'recusou' : 'nao-atendeu', chamada: antes })
-      if (antes.situacao === 'em_andamento' && nova?.situacao === 'feita') setAviso({ tipo: aluno ? 'nota' : 'fim-personal', chamada: nova })
+      if (antes.situacao === 'em_andamento' && nova?.situacao === 'feita' && antes.aluno_id === perfil.id) setAviso({ tipo: 'nota', chamada: nova })
     }
-    anterior.current = agora
+    anterior.current = agoraAluno
     setAtiva(agora)
   }, [perfil.id, aluno])
 
@@ -203,23 +179,22 @@ export function CentralChamadas({ perfil }: { perfil: Perfil }) {
   // Com chamada na tela olha a cada 3 segundos; o personal a cada 5 (para tocar); o aluno a cada 20.
   useEffect(() => {
     ler()
-    const vez = setInterval(ler, ativa ? 3000 : aluno ? 20000 : 5000)
+    const vez = setInterval(ler, ativa || sala.length ? 3000 : aluno ? 20000 : 5000)
     window.addEventListener('formacerta:chamada', ler)
     return () => {
       clearInterval(vez)
       window.removeEventListener('formacerta:chamada', ler)
     }
-  }, [ler, ativa, aluno])
+  }, [ler, ativa, aluno, sala.length])
 
   const souAlunoDaAtiva = ativa?.aluno_id === perfil.id
   const tocando = ativa?.situacao === 'chamando' && !souAlunoDaAtiva
   useToque(tocando)
   const agora = useAgora(ativa?.situacao === 'chamando')
 
-  async function responder(aceitar: boolean) {
-    if (!ativa) return
+  async function responder(id: string, aceitar: boolean) {
     setErro(null)
-    const e = await atenderVideo(ativa.id, aceitar)
+    const e = await atenderVideo(id, aceitar)
     if (e) setErro(e)
     ler()
   }
@@ -230,6 +205,8 @@ export function CentralChamadas({ perfil }: { perfil: Perfil }) {
     anterior.current = null
     ler()
   }
+
+  if (sala.length) return <SalaPersonal meuId={perfil.id} sala={sala} fila={fila} regras={regras} erro={erro} onResponder={responder} onAtualizar={ler} />
 
   if (ativa?.situacao === 'em_andamento')
     return (
@@ -259,10 +236,10 @@ export function CentralChamadas({ perfil }: { perfil: Perfil }) {
               </p>
               <p className="chamada-tempo">Atenda em {relogio(falta)}</p>
               <div className="acoes-linha">
-                <button className="botao" onClick={() => responder(true)}>
+                <button className="botao" onClick={() => responder(ativa.id, true)}>
                   <Video size={18} /> Atender
                 </button>
-                <button className="botao-sec" onClick={() => responder(false)}>
+                <button className="botao-sec" onClick={() => responder(ativa.id, false)}>
                   <PhoneOff size={18} /> Recusar
                 </button>
               </div>
@@ -316,11 +293,12 @@ export function CentralChamadas({ perfil }: { perfil: Perfil }) {
                 Agora não
               </button>
             </>
-          ) : aviso.tipo === 'fim-personal' ? (
+          ) : aviso.tipo === 'fim-sala' ? (
             <>
-              <h2>Chamada encerrada</h2>
+              <h2>Sala encerrada</h2>
               <p className="dica-sec">
-                Chamada com {aviso.chamada.aluno_nome} de {aviso.chamada.minutos} min. Você recebe {emReais(Math.max(0, aviso.chamada.valor - aviso.chamada.comissao - aviso.chamada.taxa))}.
+                {(aviso.atendidas ?? [aviso.chamada]).length === 1 ? `Chamada com ${aviso.chamada.aluno_nome}.` : `${(aviso.atendidas ?? []).length} alunos atendidos: ${(aviso.atendidas ?? []).map((c) => c.aluno_nome.split(' ')[0]).join(', ')}.`} Você recebe{' '}
+                {emReais((aviso.atendidas ?? [aviso.chamada]).reduce((t, c) => t + Math.max(0, c.valor - c.comissao - c.taxa), 0))}, já sem a comissão e as taxas.
               </p>
               <button className="botao" onClick={fechar}>
                 Ok

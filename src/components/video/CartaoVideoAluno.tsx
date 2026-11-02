@@ -1,7 +1,7 @@
 import { Video } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { precoServico, type Servico } from '../../nuvem/planos'
-import { avisarChamada, chamarVideo, disponivelAte, minhasChamadas } from '../../nuvem/video'
+import { avisarChamada, chamarVideo, disponibilidade, minhasChamadas } from '../../nuvem/video'
 
 type Props = {
   meuId: string
@@ -16,6 +16,7 @@ type Props = {
 /** No chat do aluno: comprar chamada de vídeo e chamar o personal quando ele está disponível. */
 export function CartaoVideoAluno({ meuId, profissionalId, nomePersonal, servicos, contratacaoLiberada, onPagar }: Props) {
   const [online, setOnline] = useState(false)
+  const [vagas, setVagas] = useState(1)
   const [creditos, setCreditos] = useState<number | null>(null)
   const [minutos, setMinutos] = useState<number[]>([])
   const [chamando, setChamando] = useState(false)
@@ -24,9 +25,10 @@ export function CartaoVideoAluno({ meuId, profissionalId, nomePersonal, servicos
   const primeiro = nomePersonal.split(' ')[0]
 
   const ler = useCallback(async () => {
-    const [ate, lista] = await Promise.all([disponivelAte(profissionalId), minhasChamadas()])
+    const [disp, lista] = await Promise.all([disponibilidade(profissionalId), minhasChamadas()])
     const meus = lista.filter((c) => c.aluno_id === meuId && c.profissional_id === profissionalId && c.situacao === 'credito')
-    setOnline(!!ate)
+    setOnline(!!disp)
+    setVagas(disp?.vagas ?? 1)
     setCreditos(meus.length)
     setMinutos(meus.map((c) => c.minutos))
   }, [meuId, profissionalId])
@@ -65,6 +67,7 @@ export function CartaoVideoAluno({ meuId, profissionalId, nomePersonal, servicos
           <span className="ponto-vivo" /> {online ? 'Disponível agora' : 'Indisponível agora'}
         </span>
       </div>
+      {online && vagas > 1 && <p className="dica-sec">Sala de treino com até {vagas} alunos ao mesmo tempo. {primeiro} acompanha cada um no seu quadro.</p>}
 
       {temCredito ? (
         <>

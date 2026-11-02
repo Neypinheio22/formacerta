@@ -81,16 +81,22 @@ export async function aceitarTermoVideo() {
   return error ? erroAmigavel(error) : null
 }
 
-/** Até quando o personal fica disponível para vídeo (vazio = não está). */
-export async function disponivelAte(profissional: string): Promise<Date | null> {
-  const { data } = await supabase.from('disponibilidade_video').select('ate').eq('profissional_id', profissional).maybeSingle()
+/** Quantos alunos o personal atende ao mesmo tempo na sala de vídeo. */
+export const VAGAS_MAXIMO = 5
+
+export type Disponibilidade = { ate: Date; vagas: number }
+
+/** Até quando o personal fica disponível para vídeo e quantos alunos atende juntos (vazio = não está). */
+export async function disponibilidade(profissional: string): Promise<Disponibilidade | null> {
+  const { data } = await supabase.from('disponibilidade_video').select('*').eq('profissional_id', profissional).maybeSingle()
   const ate = data?.ate ? new Date(data.ate as string) : null
-  return ate && ate.getTime() > Date.now() ? ate : null
+  if (!ate || ate.getTime() <= Date.now()) return null
+  return { ate, vagas: Math.min(VAGAS_MAXIMO, Math.max(1, Number(data?.vagas ?? 1))) }
 }
 
-/** minutos = 0 desliga. */
-export async function ficarDisponivel(minutos: number): Promise<{ ate: Date | null; erro: string | null }> {
-  const { data, error } = await supabase.rpc('ficar_disponivel_video', { minutos })
+/** minutos = 0 desliga. vagas = alunos ao mesmo tempo (1 a 5). */
+export async function ficarDisponivel(minutos: number, vagas = 1): Promise<{ ate: Date | null; erro: string | null }> {
+  const { data, error } = await supabase.rpc('ficar_disponivel_video', { minutos, vagas })
   if (error) return { ate: null, erro: erroAmigavel(error) }
   return { ate: data ? new Date(data as string) : null, erro: null }
 }
