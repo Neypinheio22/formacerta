@@ -51,7 +51,8 @@ Deno.serve(async (req) => {
     method: 'POST',
     headers: { Authorization: `Bearer ${chave}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      from: 'FormaCerta <onboarding@resend.dev>',
+      // Remetente: domínio verificado no Resend (segredo EMAIL_REMETENTE). Sem ele, o remetente de teste do Resend.
+      from: Deno.env.get('EMAIL_REMETENTE') || 'FormaCerta <onboarding@resend.dev>',
       to: [ADMIN],
       reply_to: perfil.email,
       subject: `Novo ${tipo} aguardando liberação: ${perfil.nome || perfil.email}`,
