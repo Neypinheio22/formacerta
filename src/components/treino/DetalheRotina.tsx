@@ -1,4 +1,4 @@
-import { ArrowDown, ArrowUp, CalendarDays, ChevronDown, ChevronUp, History, Pencil, Plus, TrendingUp, TriangleAlert } from 'lucide-react'
+import { ArrowDown, ArrowUp, CalendarDays, ChevronDown, ChevronUp, FileDown, History, Pencil, Plus, TrendingUp, TriangleAlert } from 'lucide-react'
 import { useState } from 'react'
 import type { Rotina } from '../../nuvem/rotinas'
 import type { Treino, TreinoFeito } from '../../nuvem/treinos'
@@ -122,6 +122,7 @@ export function DetalheRotina({
   onOrdenar,
   onAcao,
   onEvolucao,
+  onPdf,
   menu,
 }: {
   r: Rotina
@@ -133,6 +134,8 @@ export function DetalheRotina({
   onOrdenar: (ordem: Treino[]) => void
   onAcao: (a: AcaoRotina) => void
   onEvolucao: () => void
+  /** Exportar a ficha em PDF (treino atual ou rotina completa). */
+  onPdf: () => void
   /** Três pontinhos: duplicar, biblioteca, arquivar, excluir. */
   menu: React.ReactNode
 }) {
@@ -174,6 +177,11 @@ export function DetalheRotina({
             </button>
           )}
         </div>
+        {treinos.length > 0 && (
+          <button className="botao-sec botao-pdf" onClick={onPdf}>
+            <FileDown size={16} /> Exportar PDF
+          </button>
+        )}
       </section>
 
       <section className="cartao">
