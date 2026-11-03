@@ -26,6 +26,7 @@ import { Conversa } from './components/chat/Conversa'
 import { Conversas } from './components/chat/Conversas'
 import { CentralChamadas } from './components/video/CentralChamadas'
 import { sincronizarPush } from './nuvem/push'
+import { RetornoPagamento } from './components/planos/RetornoPagamento'
 import type { Conversa as ConversaNuvem } from './nuvem/chat'
 import { TelaTreino } from './components/treino/TelaTreino'
 import { Vitrine } from './components/vitrine/Vitrine'
@@ -76,6 +77,7 @@ type Screen =
   | { name: 'vitrine' }
   | { name: 'planos' }
   | { name: 'pagamento'; pedido: Pedido; voltar?: Screen }
+  | { name: 'retorno-pagamento'; pagamento: string; falhou: boolean }
   | { name: 'conversas' }
   | { name: 'conversa'; conversa: ConversaNuvem; voltar: Screen }
   | { name: 'perfil'; voltar: Screen }
@@ -97,6 +99,13 @@ function telaInicial(): Screen {
   const busca = new URLSearchParams(window.location.search)
   const codigo = busca.get('estudio')
   if (codigo) return { name: 'estudio-camera', codigo }
+  // Volta da página do Mercado Pago (cartão ou boleto): ...?pagamento=<id>
+  const pagamento = busca.get('pagamento')
+  if (pagamento && /^[0-9a-f-]{36}$/i.test(pagamento)) {
+    const falhou = busca.get('falhou') === '1' || ['rejected', 'failure', 'null'].includes(busca.get('collection_status') ?? '')
+    window.history.replaceState(null, '', window.location.pathname)
+    return { name: 'retorno-pagamento', pagamento, falhou }
+  }
   if (busca.get('abrir')) {
     // Tira o ?abrir= do endereço para não voltar ao chat num recarregar.
     window.history.replaceState(null, '', window.location.pathname)
@@ -350,6 +359,8 @@ function Telas({ inicial }: { inicial: Screen }) {
 
     if (screen.name === 'planos') return <Planos onVoltar={() => go({ name: 'inicio' })} onPagar={(pedido) => go({ name: 'pagamento', pedido })} />
 
+    if (screen.name === 'retorno-pagamento')
+      return <RetornoPagamento pagamento={screen.pagamento} falhou={screen.falhou} onInicio={() => go({ name: 'inicio' })} onPlanos={() => go({ name: 'planos' })} />
     if (screen.name === 'pagamento') {
       const voltar = screen.voltar ?? { name: 'planos' }
       return <Pagamento pedido={screen.pedido} textoPronto={screen.voltar ? (screen.voltar.name === 'inicio' ? 'Voltar ao início' : 'Voltar para a conversa') : undefined} onVoltar={() => go(voltar)} onPronto={() => go(voltar)} />

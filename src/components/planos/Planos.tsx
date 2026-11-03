@@ -1,6 +1,7 @@
 import { Check, Crown, Gift, Info, Receipt, Tag } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useConta } from '../../nuvem/conta'
+import { BotaoRecibo } from './BotaoRecibo'
 import {
   CONFIG_PADRAO,
   PLANOS_PADRAO,
@@ -293,6 +294,7 @@ export function Planos({ onVoltar, onPagar }: Props) {
                   </span>
                   <span className="nota">{emReais(p.valor)}</span>
                 </span>
+                {p.situacao === 'pago' && p.valor > 0 && <BotaoRecibo pagamento={p.id} />}
                 {p.situacao === 'pendente' && config.gateway === 'mercadopago' && (
                   <button className="botao pagar-pendente" onClick={() => onPagar({ tipo: 'pendente', pagamento: p })}>
                     Pagar agora

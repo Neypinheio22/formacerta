@@ -85,7 +85,8 @@ Deno.serve(async (req) => {
       external_reference: pg.id,
       notification_url: aviso,
       payment_methods: { excluded_payment_types: fora.map((id) => ({ id })), installments: forma === 'cartao' ? 12 : 1 },
-      back_urls: { success: APP, pending: APP, failure: APP },
+      // Na volta, o app abre a tela de confirmação deste pagamento.
+      back_urls: { success: `${APP}?pagamento=${pg.id}`, pending: `${APP}?pagamento=${pg.id}`, failure: `${APP}?pagamento=${pg.id}&falhou=1` },
       auto_return: 'approved',
       statement_descriptor: 'FORMACERTA',
     }),

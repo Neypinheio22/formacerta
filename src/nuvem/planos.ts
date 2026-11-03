@@ -116,6 +116,8 @@ export type Pagamento = {
   link_pagamento: string | null
   /** Quando o FormaCerta repassou ao personal a parte dele. */
   repassado_em?: string | null
+  /** Código do pagamento no Mercado Pago. */
+  gateway_id?: string | null
 }
 
 export type Cobranca = { pix_copia_cola?: string; pix_qr?: string | null; link?: string | null }
@@ -562,3 +564,92 @@ export async function marcarRepasse(profissional: string): Promise<{ valor: numb
   const { data, error } = await supabase.rpc('admin_marcar_repasse', { profissional })
   return error ? { valor: 0, erro: erroAmigavel(error) } : { valor: Number(data ?? 0), erro: null }
 }
+
+// ---------- Recibo (item 16) ----------
+
+export type Recibo = {
+  id: string
+  numero: string
+  tipo: 'assinatura' | 'avaliacao'
+  descricao: string
+  valor: number
+  forma: Forma
+  pago_em: string
+  gateway_id: string | null
+  pagador_nome: string
+  pagador_email: string
+  recebedor_nome: string | null
+}
+
+/** Dados do recibo de um pagamento confirmado (quem pagou, o personal que recebeu ou o administrador). */
+export async function lerRecibo(pagamento: string): Promise<Recibo | null> {
+  const { data } = await supabase.rpc('recibo_pagamento', { pagamento })
+  const r = (data as Recibo[] | null)?.[0]
+  return r ? { ...r, valor: Number(r.valor) } : null
+}
+
+/** Linhas do recibo, na ordem em que aparecem no PDF. */
+export function linhasRecibo(r: Recibo): [string, string][] {
+  const data = new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(r.pago_em))
+  const linhas: [string, string][] = [
+    ['Recebemos de', `${r.pagador_nome} (${r.pagador_email})`],
+    ['Referente a', r.descricao],
+  ]
+  if (r.recebedor_nome) linhas.push(['Personal', r.recebedor_nome])
+  linhas.push(['Forma de pagamento', ROTULO_FORMA[r.forma] ?? r.forma], ['Data do pagamento', data])
+  if (r.gateway_id) linhas.push(['Código Mercado Pago', r.gateway_id])
+  return linhas
+}
+
+// ---------- Painel de vendas (item 17) ----------
+
+export type PainelVendas = {
+  mes: string
+  bruto: number
+  vendas: number
+  receita: number
+  a_repassar: number
+  assinaturas: { qtd: number; valor: number }
+  servicos: { qtd: number; valor: number; comissao: number }
+  video: { qtd: number; valor: number; comissao: number; chamadas: number; taxas: number }
+  pendentes: { qtd: number; valor: number }
+  ativos: { aluno_pro: number; personais: number; testes: number; cortesias: number }
+  meses: { mes: string; bruto: number; receita: number }[]
+  top: { nome: string; vendas: number; valor: number }[]
+}
+
+/** Painel do administrador para o mês (AAAA-MM). Vazio sem o SQL ou sem permissão. */
+export async function lerPainelVendas(mes: string): Promise<PainelVendas | null> {
+  const { data, error } = await supabase.rpc('admin_painel_vendas', { mes: `${mes}-01` })
+  if (error || !data) return null
+  const n = (v: unknown) => Number(v ?? 0)
+  const d = data as PainelVendas
+  return {
+    ...d,
+    bruto: n(d.bruto),
+    vendas: n(d.vendas),
+    receita: n(d.receita),
+    a_repassar: n(d.a_repassar),
+    assinaturas: { qtd: n(d.assinaturas?.qtd), valor: n(d.assinaturas?.valor) },
+    servicos: { qtd: n(d.servicos?.qtd), valor: n(d.servicos?.valor), comissao: n(d.servicos?.comissao) },
+    video: { qtd: n(d.video?.qtd), valor: n(d.video?.valor), comissao: n(d.video?.comissao), chamadas: n(d.video?.chamadas), taxas: n(d.video?.taxas) },
+    pendentes: { qtd: n(d.pendentes?.qtd), valor: n(d.pendentes?.valor) },
+    ativos: { aluno_pro: n(d.ativos?.aluno_pro), personais: n(d.ativos?.personais), testes: n(d.ativos?.testes), cortesias: n(d.ativos?.cortesias) },
+    meses: (d.meses ?? []).map((m) => ({ mes: m.mes, bruto: n(m.bruto), receita: n(m.receita) })),
+    top: (d.top ?? []).map((t) => ({ nome: t.nome, vendas: n(t.vendas), valor: n(t.valor) })),
+  }
+}
+
+const MESES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez']
+
+/** "2026-11" → "nov/26". */
+export const rotuloMes = (mes: string) => `${MESES[Number(mes.slice(5, 7)) - 1]}/${mes.slice(2, 4)}`
+
+/** Soma ou tira meses de "AAAA-MM". */
+export function outroMes(mes: string, delta: number) {
+  const d = new Date(Date.UTC(Number(mes.slice(0, 4)), Number(mes.slice(5, 7)) - 1 + delta, 1))
+  return d.toISOString().slice(0, 7)
+}
+
+/** Mês atual no horário de Brasília. */
+export const mesAtual = (agora = new Date()) => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit' }).format(agora).slice(0, 7)
