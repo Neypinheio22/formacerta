@@ -7208,3 +7208,146 @@ p.selo-aluno {
 .repasse h3 {
   margin: 0 0 4px;
 }
+
+/* ---------- Agenda de vídeo, créditos, instalar e notificações (itens 11 a 14) ---------- */
+.agenda-video,
+.agenda-personal {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.agenda-video h3,
+.agenda-personal h3 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.95rem;
+  margin: 4px 0 0;
+}
+
+.agenda-dias {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: none;
+}
+
+.agenda-dias button,
+.horas-livres button {
+  flex: 0 0 auto;
+  background: transparent;
+  border: 1px solid var(--borda);
+  border-radius: 999px;
+  color: var(--texto);
+  padding: 8px 14px;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.agenda-dias button.ativo,
+.horas-livres button.ativo {
+  border-color: var(--verde);
+  color: var(--verde);
+  box-shadow: 0 0 0 1px var(--verde);
+}
+
+.horas-livres {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(76px, 1fr));
+  gap: 8px;
+}
+
+.horas-livres button {
+  padding: 10px 0;
+}
+
+.lista-agenda {
+  list-style: none;
+  margin: 6px 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.lista-agenda li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 10px 12px;
+  border: 1px solid var(--borda);
+  border-radius: 12px;
+  font-size: 0.9rem;
+  text-transform: none;
+}
+
+.lista-agenda li b {
+  color: var(--verde);
+  text-transform: capitalize;
+}
+
+.lista-agenda .link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.linha-horario {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.linha-horario select {
+  flex: 1 1 0;
+  min-width: 0;
+  background: transparent;
+  color: var(--texto);
+  border: 1px solid var(--borda);
+  border-radius: 10px;
+  padding: 8px 4px;
+  font: inherit;
+}
+
+.linha-horario select option {
+  background: #0b1a17;
+}
+
+.redondo-pequeno {
+  background: transparent;
+  border: 1px solid var(--borda);
+  color: var(--texto);
+  border-radius: 999px;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cartao-creditos-video.vence {
+  border-color: rgba(245, 158, 11, 0.55);
+}
+
+.alerta-texto {
+  color: #f59e0b;
+}
+
+.passos-instalar {
+  margin: 4px 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.92rem;
+}
+
+.passos-instalar svg {
+  vertical-align: -2px;
+}

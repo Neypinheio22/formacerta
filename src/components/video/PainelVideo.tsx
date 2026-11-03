@@ -2,6 +2,7 @@ import { Users, Video, VideoOff } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { emReais, listarCatalogo, listarServicos } from '../../nuvem/planos'
 import { aceitouTermoVideo, disponibilidade, ficarDisponivel, VAGAS_MAXIMO, lerRegrasVideo, minhasChamadas, resumoGanhos, REGRAS_PADRAO, type Chamada, type RegrasVideo } from '../../nuvem/video'
+import { AgendaPersonal } from './AgendaPersonal'
 import { TermoVideo } from './TermoVideo'
 
 const TEMPOS = [
@@ -121,7 +122,7 @@ export function PainelVideo({ meuId, curto = false, onMudou }: Props) {
           <p className="disponivel-agora">
             <span className="ponto-vivo" /> Disponível para vídeo até {hora(ate)}
           </p>
-          <p className="dica-sec">Deixe o app aberto. Quando um aluno chamar, o celular toca e você tem 2 minutos para atender.</p>
+          <p className="dica-sec">Quando um aluno chamar, o celular toca (com as notificações ativadas, mesmo com o app fechado) e você tem 2 minutos para atender.</p>
           {seletorVagas}
           <button className="botao-sec" disabled={mudando} onClick={() => mudar(0)}>
             <VideoOff size={16} /> Ficar indisponível
@@ -140,6 +141,8 @@ export function PainelVideo({ meuId, curto = false, onMudou }: Props) {
           </div>
         </>
       )}
+
+      {aceito && temServico && !curto && <AgendaPersonal meuId={meuId} />}
 
       {aceito && !curto && (
         <div className="ganhos-video">

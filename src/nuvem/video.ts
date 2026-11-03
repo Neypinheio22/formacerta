@@ -1,7 +1,7 @@
 import { supabase } from './cliente'
 import { erroAmigavel } from './conta'
 
-export type SituacaoChamada = 'credito' | 'chamando' | 'em_andamento' | 'feita' | 'cancelada'
+export type SituacaoChamada = 'credito' | 'chamando' | 'em_andamento' | 'feita' | 'cancelada' | 'vencida'
 
 export type Chamada = {
   id: string
@@ -21,6 +21,8 @@ export type Chamada = {
   nota: number | null
   repassado_em: string | null
   criado_em: string
+  /** Até quando o crédito pode ser usado (vazio antes do SQL da validade). */
+  vence_em?: string | null
 }
 
 export type RegrasVideo = { comissao_pct: number; taxa_video: number; termo_video_versao: string }
@@ -143,3 +145,126 @@ export async function salvarTaxaVideo(taxa_video: number) {
 
 /** Avisa a tela de chamada que algo mudou (o aluno chamou), para ela olhar o banco na hora. */
 export const avisarChamada = () => window.dispatchEvent(new Event('formacerta:chamada'))
+
+// ---------- Créditos com validade (item 13) ----------
+
+/** Dias que faltam para o crédito vencer (null = sem validade). */
+export function diasParaVencer(c: Pick<Chamada, 'vence_em'>, agora = Date.now()) {
+  if (!c.vence_em) return null
+  return Math.max(0, Math.ceil((new Date(c.vence_em).getTime() - agora) / 86_400_000))
+}
+
+export type CreditosDoPersonal = {
+  profissional_id: string
+  profissional_nome: string
+  profissional_foto: string | null
+  quantidade: number
+  minutos: number[]
+  /** Data do crédito que vence primeiro. */
+  vence_em: string | null
+}
+
+/** Créditos do aluno ainda para usar, juntos por personal (o que vence primeiro na frente). */
+export function creditosPorPersonal(chamadas: Chamada[], alunoId: string): CreditosDoPersonal[] {
+  const grupos = new Map<string, CreditosDoPersonal>()
+  for (const c of chamadas) {
+    if (c.aluno_id !== alunoId || c.situacao !== 'credito') continue
+    const g = grupos.get(c.profissional_id) ?? {
+      profissional_id: c.profissional_id,
+      profissional_nome: c.profissional_nome,
+      profissional_foto: c.profissional_foto,
+      quantidade: 0,
+      minutos: [],
+      vence_em: null,
+    }
+    g.quantidade++
+    g.minutos.push(c.minutos)
+    if (c.vence_em && (!g.vence_em || c.vence_em < g.vence_em)) g.vence_em = c.vence_em
+    grupos.set(c.profissional_id, g)
+  }
+  return [...grupos.values()].sort((a, b) => (a.vence_em ?? '9').localeCompare(b.vence_em ?? '9'))
+}
+
+// ---------- Agenda (item 14) ----------
+
+export const DIAS_SEMANA = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado']
+
+export type HorarioSemana = { dia_semana: number; inicio: string; fim: string }
+
+export type Agendamento = {
+  id: string
+  aluno_id: string
+  profissional_id: string
+  aluno_nome: string
+  profissional_nome: string
+  inicio: string
+  minutos: number
+  chamada_situacao: SituacaoChamada
+}
+
+const hm = (t: string) => t.slice(0, 5)
+
+export async function meusHorarios(meuId: string): Promise<HorarioSemana[] | null> {
+  const { data, error } = await supabase.from('horarios_video').select('dia_semana, inicio, fim').eq('profissional_id', meuId).order('dia_semana').order('inicio')
+  if (error) return null
+  return (data ?? []).map((h) => ({ dia_semana: Number(h.dia_semana), inicio: hm(String(h.inicio)), fim: hm(String(h.fim)) }))
+}
+
+/** Confere os horários antes de salvar: fim depois do início e sem sobrepor no mesmo dia. */
+export function conferirHorarios(lista: HorarioSemana[]): string | null {
+  for (const h of lista) if (h.fim <= h.inicio) return `${DIAS_SEMANA[h.dia_semana]}: o fim precisa ser depois do início.`
+  for (let d = 0; d < 7; d++) {
+    const dia = lista.filter((h) => h.dia_semana === d).sort((a, b) => a.inicio.localeCompare(b.inicio))
+    for (let i = 1; i < dia.length; i++) if (dia[i].inicio < dia[i - 1].fim) return `${DIAS_SEMANA[d]}: dois horários se sobrepõem.`
+  }
+  return null
+}
+
+export async function salvarHorarios(lista: HorarioSemana[]) {
+  const { error } = await supabase.rpc('salvar_horarios_video', { horarios: lista })
+  return error ? erroAmigavel(error) : null
+}
+
+export async function horariosLivres(profissional: string, minutos: number): Promise<Date[]> {
+  const { data } = await supabase.rpc('horarios_livres_video', { profissional, minutos })
+  return ((data ?? []) as { inicio: string }[]).map((l) => new Date(l.inicio))
+}
+
+export async function agendarVideo(profissional: string, inicio: Date) {
+  const { error } = await supabase.rpc('agendar_video', { profissional, inicio: inicio.toISOString() })
+  return error ? erroAmigavel(error) : null
+}
+
+export async function cancelarAgendamento(agendamento: string) {
+  const { error } = await supabase.rpc('cancelar_agendamento_video', { agendamento })
+  return error ? erroAmigavel(error) : null
+}
+
+export async function meusAgendamentos(): Promise<Agendamento[]> {
+  const { data } = await supabase.rpc('meus_agendamentos_video')
+  return ((data ?? []) as Agendamento[]).map((a) => ({ ...a, minutos: Number(a.minutos) }))
+}
+
+/** Os horários livres juntos por dia (hora de Brasília). */
+export function porDia(horarios: Date[]) {
+  const dias = new Map<string, Date[]>()
+  const chave = new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Sao_Paulo', weekday: 'short', day: '2-digit', month: '2-digit' })
+  for (const h of horarios) {
+    const k = chave.format(h)
+    dias.set(k, [...(dias.get(k) ?? []), h])
+  }
+  return [...dias.entries()].map(([dia, horas]) => ({ dia, horas }))
+}
+
+export const horaBr = (d: Date | string) => new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit' }).format(new Date(d))
+export const dataHoraBr = (d: Date | string) =>
+  new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Sao_Paulo', weekday: 'short', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }).format(new Date(d))
+
+/** Já dá para chamar o treino agendado (de 10 minutos antes até o fim)? */
+export function horaDeChamar(a: Pick<Agendamento, 'inicio' | 'minutos'>, agora = Date.now()) {
+  const ini = new Date(a.inicio).getTime()
+  return agora >= ini - 10 * 60_000 && agora <= ini + a.minutos * 60_000
+}
+
+/** Aluno só desmarca até 2 horas antes. */
+export const alunoPodeDesmarcar = (a: Pick<Agendamento, 'inicio'>, agora = Date.now()) => new Date(a.inicio).getTime() - agora > 2 * 3600_000
