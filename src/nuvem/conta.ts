@@ -1,4 +1,5 @@
 import type { Session } from '@supabase/supabase-js'
+import { desligarPush } from './push'
 import { createContext, useContext } from 'react'
 import { enderecoApp, supabase } from './cliente'
 
@@ -116,6 +117,8 @@ export async function sair() {
   } catch {
     /* ignora */
   }
+  // Este celular para de receber as notificações da conta que saiu.
+  await desligarPush()
   await supabase.auth.signOut()
 }
 

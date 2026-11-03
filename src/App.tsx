@@ -25,6 +25,7 @@ import { EncontrarPersonal } from './components/conta/EncontrarPersonal'
 import { Conversa } from './components/chat/Conversa'
 import { Conversas } from './components/chat/Conversas'
 import { CentralChamadas } from './components/video/CentralChamadas'
+import { sincronizarPush } from './nuvem/push'
 import type { Conversa as ConversaNuvem } from './nuvem/chat'
 import { TelaTreino } from './components/treino/TelaTreino'
 import { Vitrine } from './components/vitrine/Vitrine'
@@ -91,9 +92,17 @@ const TELAS_PRO: Partial<Record<Screen['name'], RecursoPro>> = {
 }
 
 // Link enviado pelo celular de controle: ...?estudio=123456 abre direto como câmera.
+// Toque na notificação: ...?abrir=conversas abre o chat.
 function telaInicial(): Screen {
-  const codigo = new URLSearchParams(window.location.search).get('estudio')
-  return codigo ? { name: 'estudio-camera', codigo } : { name: 'inicio' }
+  const busca = new URLSearchParams(window.location.search)
+  const codigo = busca.get('estudio')
+  if (codigo) return { name: 'estudio-camera', codigo }
+  if (busca.get('abrir')) {
+    // Tira o ?abrir= do endereço para não voltar ao chat num recarregar.
+    window.history.replaceState(null, '', window.location.pathname)
+    if (busca.get('abrir') === 'conversas') return { name: 'conversas' }
+  }
+  return { name: 'inicio' }
 }
 
 export default function App() {
@@ -125,6 +134,22 @@ function Telas({ inicial }: { inicial: Screen }) {
     setScreen(s)
     window.scrollTo(0, 0)
   }, [])
+
+  // Notificações: confirma este celular para a conta que entrou e abre o chat ao tocar no aviso com o app aberto.
+  useEffect(() => {
+    if (perfil?.id) sincronizarPush()
+  }, [perfil?.id])
+  useEffect(() => {
+    if (!('serviceWorker' in navigator)) return
+    const aoAviso = (e: MessageEvent) => {
+      if (e.data?.tipo !== 'abrir') return
+      const abrir = new URL(String(e.data.url), window.location.href).searchParams.get('abrir')
+      if (abrir === 'conversas') go({ name: 'conversas' })
+      else go({ name: 'inicio' })
+    }
+    navigator.serviceWorker.addEventListener('message', aoAviso)
+    return () => navigator.serviceWorker.removeEventListener('message', aoAviso)
+  }, [go])
   /** Abre o teste, passando antes por "Meus dados" se faltar o básico (uma vez por visita). */
   const comDados = (s: Screen) => {
     // Recurso do Aluno Pro no plano grátis: mostra o convite antes de pedir os dados.
@@ -354,6 +379,7 @@ function Telas({ inicial }: { inicial: Screen }) {
         onTreino={(abrir) => go({ name: 'treino', abrir })}
         onPersonais={() => go({ name: 'personais', voltar: screen })}
         direitos={direitos}
+        onChat={() => go({ name: 'conversas' })}
         onPagarServico={(servico) => go({ name: 'pagamento', pedido: { tipo: 'avaliacao', servico }, voltar: { name: 'inicio' } })}
       />
     )

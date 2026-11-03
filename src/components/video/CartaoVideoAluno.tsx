@@ -1,7 +1,8 @@
-import { Video } from 'lucide-react'
+import { CalendarCheck, Video } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { precoServico, type Servico } from '../../nuvem/planos'
-import { avisarChamada, chamarVideo, disponibilidade, minhasChamadas } from '../../nuvem/video'
+import { avisarChamada, chamarVideo, diasParaVencer, disponibilidade, horaDeChamar, meusAgendamentos, minhasChamadas, type Agendamento } from '../../nuvem/video'
+import { AgendarVideo, ListaAgendamentos } from './AgendarVideo'
 
 type Props = {
   meuId: string
@@ -22,11 +23,20 @@ export function CartaoVideoAluno({ meuId, profissionalId, nomePersonal, servicos
   const [chamando, setChamando] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
   const [comprar, setComprar] = useState(false)
+  const [agenda, setAgenda] = useState<Agendamento[]>([])
+  const [vence, setVence] = useState<number | null>(null)
+  const [agora, setAgora] = useState(0)
+  const [agendar, setAgendar] = useState(false)
   const primeiro = nomePersonal.split(' ')[0]
 
   const ler = useCallback(async () => {
-    const [disp, lista] = await Promise.all([disponibilidade(profissionalId), minhasChamadas()])
+    const [disp, lista, ag] = await Promise.all([disponibilidade(profissionalId), minhasChamadas(), meusAgendamentos()])
     const meus = lista.filter((c) => c.aluno_id === meuId && c.profissional_id === profissionalId && c.situacao === 'credito')
+    const agoraMs = Date.now()
+    setAgora(agoraMs)
+    setAgenda(ag.filter((a) => a.aluno_id === meuId && a.profissional_id === profissionalId))
+    const dias = meus.map((c) => diasParaVencer(c, agoraMs)).filter((d): d is number => d !== null)
+    setVence(dias.length ? Math.min(...dias) : null)
     setOnline(!!disp)
     setVagas(disp?.vagas ?? 1)
     setCreditos(meus.length)
@@ -55,6 +65,9 @@ export function CartaoVideoAluno({ meuId, profissionalId, nomePersonal, servicos
   }
 
   const temCredito = (creditos ?? 0) > 0
+  const naHora = agenda.some((a) => horaDeChamar(a, agora))
+  const podeChamar = online || naHora
+  const livres = (creditos ?? 0) - agenda.length
   const proxima = minutos.length ? Math.min(...minutos) : 0
 
   return (
@@ -73,20 +86,30 @@ export function CartaoVideoAluno({ meuId, profissionalId, nomePersonal, servicos
         <>
           <p className="dica-sec">
             Você tem <b>{creditos}</b> chamada{creditos! > 1 ? 's' : ''} com {primeiro}
-            {proxima ? ` (${proxima} min)` : ''}.
+            {proxima ? ` (${proxima} min)` : ''}.{vence !== null && vence <= 7 ? ` Vence em ${vence} dia${vence === 1 ? '' : 's'}.` : ''}
           </p>
-          {online ? (
+          <ListaAgendamentos meuId={meuId} lista={agenda} onMudou={ler} />
+          {podeChamar ? (
             <button className="botao" disabled={chamando} onClick={chamar}>
-              <Video size={18} /> {chamando ? 'Chamando…' : 'Chamar por vídeo agora'}
+              <Video size={18} /> {chamando ? 'Chamando…' : naHora ? 'Chamar para o treino agendado' : 'Chamar por vídeo agora'}
             </button>
           ) : (
-            <p className="dica-sec">Combine um horário aqui no chat. Quando {primeiro} ficar disponível, o botão de chamar acende.</p>
+            !agendar && <p className="dica-sec">Agende um horário ou espere {primeiro} ficar disponível. Na hora, o botão de chamar acende.</p>
+          )}
+          {agendar ? (
+            <AgendarVideo profissionalId={profissionalId} nomePersonal={nomePersonal} minutos={proxima || 30} onFechar={() => setAgendar(false)} onMudou={ler} />
+          ) : (
+            livres > 0 && (
+              <button className="botao-sec" onClick={() => setAgendar(true)}>
+                <CalendarCheck size={16} /> Agendar horário
+              </button>
+            )
           )}
         </>
       ) : (
         <>
           <p className="dica-sec">
-            {primeiro} acompanha seu treino ao vivo pela câmera e corrige na hora. Você paga por chamada e só usa quando {primeiro} estiver disponível.
+            {primeiro} acompanha seu treino ao vivo pela câmera e corrige na hora. Você paga por chamada e agenda o horário ou chama quando {primeiro} estiver disponível.
           </p>
           {!comprar ? (
             <button className="botao-sec" onClick={() => setComprar(true)}>
