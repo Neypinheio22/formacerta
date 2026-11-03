@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { PLANOS_PADRAO, assinaturaAtual, assinaturaVencida, avisoDoPlano, paraRenovar, dividir, economiaAnual, emReais, lerReais, mensalNoAnual, type Assinatura, type Direitos } from './planos'
+import { PLANOS_PADRAO, assinaturaAtual, assinaturaVencida, avisoDoPlano, paraRenovar, dividir, economiaAnual, emReais, lerReais, mensalNoAnual, linhasRecibo, rotuloMes, outroMes, mesAtual, type Assinatura, type Direitos } from './planos'
 import { travadoNoPro } from '../components/planos/useDireitos'
 import type { Perfil } from './conta'
 
@@ -100,5 +100,37 @@ describe('planos', () => {
     // Cancelou: não oferece renovar enquanto vale; depois de vencer, sim.
     expect(paraRenovar([a({ valido_ate: daqui(2), cancelado_em: daqui(-1) })])).toBeNull()
     expect(paraRenovar([a({ situacao: 'vencida', valido_ate: daqui(-1), cancelado_em: daqui(-10) })])?.id).toBe('a')
+  })
+})
+
+describe('recibo e painel de vendas', () => {
+  const recibo = {
+    id: 'x',
+    numero: 'FC-1A2B3C4D',
+    tipo: 'avaliacao' as const,
+    descricao: 'Avaliação postural',
+    valor: 120,
+    forma: 'pix' as const,
+    pago_em: '2026-11-03T15:30:00Z',
+    gateway_id: '123456',
+    pagador_nome: 'Carla Souza',
+    pagador_email: 'carla@x.com',
+    recebedor_nome: 'Romildo Bernardo',
+  }
+
+  it('monta as linhas do recibo com o personal e o código do Mercado Pago', () => {
+    const l = linhasRecibo(recibo)
+    expect(l[0]).toEqual(['Recebemos de', 'Carla Souza (carla@x.com)'])
+    expect(l.find(([r]) => r === 'Personal')?.[1]).toBe('Romildo Bernardo')
+    expect(l.find(([r]) => r === 'Data do pagamento')?.[1]).toMatch(/03\/11\/2026.*12:30/)
+    expect(l.at(-1)).toEqual(['Código Mercado Pago', '123456'])
+    expect(linhasRecibo({ ...recibo, recebedor_nome: null, gateway_id: null }).some(([r]) => r === 'Personal' || r.startsWith('Código'))).toBe(false)
+  })
+
+  it('anda pelos meses do painel', () => {
+    expect(rotuloMes('2026-11')).toBe('nov/26')
+    expect(outroMes('2026-01', -1)).toBe('2025-12')
+    expect(outroMes('2026-12', 1)).toBe('2027-01')
+    expect(mesAtual(new Date('2026-12-01T02:00:00Z'))).toBe('2026-11')
   })
 })

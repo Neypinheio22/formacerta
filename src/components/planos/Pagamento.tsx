@@ -24,6 +24,7 @@ import {
   type Plano,
   type Servico,
 } from '../../nuvem/planos'
+import { BotaoRecibo } from './BotaoRecibo'
 import { recarregarDireitos } from './useDireitos'
 
 export type Pedido =
@@ -235,6 +236,8 @@ function PagarPix({
           <CircleCheck size={56} className="verde" />
           <h1>Pagamento confirmado</h1>
           <p className="dica">{servico ? `${titulo} está pago. O seu personal já recebeu o aviso e vai combinar o atendimento com você pelo chat.` : `${titulo} já está valendo. Obrigado!`}</p>
+          <p className="dica-sec">O recibo também foi para o seu e-mail.</p>
+          <BotaoRecibo pagamento={pagamento} classe="botao-sec" />
           <button className="botao grande" onClick={onPronto}>
             {textoPronto}
           </button>

@@ -4,9 +4,10 @@ import { definirSituacao, excluirConta, listarPerfis } from '../../nuvem/gestao'
 import { ModerarVitrine } from '../vitrine/ModerarVitrine'
 import { AdminPagamentos, AdminPlanos, AdminRepasses } from '../planos/AdminCobranca'
 import { AdminPrecos } from '../planos/AdminPrecos'
+import { AdminVendas } from '../planos/AdminVendas'
 import { ROTULO_TIPO, listarResultados, type ResultadoNuvem, type TipoResultado } from '../../nuvem/resultados'
 
-type Aba = 'aguardando' | 'profissionais' | 'alunos' | 'resultados' | 'vitrine' | 'planos' | 'precos' | 'pagamentos' | 'repasses'
+type Aba = 'vendas' | 'aguardando' | 'profissionais' | 'alunos' | 'resultados' | 'vitrine' | 'planos' | 'precos' | 'pagamentos' | 'repasses'
 
 /** Tela do administrador: libera, bloqueia e exclui profissionais e alunos. */
 export function Admin({ onVoltar }: { onVoltar: () => void }) {
@@ -81,6 +82,9 @@ export function Admin({ onVoltar }: { onVoltar: () => void }) {
       </div>
 
       <div className="escolha abas">
+        <button className={aba === 'vendas' ? 'ativo' : ''} onClick={() => setAba('vendas')}>
+          Vendas
+        </button>
         <button className={aba === 'aguardando' ? 'ativo' : ''} onClick={() => setAba('aguardando')}>
           Aguardando{aguardando.length > 0 && ` (${aguardando.length})`}
         </button>
@@ -170,6 +174,7 @@ export function Admin({ onVoltar }: { onVoltar: () => void }) {
       {!carregando && aba === 'pagamentos' && <AdminPagamentos nomePorId={nomePorId} />}
 
       {!carregando && aba === 'repasses' && <AdminRepasses />}
+      {aba === 'vendas' && <AdminVendas />}
     </div>
   )
 }

@@ -7351,3 +7351,161 @@ p.selo-aluno {
 .passos-instalar svg {
   vertical-align: -2px;
 }
+
+/* ---------- Painel de vendas do administrador (item 17) ---------- */
+.painel-vendas {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.painel-vendas h3 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 8px;
+  font-size: 1rem;
+}
+
+.mes-escolha {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  text-transform: capitalize;
+}
+
+.mes-escolha strong {
+  min-width: 80px;
+  text-align: center;
+  font-size: 1.1rem;
+}
+
+.numeros.vendas {
+  grid-template-columns: 1fr;
+  margin: 0;
+}
+
+.numeros.vendas div {
+  text-align: left;
+  font-size: 0.9rem;
+}
+
+.numeros.vendas strong {
+  font-size: 1.6rem;
+}
+
+.numeros .destaque-verde strong {
+  color: var(--verde);
+}
+
+.numeros .destaque-laranja strong {
+  color: #f59e0b;
+}
+
+.lista-valores {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px 12px;
+  margin: 0;
+  font-size: 0.92rem;
+}
+
+.lista-valores dt {
+  color: var(--texto-sec);
+}
+
+.lista-valores dd {
+  margin: 0;
+  text-align: right;
+  font-weight: 600;
+}
+
+.lista-valores dd small {
+  display: block;
+  font-weight: 400;
+  color: var(--texto-sec);
+}
+
+.barras-meses {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.barras-meses li {
+  display: grid;
+  grid-template-columns: 52px 1fr auto;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+}
+
+.barras-meses li.atual .rotulo {
+  color: var(--verde);
+  font-weight: 700;
+}
+
+.barras-meses .trilho {
+  position: relative;
+  height: 14px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.barras-meses .barra {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: rgba(54, 242, 148, 0.35);
+  border-radius: 999px;
+}
+
+.barras-meses .barra.receita {
+  background: var(--verde);
+}
+
+.legenda-barras {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.legenda-barras .ponto {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+  background: rgba(54, 242, 148, 0.35);
+}
+
+.legenda-barras .ponto.receita {
+  background: var(--verde);
+  margin-left: 10px;
+}
+
+.top-personais {
+  margin: 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.92rem;
+}
+
+.top-personais li span:first-child {
+  margin-right: 8px;
+}
+
+.top-personais li span:last-child {
+  float: right;
+  color: var(--texto-sec);
+}
+
+.historico .link svg {
+  vertical-align: -2px;
+}
