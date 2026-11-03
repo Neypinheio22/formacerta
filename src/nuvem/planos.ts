@@ -46,6 +46,8 @@ export type Assinatura = {
   criado_em: string
   /** Dado pelo administrador, sem pagamento. */
   cortesia?: boolean
+  /** Cancelou: continua valendo até valido_ate e não renova. */
+  cancelado_em?: string | null
 }
 
 export type Servico = {
@@ -315,12 +317,50 @@ export function paraRenovar(lista: Assinatura[], diasAviso = 3): Assinatura | nu
   const ultima = lista.find((a) => a.situacao !== 'cancelada')
   if (!ultima || ultima.cortesia || ultima.valor <= 0) return null
   if (ultima.situacao === 'vencida') return ultima
+  if (ultima.cancelado_em) return null
   if ((ultima.situacao === 'ativa' || ultima.situacao === 'teste') && ultima.valido_ate) {
     const dias = (Date.parse(ultima.valido_ate) - Date.now()) / 86_400_000
     return dias <= diasAviso ? ultima : null
   }
   return null
 }
+
+/** Desfaz o cancelamento: o plano volta a ser renovável. */
+export async function reativarAssinatura() {
+  const { error } = await supabase.rpc('reativar_assinatura')
+  return error ? erroAmigavel(error) : null
+}
+
+/** Serviço mensal que o aluno pagou e que vence em breve (ou já venceu). */
+export type Mensalidade = {
+  servico_id: string
+  nome: string
+  descricao: string
+  preco: number
+  ativo: boolean
+  profissional_id: string
+  profissional_nome: string
+  pago_em: string
+  vence_em: string
+}
+
+/** Aluno: serviços mensais para renovar (a partir de 5 dias antes de vencer). Vazio sem o SQL novo. */
+export async function mensalidadesParaRenovar(): Promise<Mensalidade[]> {
+  const { data, error } = await supabase.rpc('mensalidades_para_renovar')
+  if (error || !data) return []
+  return (data as Mensalidade[]).map((m) => ({ ...m, preco: Number(m.preco) }))
+}
+
+/** O serviço da mensalidade, no formato que a tela de pagamento usa. */
+export const servicoDaMensalidade = (m: Mensalidade): Servico => ({
+  id: m.servico_id,
+  profissional_id: m.profissional_id,
+  nome: m.nome,
+  descricao: m.descricao,
+  preco: m.preco,
+  ativo: m.ativo,
+  mensal: true,
+})
 
 export async function cancelarAssinatura() {
   const { error } = await supabase.rpc('cancelar_assinatura')
@@ -441,6 +481,8 @@ export type Direitos = {
   /** Está num plano pago (pagou, teste grátis ou cortesia). */
   pago: boolean
   cortesia: boolean
+  /** Cancelou o plano: vale até o fim do período e não renova. */
+  cancelado?: boolean
   situacao: SituacaoAssinatura | null
   ciclo: Ciclo | null
   valido_ate: string | null
@@ -473,7 +515,7 @@ export const DIAS_AVISO = 3
 /** O aviso do plano para a tela inicial, ou vazio quando não há nada a dizer. */
 export function avisoDoPlano(d: Direitos | null): { tipo: 'vence' | 'venceu'; titulo: string; texto: string } | null {
   if (!d || d.papel === 'admin') return null
-  if (d.pago && !d.cortesia && d.dias_restantes !== null && d.dias_restantes <= DIAS_AVISO) {
+  if (d.pago && !d.cortesia && !d.cancelado && d.dias_restantes !== null && d.dias_restantes <= DIAS_AVISO) {
     const quando = d.dias_restantes <= 0 ? 'hoje' : d.dias_restantes === 1 ? 'amanhã' : `em ${d.dias_restantes} dias`
     return d.situacao === 'teste'
       ? { tipo: 'vence', titulo: `Seu teste grátis acaba ${quando}`, texto: `Assine o ${d.plano_nome} para continuar com tudo liberado.` }

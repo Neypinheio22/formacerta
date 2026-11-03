@@ -117,7 +117,8 @@ export function Pagamento({ pedido, onVoltar, onPronto, textoPronto = 'Ver meus 
     setEnviando(false)
   }
 
-  if (fim?.tipo === 'pix') return <PagarPix titulo={titulo} valor={valor} pagamento={fim.pagamento} cobranca={fim.cobranca} textoPronto={textoPronto} onPronto={onPronto} />
+  if (fim?.tipo === 'pix')
+    return <PagarPix titulo={titulo} valor={valor} pagamento={fim.pagamento} cobranca={fim.cobranca} servico={pedido.tipo === 'avaliacao'} textoPronto={textoPronto} onPronto={onPronto} />
   if (fim) return <Pronto fim={fim} titulo={titulo} mercadoPago={mercadoPago} textoPronto={textoPronto} onPronto={onPronto} />
 
   return (
@@ -183,7 +184,25 @@ export function Pagamento({ pedido, onVoltar, onPronto, textoPronto = 'Ver meus 
 }
 
 /** QR Code e copia e cola. Confere sozinho a cada 5 segundos se o Pix caiu. */
-function PagarPix({ titulo, valor, pagamento, cobranca, textoPronto, onPronto }: { titulo: string; valor: number; pagamento: string; cobranca: Cobranca; textoPronto: string; onPronto: () => void }) {
+function PagarPix({
+  titulo,
+  valor,
+  pagamento,
+  cobranca,
+  servico = false,
+  textoPronto,
+  onPronto,
+}: {
+  titulo: string
+  valor: number
+  pagamento: string
+  cobranca: Cobranca
+  /** Serviço do personal: ele recebe o aviso no chat. */
+  servico?: boolean
+  textoPronto: string
+  onPronto: () => void
+}) {
+  const { recarregar } = useConta()
   const [pago, setPago] = useState(false)
   const [copiado, setCopiado] = useState(false)
 
@@ -193,10 +212,12 @@ function PagarPix({ titulo, valor, pagamento, cobranca, textoPronto, onPronto }:
       if ((await lerPagamento(pagamento))?.situacao === 'pago') {
         setPago(true)
         recarregarDireitos()
+        // Quem contratou pode ter ganhado um personal agora.
+        if (servico) recarregar()
       }
     }, 5000)
     return () => clearInterval(vez)
-  }, [pagamento, pago])
+  }, [pagamento, pago, servico, recarregar])
 
   async function copiar() {
     try {
@@ -213,7 +234,7 @@ function PagarPix({ titulo, valor, pagamento, cobranca, textoPronto, onPronto }:
         <section className="cartao destaque centro pronto">
           <CircleCheck size={56} className="verde" />
           <h1>Pagamento confirmado</h1>
-          <p className="dica">{titulo} já está valendo. Obrigado!</p>
+          <p className="dica">{servico ? `${titulo} está pago. O seu personal já recebeu o aviso e vai combinar o atendimento com você pelo chat.` : `${titulo} já está valendo. Obrigado!`}</p>
           <button className="botao grande" onClick={onPronto}>
             {textoPronto}
           </button>
@@ -254,7 +275,7 @@ function Pronto({ fim, titulo, mercadoPago, textoPronto, onPronto }: { fim: Excl
       : 'Pedido de renovação registrado. O administrador confirma o pagamento e o plano ganha mais um período.'
   else if (fim.tipo === 'pedido')
     texto = mercadoPago
-      ? 'Pedido registrado. Assim que o pagamento for confirmado, ele aparece para o seu personal.'
+      ? 'Pedido registrado. Assim que o pagamento for confirmado, o seu personal recebe o aviso no chat para combinar o atendimento.'
       : 'Pedido registrado. O pagamento pelo app ainda vai ser ligado: combine com o seu personal e ele marca a avaliação.'
   else if (a?.situacao === 'teste') texto = `Seu teste grátis começou e vai até ${new Date(a.valido_ate!).toLocaleDateString('pt-BR')}. Aproveite tudo do plano.`
   else if (a?.situacao === 'ativa') texto = 'Pronto, o plano já está valendo.'
