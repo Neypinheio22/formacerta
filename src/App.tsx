@@ -93,6 +93,9 @@ const TELAS_PRO: Partial<Record<Screen['name'], RecursoPro>> = {
   evolucao: 'evolucao',
 }
 
+// Telas de câmera e gravação: ocupam a tela inteira, sem menu, também no computador.
+const TELA_CHEIA: Screen['name'][] = ['avaliacao', 'estudio-controle', 'estudio-camera', 'exercicio-vivo', 'exercicio-arquivo', 'corrida-arquivo']
+
 // Link enviado pelo celular de controle: ...?estudio=123456 abre direto como câmera.
 // Toque na notificação: ...?abrir=conversas abre o chat.
 function telaInicial(): Screen {
@@ -178,15 +181,24 @@ function Telas({ inicial }: { inicial: Screen }) {
   const conteudo = desenhar()
   // Chamada de vídeo: toca no celular do personal e abre por cima de qualquer tela.
   const chamadas = perfil ? <CentralChamadas perfil={perfil} /> : null
-  if (!perfil || !aba)
+  if (!perfil || (!aba && TELA_CHEIA.includes(screen.name)))
     return (
       <>
         {conteudo}
         {chamadas}
       </>
     )
+  // Telas internas: no celular continuam sem a barra; no computador ganham o menu lateral.
+  if (!aba)
+    return (
+      <div className="com-lateral">
+        {conteudo}
+        <BarraInferior atual={null} soComputador aluno={perfil.papel === 'aluno'} onIr={(a) => go({ name: a })} />
+        {chamadas}
+      </div>
+    )
   return (
-    <div className="com-barra">
+    <div className="com-barra com-lateral">
       {conteudo}
       <BarraInferior atual={aba} aluno={perfil.papel === 'aluno'} onIr={(a) => go({ name: a })} />
       {chamadas}

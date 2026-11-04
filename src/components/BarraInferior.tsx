@@ -1,13 +1,17 @@
 import { Dumbbell, Home, LineChart, MessagesSquare, UserRound, Users, type LucideIcon } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { contarNaoLidas } from '../nuvem/chat'
+import { Logo } from './Logo'
 
 export type Aba = 'inicio' | 'treino' | 'conversas' | 'evolucao' | 'alunos' | 'conta'
 
 type Item = { aba: Aba; rotulo: string; Icone: LucideIcon }
 
-/** Barra fixa embaixo nas telas principais. O aluno vê Evolução; o personal vê Alunos. O Chat mostra quantas mensagens novas. */
-export function BarraInferior({ atual, aluno, onIr }: { atual: Aba; aluno: boolean; onIr: (a: Aba) => void }) {
+/**
+ * Barra fixa embaixo nas telas principais. O aluno vê Evolução; o personal vê Alunos. O Chat mostra quantas mensagens novas.
+ * No computador (tela larga) ela vira um menu lateral à esquerda, que aparece também nas telas internas (`soComputador`).
+ */
+export function BarraInferior({ atual, aluno, onIr, soComputador = false }: { atual: Aba | null; aluno: boolean; onIr: (a: Aba) => void; soComputador?: boolean }) {
   const [novas, setNovas] = useState(0)
   useEffect(() => {
     let vivo = true
@@ -28,7 +32,10 @@ export function BarraInferior({ atual, aluno, onIr }: { atual: Aba; aluno: boole
     { aba: 'conta', rotulo: 'Conta', Icone: UserRound },
   ]
   return (
-    <nav className="barra-inferior" aria-label="Menu principal">
+    <nav className={soComputador ? 'barra-inferior so-computador' : 'barra-inferior'} aria-label="Menu principal">
+      <button className="barra-logo" aria-label="FormaCerta, ir para o início" onClick={() => onIr('inicio')}>
+        <Logo size={22} />
+      </button>
       {itens.map(({ aba, rotulo, Icone }) => (
         <button key={aba} className={aba === atual ? 'ativo' : ''} aria-current={aba === atual ? 'page' : undefined} onClick={() => onIr(aba)}>
           <span className="barra-inferior-icone">
