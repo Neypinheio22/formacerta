@@ -8183,3 +8183,601 @@ p.selo-aluno {
 .cartao-aviso-novo .link {
   text-decoration: none;
 }
+
+/* ---------------------------------------------------------------------------
+   Sessão de treino do aluno: visualização, INICIAR TREINO, cronômetro,
+   exercícios marcados, cargas, descanso e bi-set. */
+.sessao-titulo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.sessao-titulo small {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--texto-sec);
+}
+
+.sessao-letra {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: rgba(54, 242, 148, 0.14);
+  border: 1px solid var(--borda-verde);
+  color: var(--verde);
+  font-size: 1.4rem;
+}
+
+.iniciar-sessao {
+  display: grid;
+  gap: 10px;
+}
+
+.botao-iniciar {
+  letter-spacing: 0.06em;
+  font-size: 1.05rem;
+}
+
+.painel-sessao {
+  position: sticky;
+  top: 8px;
+  z-index: 15;
+  display: grid;
+  gap: 8px;
+  padding: 14px 16px;
+  border-radius: 20px;
+  background: rgba(2, 11, 22, 0.92);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  border: 1px solid var(--borda-verde);
+  box-shadow: 0 10px 30px -8px rgba(0, 0, 0, 0.6);
+}
+
+.cronometro {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 1.9rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--verde);
+}
+
+.painel-sessao-linha {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: var(--texto-sec);
+}
+
+.progresso-sessao {
+  display: block;
+  height: 6px;
+  border-radius: 99px;
+  background: var(--borda);
+  overflow: hidden;
+}
+
+.progresso-sessao span {
+  display: block;
+  height: 100%;
+  background: var(--verde);
+  border-radius: 99px;
+  transition: width 0.3s;
+}
+
+.lista-sessao,
+.bloco-combinado-lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+
+.cartao-ex {
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+  border-radius: 20px;
+  background: var(--vidro);
+  border: 1px solid var(--borda-verde);
+}
+
+.cartao-ex.feito {
+  border-color: rgba(54, 242, 148, 0.55);
+}
+
+.cartao-ex.compacto {
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  padding: 12px 14px;
+  background: rgba(54, 242, 148, 0.08);
+}
+
+.cartao-ex-reabrir {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: 0;
+  color: var(--texto);
+  text-align: left;
+  font: inherit;
+  padding: 0;
+  cursor: pointer;
+}
+
+.cartao-ex-topo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cartao-ex-nome {
+  flex: 1;
+  font-size: 1.05rem;
+  line-height: 1.3;
+}
+
+.check-ex {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border-radius: 50%;
+  border: 2px solid var(--texto-sec);
+  background: transparent;
+  color: var(--fundo);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.check-ex.marcado {
+  border-color: var(--verde);
+  background: var(--verde);
+  box-shadow: 0 0 14px rgba(54, 242, 148, 0.45);
+}
+
+.letra-bloco {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--verde);
+  color: var(--fundo);
+  font-weight: 800;
+}
+
+.prescricao {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+}
+
+.prescricao > div {
+  padding: 6px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--borda);
+}
+
+.prescricao dt {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--texto-sec);
+}
+
+.prescricao dd {
+  margin: 0;
+  font-weight: 700;
+}
+
+.prescricao-texto,
+.instrucao,
+.ultima-vez {
+  margin: 0;
+  font-size: 0.88rem;
+}
+
+.instrucao b {
+  color: var(--verde);
+}
+
+.ultima-vez {
+  color: var(--texto-sec);
+}
+
+.cartao-ex-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.cartao-ex-acoes .botao-sec {
+  padding: 8px 12px;
+  font-size: 0.85rem;
+  width: auto;
+}
+
+.cartao-ex-acoes .botao-sec.ativo {
+  border-color: var(--verde);
+  color: var(--verde);
+}
+
+.series-sessao {
+  display: grid;
+  gap: 6px;
+}
+
+.series-sessao-cabeca,
+.series-sessao li {
+  display: grid;
+  grid-template-columns: 44px 1fr 1fr;
+  gap: 8px;
+  align-items: center;
+}
+
+.series-sessao-cabeca {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--texto-sec);
+}
+
+.series-sessao ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.series-sessao input {
+  width: 100%;
+  min-width: 0;
+  padding: 10px;
+  text-align: center;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.series-sessao-n {
+  font-weight: 700;
+  color: var(--texto-sec);
+}
+
+.bloco-combinado {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 24px;
+  border: 1px dashed rgba(54, 242, 148, 0.45);
+  background: rgba(54, 242, 148, 0.04);
+}
+
+.bloco-combinado.feito {
+  border-style: solid;
+  border-color: rgba(54, 242, 148, 0.6);
+}
+
+.bloco-combinado-topo {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.bloco-combinado-topo strong {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--verde);
+}
+
+.bloco-combinado-topo small {
+  display: block;
+  color: var(--texto-sec);
+  font-size: 0.82rem;
+}
+
+.bloco-combinado .cartao-ex {
+  background: rgba(2, 11, 22, 0.55);
+}
+
+.barra-descanso {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(86px + env(safe-area-inset-bottom));
+  z-index: 25;
+  width: min(528px, calc(100% - 24px));
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 20px;
+  overflow: hidden;
+  background: rgba(5, 31, 47, 0.96);
+  border: 1px solid var(--verde);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+  color: var(--verde);
+}
+
+.barra-descanso.acabou {
+  border-color: var(--laranja);
+  color: var(--laranja);
+  animation: pulsar-descanso 1s ease-in-out infinite;
+}
+
+@keyframes pulsar-descanso {
+  50% {
+    box-shadow: 0 0 24px rgba(251, 141, 26, 0.5);
+  }
+}
+
+.barra-descanso-progresso {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 3px;
+  background: currentColor;
+  transition: width 1s linear;
+}
+
+.barra-descanso-texto {
+  flex: 1;
+  display: grid;
+}
+
+.barra-descanso-texto b {
+  font-size: 1.5rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.barra-descanso-texto small {
+  color: var(--texto-sec);
+  font-size: 0.78rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.barra-descanso .botao-sec {
+  width: auto;
+  padding: 8px 12px;
+}
+
+.barra-descanso .icone-fechar {
+  background: none;
+  border: 0;
+  color: var(--texto-sec);
+  padding: 6px;
+  cursor: pointer;
+}
+
+.sessao-treino.executando {
+  padding-bottom: 180px;
+}
+
+.escala-pse {
+  display: grid;
+  gap: 6px;
+}
+
+.escala-pse button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--borda);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--texto);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.escala-pse button b {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(54, 242, 148, 0.15);
+  color: var(--verde);
+}
+
+.escala-pse button.tom-atencao b {
+  background: rgba(250, 204, 21, 0.15);
+  color: var(--amarelo);
+}
+
+.escala-pse button.tom-alerta b {
+  background: rgba(251, 141, 26, 0.18);
+  color: var(--laranja);
+}
+
+.escala-pse button.ativo {
+  border-color: var(--verde);
+  background: rgba(54, 242, 148, 0.1);
+}
+
+.escala-pse button.ativo.tom-atencao {
+  border-color: var(--amarelo);
+  background: rgba(250, 204, 21, 0.08);
+}
+
+.escala-pse button.ativo.tom-alerta {
+  border-color: var(--laranja);
+  background: rgba(251, 141, 26, 0.1);
+}
+
+.frequencia-treino {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.frequencia-treino span {
+  display: grid;
+  text-align: center;
+  padding: 8px 4px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--borda);
+}
+
+.frequencia-treino b {
+  font-size: 1.2rem;
+  color: var(--verde);
+}
+
+.frequencia-treino b.laranja {
+  color: var(--laranja);
+}
+
+.frequencia-treino small {
+  font-size: 0.68rem;
+  color: var(--texto-sec);
+}
+
+.sessao-exercicios {
+  list-style: none;
+  margin: 4px 0;
+  padding: 10px 12px;
+  display: grid;
+  gap: 8px;
+  border-radius: 14px;
+  background: rgba(2, 11, 22, 0.5);
+}
+
+.sessao-exercicios li {
+  display: grid;
+  gap: 2px;
+}
+
+.sessao-ex-nome {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+  font-size: 0.88rem;
+}
+
+.sessao-ex-vazio {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1.5px solid var(--texto-sec);
+}
+
+.sessao-ex-series {
+  font-size: 0.82rem;
+  color: var(--texto-sec);
+}
+
+.sessao-exercicios .chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  width: fit-content;
+}
+
+.combinar-proximo {
+  margin-top: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px dashed var(--borda-verde);
+  background: none;
+  color: var(--texto-sec);
+  font: inherit;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+.combinar-proximo.ativo {
+  border-style: solid;
+  border-color: var(--verde);
+  color: var(--verde);
+  background: rgba(54, 242, 148, 0.08);
+}
+
+.exercicios-editor > li.junto-proximo {
+  border-color: rgba(54, 242, 148, 0.5);
+  border-bottom-left-radius: 4px;
+  border-bottom-right-radius: 4px;
+}
+
+.exercicios-editor > li.junto-anterior {
+  border-color: rgba(54, 242, 148, 0.5);
+  border-top-left-radius: 4px;
+  border-top-right-radius: 4px;
+}
+
+@media (min-width: 1024px) {
+  .barra-descanso {
+    bottom: 24px;
+    left: calc(50% + 120px);
+  }
+
+  .sessao-treino.executando {
+    padding-bottom: 120px;
+  }
+
+  .lista-sessao {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+
+  .lista-sessao > .bloco-combinado {
+    grid-column: 1 / -1;
+  }
+
+  .bloco-combinado-lista {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+}
+
+.series-sessao input {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--borda);
+  border-radius: 12px;
+  color: var(--texto);
+}
+
+.series-sessao input:focus {
+  outline: none;
+  border-color: var(--verde);
+}
+
+.series-sessao input::placeholder {
+  color: var(--texto-sec);
+  opacity: 0.6;
+}

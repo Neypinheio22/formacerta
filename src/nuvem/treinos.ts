@@ -2,6 +2,7 @@ import { supabase } from './cliente'
 import { erroAmigavel } from './conta'
 import type { Ficha } from './fichas'
 import { limparLinha, linhasDe, linhaVazia, linhaVaziaDe, type LinhaSerie } from '../treino/linhas'
+import { intensidadeDaPse } from '../treino/sessao'
 import { intensidadeDoEsforco, limparCargas, type CargaExercicio, type Execucao, type Feedback } from '../treino/execucao'
 
 /**
@@ -9,7 +10,8 @@ import { intensidadeDoEsforco, limparCargas, type CargaExercicio, type Execucao,
  * usam as linhas (série/rep, carga, intervalo, cadência...); séries,
  * repetições e dica ficam para os treinos guardados antes delas.
  */
-export type ExercicioTreino = { nome: string; series: string; reps: string; obs: string; linhas?: LinhaSerie[] }
+/** junto: o personal combinou com o próximo exercício (bi-set, tri-set). */
+export type ExercicioTreino = { nome: string; series: string; reps: string; obs: string; linhas?: LinhaSerie[]; junto?: boolean }
 
 export type Treino = {
   id: string
@@ -50,6 +52,7 @@ export function limparExercicio(e: ExercicioTreino): ExercicioTreino {
     reps: (reps.length ? reps.join('x') : series).trim().slice(0, 20),
     obs: (linhas.find((l) => l.tipo === 'observacoes')?.texto ?? '').slice(0, 200),
     linhas,
+    ...(e.junto ? { junto: true } : {}),
   }
 }
 
@@ -79,11 +82,12 @@ function linhaFeedback(f: Feedback) {
   return {
     dificuldade: f.dificuldade,
     esforco: f.esforco,
+    ...(f.pse !== null ? { pse: f.pse } : {}),
     dor: f.dor,
     dor_local: f.dor ? f.dor_local.slice(0, 120) : '',
     dor_nivel: f.dor ? f.dor_nivel : null,
     comentario: f.comentario.trim().slice(0, 500),
-    ...(f.esforco !== null ? { intensidade: intensidadeDoEsforco(f.esforco) } : {}),
+    ...(f.pse !== null ? { intensidade: intensidadeDaPse(f.pse) } : f.esforco !== null ? { intensidade: intensidadeDoEsforco(f.esforco) } : {}),
     avaliado_em: new Date().toISOString(),
   }
 }
@@ -98,6 +102,11 @@ export async function marcarFeito(meuId: string, t: Treino, retorno?: Retorno, e
   const antigo = retorno ? { inicio: retorno.inicio, fim: retorno.fim, intensidade: retorno.intensidade.slice(0, 30), comentario: retorno.comentario.trim().slice(0, 500) } : {}
   const novo = { ...(extra?.cargas ? { cargas: limparCargas(extra.cargas) } : {}), ...(extra?.feedback ? linhaFeedback(extra.feedback) : {}) }
   let { error } = await supabase.from('treinos_feitos').insert({ ...base, ...antigo, ...novo })
+  // Banco ainda sem a coluna da PSE: guarda o resto (a PSE fica na intensidade).
+  if (error && 'pse' in novo && semColuna(error.message)) {
+    const { pse: _pse, ...semPse } = novo as Record<string, unknown>
+    ;({ error } = await supabase.from('treinos_feitos').insert({ ...base, ...antigo, ...semPse }))
+  }
   if (error && Object.keys(novo).length && semColuna(error.message)) ({ error } = await supabase.from('treinos_feitos').insert({ ...base, ...antigo, ...(novo.intensidade ? { intensidade: novo.intensidade } : {}), ...('comentario' in novo ? { comentario: novo.comentario } : {}) }))
   // Banco ainda sem as colunas do retorno: guarda pelo menos o treino feito.
   if (error && retorno && semColuna(error.message)) ({ error } = await supabase.from('treinos_feitos').insert(base))
@@ -106,7 +115,12 @@ export async function marcarFeito(meuId: string, t: Treino, retorno?: Retorno, e
 
 /** O aluno avalia depois um treino que já concluiu (botão Avaliar). */
 export async function avaliarTreino(id: string, f: Feedback) {
-  const { error } = await supabase.from('treinos_feitos').update(linhaFeedback(f)).eq('id', id)
+  const linha = linhaFeedback(f)
+  let { error } = await supabase.from('treinos_feitos').update(linha).eq('id', id)
+  if (error && 'pse' in linha && semColuna(error.message)) {
+    const { pse: _pse, ...semPse } = linha
+    ;({ error } = await supabase.from('treinos_feitos').update(semPse).eq('id', id))
+  }
   if (error && semColuna(error.message)) return 'Falta rodar no Supabase o arquivo gerenciamento-de-treinos.sql para guardar a avaliação.'
   return error ? erroAmigavel(error) : null
 }

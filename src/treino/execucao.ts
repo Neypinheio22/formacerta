@@ -13,7 +13,8 @@ import { diaLocal, inicioDaSemana } from './semana'
 /** Série feita pelo aluno: carga em kg e repetições. Vazio quando ele não anotou. */
 export type SerieFeita = { kg: number | null; reps: number | null }
 
-export type CargaExercicio = { nome: string; series: SerieFeita[] }
+/** Exercício da sessão: séries anotadas e se o aluno marcou como feito. */
+export type CargaExercicio = { nome: string; series: SerieFeita[]; feito?: boolean }
 
 /** O que o app precisa de cada treino concluído. */
 export type Execucao = {
@@ -28,6 +29,8 @@ export type Execucao = {
   cargas?: CargaExercicio[] | null
   dificuldade?: number | null
   esforco?: number | null
+  /** Percepção subjetiva de esforço, 1 (muito leve) a 8 (exaustão máxima). */
+  pse?: number | null
   dor?: boolean | null
   dor_local?: string | null
   dor_nivel?: number | null
@@ -80,12 +83,12 @@ export const tomEsforco = (n: number): 'ok' | 'atencao' | 'alerta' => (n >= 9 ? 
 
 export const LOCAIS_DOR = ['Ombro', 'Cotovelo', 'Punho', 'Cervical', 'Costas', 'Lombar', 'Quadril', 'Joelho', 'Tornozelo', 'Outro'] as const
 
-export type Feedback = { dificuldade: number | null; esforco: number | null; dor: boolean | null; dor_local: string; dor_nivel: number | null; comentario: string }
+export type Feedback = { dificuldade: number | null; esforco: number | null; pse: number | null; dor: boolean | null; dor_local: string; dor_nivel: number | null; comentario: string }
 
-export const feedbackVazio = (): Feedback => ({ dificuldade: null, esforco: null, dor: null, dor_local: '', dor_nivel: null, comentario: '' })
+export const feedbackVazio = (): Feedback => ({ dificuldade: null, esforco: null, pse: null, dor: null, dor_local: '', dor_nivel: null, comentario: '' })
 
 /** O aluno já disse como foi o treino (pela tela nova ou pela antiga, de intensidade). */
-export const temFeedback = (e: Execucao) => !!e.avaliado_em || e.dificuldade != null || e.esforco != null || !!e.intensidade
+export const temFeedback = (e: Execucao) => !!e.avaliado_em || e.pse != null || e.dificuldade != null || e.esforco != null || !!e.intensidade
 
 // ---------------------------------------------------------------------------
 // Histórico e situação de cada treino
@@ -140,14 +143,15 @@ export function lerNumero(v: string): number | null {
   return Number.isFinite(n) && n >= 0 && n < 1000 ? Math.round(n * 10) / 10 : null
 }
 
-/** Só os exercícios com alguma série anotada, sem séries vazias. */
+/** Só os exercícios feitos ou com alguma série anotada, sem séries vazias. */
 export function limparCargas(cargas: CargaExercicio[]): CargaExercicio[] {
   return cargas
     .map((c) => ({
       nome: c.nome.trim().slice(0, 80),
       series: c.series.filter((s) => s.kg !== null || s.reps !== null).slice(0, 10),
+      ...(c.feito ? { feito: true } : {}),
     }))
-    .filter((c) => c.nome && c.series.length)
+    .filter((c) => c.nome && (c.series.length || c.feito))
     .slice(0, 30)
 }
 
@@ -232,6 +236,7 @@ export type ResumoPeriodo = {
   /** Média da maior carga de cada exercício no período. */
   cargaMedia: number | null
   esforco: number | null
+  pse: number | null
   dificuldade: number | null
   minutos: number | null
   dores: number
@@ -269,6 +274,7 @@ export function resumoDoPeriodo(execucoes: Execucao[], de: string, ate: string):
     reps,
     cargaMedia: media([...maiores.values()]),
     esforco: media(no.map((e) => e.esforco).filter((n): n is number => n != null)),
+    pse: media(no.map((e) => e.pse).filter((n): n is number => n != null)),
     dificuldade: media(no.map((e) => e.dificuldade).filter((n): n is number => n != null)),
     minutos: media(tempos),
     dores: no.filter((e) => e.dor).length,
@@ -347,3 +353,47 @@ export const LETRAS_TREINO = 'ABCDEFGHIJ'
 
 /** Letras em sequência (A, B, C...) na ordem da lista. */
 export const reletrar = <T extends { letra: string }>(lista: T[]): T[] => lista.map((t, i) => ({ ...t, letra: LETRAS_TREINO[i] }))
+
+// ---------------------------------------------------------------------------
+// Histórico de sessões para o personal
+
+export type ExercicioDaSessao = { nome: string; series: SerieFeita[]; feito: boolean; cargaMax: number; antes: number | null; dif: number | null }
+
+/**
+ * Exercícios de uma sessão com o comparativo de carga: maior carga de hoje
+ * contra a maior carga da sessão anterior em que o aluno anotou o mesmo exercício.
+ */
+export function exerciciosDaSessao(execucoes: Execucao[], e: Execucao): ExercicioDaSessao[] {
+  const anteriores = execucoes.filter((x) => x.id !== e.id && x.feito_em < e.feito_em).sort((a, b) => b.feito_em.localeCompare(a.feito_em))
+  return (e.cargas ?? []).map((c) => {
+    const agora = pontoDe(e.feito_em, c.series).cargaMax
+    const k = nomeChave(c.nome)
+    let antes: number | null = null
+    for (const x of anteriores) {
+      const ca = (x.cargas ?? []).find((y) => nomeChave(y.nome) === k && y.series.some((s) => s.kg))
+      if (ca) {
+        antes = pontoDe(x.feito_em, ca.series).cargaMax
+        break
+      }
+    }
+    return { nome: c.nome, series: c.series, feito: c.feito ?? c.series.length > 0, cargaMax: agora, antes, dif: antes !== null && agora ? agora - antes : null }
+  })
+}
+
+export type Frequencia = { semana: number; ultimos30: number; porSemana: number; diasSemTreinar: number | null }
+
+/** Frequência de treino: nesta semana, nos últimos 30 dias, média por semana (4 semanas) e dias desde o último. */
+export function frequenciaDeTreino(execucoes: Execucao[], hoje = new Date()): Frequencia {
+  const segunda = diaLocal(inicioDaSemana(hoje))
+  const hojeDia = diaLocal(hoje)
+  const desde30 = menosDias(hojeDia, 29)
+  const desde28 = menosDias(hojeDia, 27)
+  const dias = execucoes.map((e) => diaLocal(e.feito_em))
+  const ultima = [...dias].sort().pop()
+  return {
+    semana: dias.filter((d) => d >= segunda && d <= hojeDia).length,
+    ultimos30: dias.filter((d) => d >= desde30 && d <= hojeDia).length,
+    porSemana: dias.filter((d) => d >= desde28 && d <= hojeDia).length / 4,
+    diasSemTreinar: ultima ? Math.round((new Date(`${hojeDia}T12:00:00`).getTime() - new Date(`${ultima}T12:00:00`).getTime()) / 86400000) : null,
+  }
+}
