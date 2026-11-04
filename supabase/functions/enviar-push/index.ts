@@ -1,6 +1,6 @@
 // Notificação no celular (Web Push). Chamada pelo banco (mandar_push) quando
-// chega mensagem no chat, quando o aluno chama por vídeo e 15 minutos antes do
-// treino agendado. Também entrega a chave pública para o app se inscrever
+// chega mensagem no chat, quando o aluno chama por vídeo, 15 minutos antes do
+// treino agendado e quando o personal manda uma notificação (tipo aviso). Também entrega a chave pública para o app se inscrever
 // ({ acao: 'chave' }). Confere tudo no banco e não repete a mesma notificação
 // (push_enviados), então chamar de novo não manda nada. Publicada sem login
 // (verify_jwt false). As chaves VAPID são criadas aqui na primeira vez e ficam
@@ -137,6 +137,23 @@ Deno.serve(async (req) => {
         url: './?abrir=inicio',
         tag: `agenda-${id}`,
       }))
+    return ok({ enviados: n })
+  }
+
+  if (pedido.tipo === 'aviso') {
+    // Notificação que o personal mandou (na hora, agendada ou recorrente).
+    const { data: r } = await banco.from('notificacoes_recebidas').select('id, notificacao_id, profissional_id, aluno_id, titulo, texto, criado_em').eq('id', id).maybeSingle()
+    if (!r || !recente(r.criado_em as string, 10)) return ok({ enviados: 0 })
+    if (!(await primeiraVez(banco, `aviso:${id}`))) return ok({ enviados: 0 })
+    const personal = r.profissional_id ? primeiro(await nomeDe(banco, r.profissional_id as string)) : 'Seu personal'
+    const texto = String(r.texto)
+    const n = await mandar(banco, r.aluno_id as string, {
+      tipo: 'aviso',
+      titulo: `${personal}: ${r.titulo}`,
+      corpo: texto.length > 180 ? `${texto.slice(0, 177)}…` : texto,
+      url: './?abrir=avisos',
+      tag: `aviso-${r.notificacao_id ?? id}`,
+    })
     return ok({ enviados: n })
   }
 

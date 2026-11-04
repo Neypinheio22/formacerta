@@ -12,6 +12,7 @@ import { travadoNoPro } from './planos/useDireitos'
 import { CartaoMensalidades } from './planos/CartaoMensalidades'
 import { CartaoCreditosVideo } from './video/CartaoCreditosVideo'
 import { CartaoInstalar, CartaoNotificacoes } from './CartaoAvisos'
+import { CartaoAvisoNovo, CartaoNotificacoesPersonal, SinoNotificacoes } from './notificacoes/Avisos'
 import { AguaCartao, ProximoTreinoCartao, SemanaCartao } from './treino/CartoesAluno'
 import { useMeuTreino } from './treino/useMeuTreino'
 import { VitrineCarrossel } from './vitrine/VitrineCarrossel'
@@ -43,6 +44,10 @@ type Props = {
   onPagarServico?: (servico: Servico) => void
   /** Abre a aba Chat (para chamar o personal por vídeo). */
   onChat?: () => void
+  /** Personal: tela de notificações (criar: já abre o "Criar notificação"). */
+  onNotificacoes?: (criar?: boolean) => void
+  /** Aluno: avisos que o personal mandou. */
+  onAvisos?: () => void
 }
 
 /** pro: recurso do Aluno Pro (mostra a coroa para quem está no grátis). */
@@ -74,7 +79,7 @@ function Grupo({ titulo, atalhos, personal, semPro = false }: { titulo: string; 
   )
 }
 
-export function Home({ history, onStart, onOpen, onEstudio, onExercicio, onCarga, onCorrida, onFlexibilidade, onAdams, onIdoso, perfil, onAdmin, onAlunos, onReavaliacoes, onEvolucao, onMeusDados, onVitrine, onPlanos, onRelatorio, onTreino, onPersonais, direitos = null, onPagarServico, onChat }: Props) {
+export function Home({ history, onStart, onOpen, onEstudio, onExercicio, onCarga, onCorrida, onFlexibilidade, onAdams, onIdoso, perfil, onAdmin, onAlunos, onReavaliacoes, onEvolucao, onMeusDados, onVitrine, onPlanos, onRelatorio, onTreino, onPersonais, direitos = null, onPagarServico, onChat, onNotificacoes, onAvisos }: Props) {
   const verPlanos = usePlanosLiberados(perfil)
   const [todoHistorico, setTodoHistorico] = useState(false)
   // O aluno só vê o que ele mesmo usa; as ferramentas de avaliar e atender alunos ficam para o personal.
@@ -96,6 +101,7 @@ export function Home({ history, onStart, onOpen, onEstudio, onExercicio, onCarga
             <h1>{perfil.nome ? perfil.nome.split(' ')[0] : perfil.email.split('@')[0]}</h1>
           </div>
           <span className="barra-botoes">
+            {(aluno ? onAvisos : onNotificacoes) && <SinoNotificacoes perfil={perfil} onAbrir={() => (aluno ? onAvisos!() : onNotificacoes!())} />}
             {verPlanos && (
               <button className="botao-sec" onClick={onPlanos}>
                 <Crown size={14} /> Planos
@@ -130,8 +136,12 @@ export function Home({ history, onStart, onOpen, onEstudio, onExercicio, onCarga
         </section>
       )}
 
+      {aluno && perfil && onAvisos && <CartaoAvisoNovo meuId={perfil.id} onAbrir={onAvisos} />}
+
       {perfil && <CartaoInstalar />}
       {perfil && <CartaoNotificacoes personal={!aluno} />}
+
+      {perfil && !aluno && onNotificacoes && <CartaoNotificacoesPersonal onAbrir={() => onNotificacoes()} onCriar={() => onNotificacoes(true)} />}
 
       {aluno && perfil && onPagarServico && <CartaoMensalidades meuId={perfil.id} onPagar={onPagarServico} />}
 

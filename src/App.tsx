@@ -26,6 +26,8 @@ import { Conversa } from './components/chat/Conversa'
 import { Conversas } from './components/chat/Conversas'
 import { CentralChamadas } from './components/video/CentralChamadas'
 import { sincronizarPush } from './nuvem/push'
+import { Notificacoes } from './components/notificacoes/Notificacoes'
+import { Avisos } from './components/notificacoes/Avisos'
 import { RetornoPagamento } from './components/planos/RetornoPagamento'
 import type { Conversa as ConversaNuvem } from './nuvem/chat'
 import { TelaTreino } from './components/treino/TelaTreino'
@@ -79,6 +81,8 @@ type Screen =
   | { name: 'pagamento'; pedido: Pedido; voltar?: Screen }
   | { name: 'retorno-pagamento'; pagamento: string; falhou: boolean }
   | { name: 'conversas' }
+  | { name: 'notificacoes'; criar?: boolean }
+  | { name: 'avisos' }
   | { name: 'conversa'; conversa: ConversaNuvem; voltar: Screen }
   | { name: 'perfil'; voltar: Screen }
   | { name: 'relatorio'; avaliado?: string; marcados?: string[]; voltar: Screen }
@@ -113,6 +117,7 @@ function telaInicial(): Screen {
     // Tira o ?abrir= do endereço para não voltar ao chat num recarregar.
     window.history.replaceState(null, '', window.location.pathname)
     if (busca.get('abrir') === 'conversas') return { name: 'conversas' }
+    if (busca.get('abrir') === 'avisos') return { name: 'avisos' }
   }
   return { name: 'inicio' }
 }
@@ -157,6 +162,7 @@ function Telas({ inicial }: { inicial: Screen }) {
       if (e.data?.tipo !== 'abrir') return
       const abrir = new URL(String(e.data.url), window.location.href).searchParams.get('abrir')
       if (abrir === 'conversas') go({ name: 'conversas' })
+      else if (abrir === 'avisos') go({ name: 'avisos' })
       else go({ name: 'inicio' })
     }
     navigator.serviceWorker.addEventListener('message', aoAviso)
@@ -291,6 +297,11 @@ function Telas({ inicial }: { inicial: Screen }) {
     }
     if (screen.name === 'personais') return <EncontrarPersonal meuId={perfil?.id ?? ''} meuNome={perfil?.nome ?? ''} onVoltar={() => go(screen.voltar)} onConversa={(conversa) => go({ name: 'conversa', conversa, voltar: { name: 'conversas' } })} />
 
+    if (screen.name === 'notificacoes' && perfil)
+      return <Notificacoes key={screen.criar ? 'criar' : 'ver'} meuId={perfil.id} meuNome={perfil.nome || perfil.email} criar={screen.criar} onVoltar={() => go({ name: 'inicio' })} />
+
+    if (screen.name === 'avisos') return <Avisos onVoltar={() => go({ name: 'inicio' })} />
+
     if (screen.name === 'conversas' && perfil)
       return <Conversas perfil={perfil} onAbrir={(conversa) => go({ name: 'conversa', conversa, voltar: screen })} onPersonais={() => go({ name: 'personais', voltar: screen })} />
 
@@ -403,6 +414,8 @@ function Telas({ inicial }: { inicial: Screen }) {
         onPersonais={() => go({ name: 'personais', voltar: screen })}
         direitos={direitos}
         onChat={() => go({ name: 'conversas' })}
+        onNotificacoes={(criar) => go({ name: 'notificacoes', criar })}
+        onAvisos={() => go({ name: 'avisos' })}
         onPagarServico={(servico) => go({ name: 'pagamento', pedido: { tipo: 'avaliacao', servico }, voltar: { name: 'inicio' } })}
       />
     )
