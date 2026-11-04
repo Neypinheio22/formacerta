@@ -7509,3 +7509,135 @@ p.selo-aluno {
 .historico .link svg {
   vertical-align: -2px;
 }
+
+/* ===== Computador =====
+   No celular nada muda: a barra fica embaixo e as telas internas seguem sem menu.
+   A partir de 1024px de largura a barra vira um menu lateral à esquerda e o conteúdo usa mais a tela. */
+.barra-inferior .barra-logo,
+.barra-inferior.so-computador {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .com-lateral {
+    padding-left: 240px;
+  }
+
+  .com-lateral .tela {
+    max-width: 1040px;
+    padding: 32px 32px 64px;
+  }
+
+  .com-barra .tela {
+    padding-bottom: 64px;
+  }
+
+  .barra-inferior,
+  .barra-inferior.so-computador {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    left: 16px;
+    top: 16px;
+    bottom: 16px;
+    transform: none;
+    width: 208px;
+    padding: 16px 12px;
+    border-radius: 24px;
+  }
+
+  .barra-inferior .barra-logo {
+    display: flex;
+    justify-content: flex-start;
+    padding: 4px 10px 20px;
+    margin-bottom: 8px;
+    border-bottom: 1px solid var(--borda-verde);
+    border-radius: 0;
+    color: var(--texto);
+  }
+
+  .barra-inferior button:not(.barra-logo) {
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 10px;
+    padding: 6px 8px;
+    border-radius: 14px;
+    font-size: 0.95rem;
+    transition: background 0.2s ease, color 0.2s ease;
+  }
+
+  .barra-inferior button:not(.barra-logo):hover {
+    background: rgba(54, 242, 148, 0.06);
+    color: var(--texto);
+  }
+
+  .barra-inferior button.ativo:not(.barra-logo) {
+    background: rgba(54, 242, 148, 0.08);
+    color: var(--verde);
+  }
+
+  .barra-inferior-icone {
+    width: 38px;
+    height: 34px;
+  }
+
+  /* O logo já está no menu lateral */
+  .com-lateral .saudacao .logo {
+    display: none;
+  }
+
+  /* Botão principal dos cartões não estica pela tela toda */
+  .com-lateral .tela .cartao > :is(.botao, .botao-sec) {
+    width: fit-content;
+    min-width: 320px;
+    max-width: 100%;
+  }
+
+  .com-lateral .tela > :is(.botao, .botao-sec) {
+    align-self: flex-start;
+    min-width: 320px;
+  }
+
+  /* Tela inicial em duas colunas: os cartões pequenos ficam lado a lado */
+  .com-lateral .tela-inicio {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-auto-flow: row dense;
+    align-items: stretch;
+  }
+
+  .com-lateral .tela-inicio > * {
+    grid-column: 1 / -1;
+  }
+
+  .com-lateral .tela-inicio > .cartao {
+    grid-column: auto;
+    margin: 0;
+  }
+
+  .com-lateral .tela-inicio > .cartao:has(.botao.grande) {
+    grid-column: 1 / -1;
+  }
+
+  /* Atalhos em grade de 3 ou 4 colunas, no lugar de 2 */
+  .com-lateral .atalhos {
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 14px;
+  }
+
+  /* Telas que abrem por cima (biblioteca de exercícios): conteúdo mais largo */
+  .bib-conteudo {
+    max-width: 960px;
+    padding: 24px 32px 40px;
+  }
+
+  .bib-barra .botao {
+    max-width: 928px;
+  }
+}
+
+@media (min-width: 1440px) {
+  .com-lateral .tela {
+    max-width: 1120px;
+  }
+}

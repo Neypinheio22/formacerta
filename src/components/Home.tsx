@@ -85,7 +85,7 @@ export function Home({ history, onStart, onOpen, onEstudio, onExercicio, onCarga
   const aviso = avisoDoPlano(direitos)
 
   return (
-    <div className="tela">
+    <div className="tela tela-inicio">
       <FundoHex brilho />
 
       {perfil ? (
