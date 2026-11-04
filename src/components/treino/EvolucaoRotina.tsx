@@ -45,6 +45,7 @@ function Comparacao({ execucoes }: { execucoes: TreinoFeito[] }) {
     { rotulo: 'Volume (kg × reps)', v: (r) => (r.volume ? r.volume : null), txt: mil },
     { rotulo: 'Repetições', v: (r) => (r.reps ? r.reps : null), txt: (n) => String(Math.round(n)) },
     { rotulo: 'Carga média', v: (r) => r.cargaMedia, txt: kg },
+    { rotulo: 'PSE média', v: (r) => r.pse, txt: (n) => `${numero(n, 1)}/8`, inverso: true },
     { rotulo: 'Esforço médio', v: (r) => r.esforco, txt: (n) => `${numero(n, 1)}/10`, inverso: true },
     { rotulo: 'Dificuldade média', v: (r) => r.dificuldade, txt: (n) => `${numero(n, 1)}/5`, inverso: true },
     { rotulo: 'Tempo médio', v: (r) => r.minutos, txt: textoDuracao },

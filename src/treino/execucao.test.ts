@@ -8,6 +8,8 @@ import {
   intensidadeDoEsforco,
   lerNumero,
   limparCargas,
+  exerciciosDaSessao,
+  frequenciaDeTreino,
   mover,
   pontosDoExercicio,
   progressoDoExercicio,
@@ -136,5 +138,32 @@ describe('feedback, foco e ordem', () => {
     const novo = reletrar(mover(l, 2, -1))
     expect(novo.map((t) => `${t.letra}${t.n}`)).toEqual(['A1', 'B3', 'C2'])
     expect(mover(l, 0, -1)).toBe(l)
+  })
+})
+
+describe('histórico de sessões', () => {
+  const e = (id: string, feito_em: string, cargas: { nome: string; series: { kg: number | null; reps: number | null }[]; feito?: boolean }[]) => ({ id, treino_id: 't', letra: 'A', feito_em, cargas })
+  it('compara a carga com a sessão anterior do mesmo exercício', () => {
+    const lista = [
+      e('1', '2026-11-01T10:00:00', [{ nome: 'Supino reto', series: [{ kg: 40, reps: 10 }] }]),
+      e('2', '2026-11-03T10:00:00', [{ nome: 'Remada', series: [], feito: true }]),
+      e('3', '2026-11-04T10:00:00', [
+        { nome: 'supino Reto', series: [{ kg: 42, reps: 10 }, { kg: 44, reps: 8 }], feito: true },
+        { nome: 'Remada', series: [], feito: true },
+      ]),
+    ]
+    const r = exerciciosDaSessao(lista, lista[2])
+    expect(r[0]).toMatchObject({ cargaMax: 44, antes: 40, dif: 4, feito: true })
+    expect(r[1]).toMatchObject({ antes: null, dif: null, feito: true })
+  })
+
+  it('conta a frequência de treino', () => {
+    const hoje = new Date('2026-11-04T15:00:00') // quarta
+    const lista = ['2026-11-02T10:00:00', '2026-11-04T08:00:00', '2026-10-20T10:00:00', '2026-09-01T10:00:00'].map((d, i) => e(String(i), d, []))
+    const f = frequenciaDeTreino(lista, hoje)
+    expect(f.semana).toBe(2)
+    expect(f.ultimos30).toBe(3)
+    expect(f.porSemana).toBe(0.75)
+    expect(f.diasSemTreinar).toBe(0)
   })
 })

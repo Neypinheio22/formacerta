@@ -1,4 +1,4 @@
-import { CheckCircle2, ClipboardList, Film, FolderOpen, Library, Lightbulb, MessageSquareText, Plus, Trash2, TrendingUp, X } from 'lucide-react'
+import { CheckCircle2, ClipboardList, Film, FolderOpen, Library, Lightbulb, Link2, MessageSquareText, Plus, Trash2, TrendingUp, X } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { EXERCICIOS } from '../../movimento/exercicios'
 import type { Ficha } from '../../nuvem/fichas'
@@ -123,7 +123,7 @@ export function EditorExercicios({ exercicios, bib, onMudar }: { exercicios: Exe
 
   return (
     <>
-      <p className="dica-sec">Em cada exercício, adicione as linhas que quiser: escolha o tipo (repetições e carga, cadência, observações...) e toque em + Linha.</p>
+      <p className="dica-sec">Em cada exercício, adicione as linhas que quiser: escolha o tipo (repetições e carga, cadência, observações...) e toque em + Linha. Para bi-set ou tri-set, toque em Combinar com o próximo: o aluno vê os exercícios juntos e alterna entre eles.</p>
       <datalist id="sugestoes-treino">
         {[...new Set([...bib.lista.map((e) => e.nome), ...SUGESTOES])].sort((a, b) => a.localeCompare(b, 'pt-BR')).map((s) => (
           <option key={s} value={s} />
@@ -131,7 +131,7 @@ export function EditorExercicios({ exercicios, bib, onMudar }: { exercicios: Exe
       </datalist>
       <ol className="exercicios-editor">
         {exercicios.map((ex, i) => (
-          <li key={i}>
+          <li key={i} className={`${ex.junto && i < exercicios.length - 1 ? 'junto-proximo' : ''} ${exercicios[i - 1]?.junto ? 'junto-anterior' : ''}`}>
             <div className="exercicio-linha">
               <input list="sugestoes-treino" value={ex.nome} onChange={(e) => mudarEx(i, { nome: e.target.value })} maxLength={80} placeholder="Exercício" aria-label="Exercício" />
               <button type="button" className="icone-apagar" aria-label="Tirar exercício" onClick={() => onMudar(exercicios.filter((_, j) => j !== i))}>
@@ -140,6 +140,11 @@ export function EditorExercicios({ exercicios, bib, onMudar }: { exercicios: Exe
             </div>
             <MidiaNaFicha nome={ex.nome} bib={bib} />
             <EditorLinhas linhas={ex.linhas ?? []} onMudar={(linhas) => mudarEx(i, { linhas })} />
+            {i < exercicios.length - 1 && (
+              <button type="button" className={`combinar-proximo ${ex.junto ? 'ativo' : ''}`} aria-pressed={!!ex.junto} onClick={() => mudarEx(i, { junto: !ex.junto })}>
+                <Link2 size={14} /> {ex.junto ? 'Combinado com o próximo (bi-set) · desfazer' : 'Combinar com o próximo (bi-set)'}
+              </button>
+            )}
           </li>
         ))}
       </ol>

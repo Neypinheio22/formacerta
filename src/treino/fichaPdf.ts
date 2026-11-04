@@ -497,6 +497,8 @@ export async function gerarFichaPdf(dados: DadosFichaPdf): Promise<{ pdf: Blob; 
 }
 
 /** Rótulo e texto de linha antigos ou novos lidos do exercício guardado. */
-export function exercicioPdf(ex: { nome: string; series?: string; reps?: string; obs?: string; linhas?: LinhaSerie[] }, extra: Pick<ExercicioPdf, 'imagem' | 'video'> = {}): ExercicioPdf {
-  return { nome: ex.nome, linhas: linhasDoExercicio(ex), ...extra }
+export function exercicioPdf(ex: { nome: string; series?: string; reps?: string; obs?: string; linhas?: LinhaSerie[]; junto?: boolean }, extra: Pick<ExercicioPdf, 'imagem' | 'video'> = {}): ExercicioPdf {
+  const linhas = linhasDoExercicio(ex)
+  if (ex.junto) linhas.push({ tipo: 'exercicio', texto: 'Combinado com o próximo (bi-set): alterne os dois, uma série de cada.' })
+  return { nome: ex.nome, linhas, ...extra }
 }
