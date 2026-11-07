@@ -9,9 +9,18 @@ import { Termos } from './Termos'
 
 type Modo = 'entrar' | 'cadastrar' | 'esqueci'
 
+/** Link da página de captação: ...?cadastro=aluno abre direto em "Criar conta" como aluno. */
+function cadastroDoLink(): 'profissional' | 'aluno' | null {
+  const c = new URLSearchParams(window.location.search).get('cadastro')
+  if (c !== 'aluno' && c !== 'profissional') return null
+  window.history.replaceState(null, '', window.location.pathname)
+  return c
+}
+
 export function Entrar() {
-  const [modo, setModo] = useState<Modo>('entrar')
-  const [papel, setPapel] = useState<'profissional' | 'aluno'>('profissional')
+  const [doLink] = useState(cadastroDoLink)
+  const [modo, setModo] = useState<Modo>(doLink ? 'cadastrar' : 'entrar')
+  const [papel, setPapel] = useState<'profissional' | 'aluno'>(doLink ?? 'profissional')
   const [nome, setNome] = useState('')
   const [registro, setRegistro] = useState('')
   const [email, setEmail] = useState('')
@@ -44,7 +53,11 @@ export function Entrar() {
       const r = await cadastrar({ email, senha, nome, papel, registro, termosVersao: VERSAO_TERMOS })
       if (r.erro) setErro(r.erro)
       else if (r.confirmar) {
-        setAviso('Cadastro feito. Abra o link que chegou no seu e-mail para confirmar. Depois disso, o administrador libera o seu acesso.')
+        setAviso(
+          papel === 'aluno'
+            ? 'Cadastro feito. Abra o link que chegou no seu e-mail para confirmar e depois entre com o seu e-mail e senha.'
+            : 'Cadastro feito. Abra o link que chegou no seu e-mail para confirmar. Depois disso, o administrador libera o seu acesso.',
+        )
         setModo('entrar')
       }
     }
@@ -139,7 +152,7 @@ export function Entrar() {
           <p className="dica-sec">
             {papel === 'profissional'
               ? 'Depois do cadastro, o administrador confere os seus dados e libera o acesso.'
-              : 'Se o seu personal já usa o FormaCerta, peça para ele cadastrar você: assim o acesso sai na hora.'}
+              : 'Seu acesso de aluno sai na hora. Depois é só escolher o seu personal.'}
           </p>
         )}
       </form>

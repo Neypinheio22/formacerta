@@ -115,9 +115,13 @@ function telaInicial(): Screen {
   }
   if (busca.get('abrir')) {
     // Tira o ?abrir= do endereço para não voltar ao chat num recarregar.
-    window.history.replaceState(null, '', window.location.pathname)
+    // O ?cadastro= fica: a tela de entrar ainda lê (botão da página de captação).
+    const cadastro = busca.get('cadastro')
+    window.history.replaceState(null, '', window.location.pathname + (cadastro ? `?cadastro=${encodeURIComponent(cadastro)}` : ''))
     if (busca.get('abrir') === 'conversas') return { name: 'conversas' }
     if (busca.get('abrir') === 'avisos') return { name: 'avisos' }
+    // Página "personal trainer online": depois de criar a conta, o aluno cai direto na lista de personais.
+    if (busca.get('abrir') === 'personal') return { name: 'personais', voltar: { name: 'inicio' } }
   }
   return { name: 'inicio' }
 }

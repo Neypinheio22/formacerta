@@ -1,0 +1,497 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Personal trainer online com CREF | FormaCerta</title>
+    <meta
+      name="description"
+      content="Contrate um personal trainer online com CREF conferido. Avaliação física com profissional, treino personalizado para emagrecer ou ganhar massa e acompanhamento de verdade pelo app. Crie sua conta grátis."
+    />
+    <link rel="canonical" href="https://formacerta.app.br/personal-trainer-online/" />
+    <meta name="theme-color" content="#020B16" />
+    <link rel="icon" href="/favicon.ico" sizes="48x48" />
+    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="FormaCerta" />
+    <meta property="og:locale" content="pt_BR" />
+    <meta property="og:url" content="https://formacerta.app.br/personal-trainer-online/" />
+    <meta property="og:title" content="Personal trainer online com CREF | FormaCerta" />
+    <meta property="og:description" content="Avaliação física com profissional, treino feito para você e acompanhamento pelo app. Converse grátis antes de contratar." />
+    <meta property="og:image" content="https://formacerta.app.br/capa-compartilhar.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Personal trainer online com CREF | FormaCerta" />
+    <meta name="twitter:image" content="https://formacerta.app.br/capa-compartilhar.jpg" />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "Service",
+        "name": "Personal trainer online com CREF",
+        "serviceType": "Consultoria de treino online",
+        "provider": { "@type": "Organization", "name": "FormaCerta", "url": "https://formacerta.app.br/" },
+        "areaServed": { "@type": "Country", "name": "Brasil" },
+        "availableLanguage": "pt-BR",
+        "description": "Avaliação física com profissional de Educação Física com CREF, treino personalizado e acompanhamento pelo app FormaCerta."
+      }
+    </script>
+    <script type="application/ld+json" id="faq-ld"></script>
+
+    <style>
+      :root {
+        --verde: #36f294;
+        --verde-escuro: #27e184;
+        --fundo: #020b16;
+        --cartao: #051f2f;
+        --borda: #0d3247;
+        --borda-verde: rgba(54, 242, 148, 0.22);
+        --texto: #f2f2f6;
+        --texto-sec: #9fb3c2;
+        --laranja: #fb8d1a;
+      }
+      * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+      body {
+        margin: 0;
+        background: var(--fundo);
+        color: var(--texto);
+        font-family: 'Poppins', system-ui, -apple-system, 'Segoe UI', sans-serif;
+        line-height: 1.55;
+        overflow-x: hidden;
+      }
+      img { max-width: 100%; display: block; }
+      a { color: var(--verde); }
+      .verde { color: var(--verde); }
+      .largura { width: min(1120px, 100% - 32px); margin-inline: auto; }
+
+      /* Topo */
+      .topo {
+        position: sticky; top: 0; z-index: 20;
+        background: rgba(2, 11, 22, 0.86); backdrop-filter: blur(10px);
+        border-bottom: 1px solid var(--borda);
+      }
+      .topo .largura { display: flex; align-items: center; justify-content: space-between; height: 60px; gap: 12px; }
+      .logo { display: flex; align-items: center; gap: 6px; font-weight: 800; font-size: 1.25rem; color: var(--texto); text-decoration: none; letter-spacing: -0.02em; }
+      .logo svg { width: 26px; height: 26px; }
+      .topo .entrar { color: var(--texto-sec); text-decoration: none; font-size: 0.9rem; font-weight: 600; white-space: nowrap; }
+
+      /* Botões */
+      .cta {
+        display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+        background: var(--verde); color: #02140b; font-weight: 800; font-size: 1.05rem;
+        padding: 16px 26px; border-radius: 999px; text-decoration: none; border: 0; cursor: pointer;
+        box-shadow: 0 8px 30px rgba(54, 242, 148, 0.28); transition: transform 0.15s, background 0.15s;
+      }
+      .cta:hover { background: var(--verde-escuro); transform: translateY(-1px); }
+      .cta-sec {
+        display: inline-flex; align-items: center; justify-content: center;
+        color: var(--texto); font-weight: 600; padding: 15px 22px; border-radius: 999px;
+        border: 1px solid var(--borda-verde); text-decoration: none;
+      }
+
+      /* Hero */
+      .hero { padding: 40px 0 32px; position: relative; }
+      .hero::before {
+        content: ''; position: absolute; inset: -80px 0 auto; height: 520px; z-index: -1;
+        background: radial-gradient(600px 300px at 20% 30%, rgba(54, 242, 148, 0.14), transparent 70%);
+      }
+      .hero .largura { display: grid; gap: 32px; align-items: center; }
+      .selo {
+        display: inline-flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: 600;
+        color: var(--verde); background: rgba(54, 242, 148, 0.08); border: 1px solid var(--borda-verde);
+        padding: 6px 14px; border-radius: 999px;
+      }
+      h1 { font-size: clamp(2.1rem, 7vw, 3.6rem); line-height: 1.08; margin: 16px 0 14px; letter-spacing: -0.03em; font-weight: 800; }
+      .sub { font-size: 1.1rem; color: var(--texto-sec); margin: 0 0 24px; max-width: 34em; }
+      .sub strong { color: var(--texto); }
+      .acoes { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+      .confianca { list-style: none; padding: 0; margin: 22px 0 0; display: grid; gap: 8px; font-size: 0.95rem; color: var(--texto-sec); }
+      .confianca li { display: flex; gap: 10px; align-items: flex-start; }
+      .confianca svg { flex: none; width: 20px; height: 20px; margin-top: 2px; color: var(--verde); }
+      .hero-foto { border-radius: 24px; overflow: hidden; border: 1px solid var(--borda); box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5); }
+
+      /* Seções */
+      section { padding: 56px 0; }
+      .titulo-secao { font-size: clamp(1.6rem, 5vw, 2.4rem); line-height: 1.15; margin: 0 0 10px; letter-spacing: -0.02em; font-weight: 800; }
+      .intro { color: var(--texto-sec); margin: 0 0 28px; max-width: 40em; font-size: 1.05rem; }
+      .rotulo { color: var(--verde); font-weight: 700; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.08em; margin: 0 0 8px; }
+      .grade { display: grid; gap: 16px; }
+      .cartao { background: var(--cartao); border: 1px solid var(--borda); border-radius: 20px; padding: 22px; }
+      .cartao h3 { margin: 0 0 6px; font-size: 1.1rem; }
+      .cartao p { margin: 0; color: var(--texto-sec); }
+      .icone {
+        width: 46px; height: 46px; border-radius: 50%; border: 2px solid var(--verde); color: var(--verde);
+        display: grid; place-items: center; margin-bottom: 14px;
+      }
+      .icone svg { width: 22px; height: 22px; }
+
+      /* Dores */
+      .dor { border-left: 3px solid var(--laranja); }
+      .dor .fala { font-style: italic; color: var(--texto); margin-bottom: 8px; font-weight: 600; }
+      .dor .resposta { color: var(--texto-sec); }
+      .dor .resposta strong { color: var(--verde); }
+
+      /* Passos */
+      .passos { counter-reset: passo; list-style: none; padding: 0; margin: 0; display: grid; gap: 14px; }
+      .passos li { counter-increment: passo; position: relative; padding: 20px 20px 20px 74px; background: var(--cartao); border: 1px solid var(--borda); border-radius: 20px; }
+      .passos li::before {
+        content: counter(passo); position: absolute; left: 20px; top: 20px; width: 38px; height: 38px; border-radius: 50%;
+        background: var(--verde); color: #02140b; font-weight: 800; display: grid; place-items: center;
+      }
+      .passos h3 { margin: 0 0 4px; font-size: 1.05rem; }
+      .passos p { margin: 0; color: var(--texto-sec); }
+
+      /* Telas */
+      .telas { display: grid; gap: 28px; align-items: center; }
+      .celulares { display: flex; gap: 14px; justify-content: center; }
+      .celular { width: min(46%, 230px); border-radius: 26px; border: 6px solid #0b2536; overflow: hidden; background: #000; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5); }
+      .celular:nth-child(2) { margin-top: 40px; }
+      .lista-check { list-style: none; padding: 0; margin: 0; display: grid; gap: 14px; }
+      .lista-check li { display: flex; gap: 12px; }
+      .lista-check svg { flex: none; width: 22px; height: 22px; color: var(--verde); margin-top: 3px; }
+      .lista-check strong { display: block; }
+      .lista-check span { color: var(--texto-sec); }
+
+      /* Objetivos */
+      .objetivos { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+      .objetivo { background: var(--cartao); border: 1px solid var(--borda); border-radius: 18px; padding: 18px; }
+      .objetivo h3 { margin: 0 0 4px; font-size: 1rem; }
+      .objetivo p { margin: 0; color: var(--texto-sec); font-size: 0.9rem; }
+
+      /* Dúvidas */
+      .botoes-duvida { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 22px; }
+      .botoes-duvida button {
+        font: inherit; font-weight: 600; font-size: 0.95rem; color: var(--texto); cursor: pointer;
+        background: var(--cartao); border: 1px solid var(--borda-verde); border-radius: 999px; padding: 10px 16px;
+      }
+      .botoes-duvida button:hover, .botoes-duvida button.ativo { background: rgba(54, 242, 148, 0.12); border-color: var(--verde); color: var(--verde); }
+      details { background: var(--cartao); border: 1px solid var(--borda); border-radius: 18px; margin-bottom: 10px; scroll-margin-top: 80px; }
+      details[open] { border-color: var(--borda-verde); }
+      summary { cursor: pointer; padding: 18px 52px 18px 20px; font-weight: 700; list-style: none; position: relative; }
+      summary::-webkit-details-marker { display: none; }
+      summary::after { content: '+'; position: absolute; right: 20px; top: 50%; transform: translateY(-50%); color: var(--verde); font-size: 1.5rem; font-weight: 400; }
+      details[open] summary::after { content: '–'; }
+      details .resposta { padding: 0 20px 20px; color: var(--texto-sec); }
+      details .resposta p { margin: 0 0 10px; }
+      details .resposta p:last-child { margin: 0; }
+      details .resposta strong { color: var(--texto); }
+
+      /* Final */
+      .final { text-align: center; }
+      .final .caixa {
+        background: linear-gradient(160deg, rgba(54, 242, 148, 0.14), rgba(5, 31, 47, 0.9) 60%);
+        border: 1px solid var(--borda-verde); border-radius: 28px; padding: 40px 22px;
+      }
+      .final p { color: var(--texto-sec); max-width: 32em; margin: 0 auto 24px; }
+      .miudo { font-size: 0.85rem; color: var(--texto-sec); margin-top: 14px; }
+
+      .final .aviso { max-width: none; margin-inline: 0; }
+      .aviso { font-size: 0.85rem; color: var(--texto-sec); border: 1px solid rgba(251, 141, 26, 0.35); background: rgba(251, 141, 26, 0.06); border-radius: 14px; padding: 14px 16px; }
+      .aviso strong { color: var(--laranja); }
+
+      footer { padding: 32px 0 110px; border-top: 1px solid var(--borda); color: var(--texto-sec); font-size: 0.9rem; }
+      footer .largura { display: grid; gap: 14px; }
+      footer a { color: var(--texto-sec); }
+
+      /* Botão fixo no celular */
+      .fixo {
+        position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+        background: rgba(2, 11, 22, 0.94); border-top: 1px solid var(--borda); backdrop-filter: blur(10px);
+        transform: translateY(110%); transition: transform 0.25s;
+      }
+      .fixo.mostrar { transform: none; }
+      .fixo .cta { width: 100%; }
+
+      @media (min-width: 760px) {
+        .grade.tres { grid-template-columns: repeat(3, 1fr); }
+        .objetivos { grid-template-columns: repeat(3, 1fr); }
+        .passos { grid-template-columns: repeat(2, 1fr); }
+      }
+      @media (min-width: 960px) {
+        .hero { padding: 72px 0 48px; }
+        .hero .largura { grid-template-columns: 1.05fr 0.95fr; gap: 56px; }
+        .telas { grid-template-columns: 1fr 1fr; gap: 56px; }
+        .passos { grid-template-columns: repeat(4, 1fr); }
+        .passos li { padding: 74px 20px 22px; }
+        .fixo { display: none; }
+        footer { padding-bottom: 40px; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        html { scroll-behavior: auto; }
+        .cta, .fixo { transition: none; }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="topo">
+      <div class="largura">
+        <a class="logo" href="/" aria-label="FormaCerta">
+          <svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="17" cy="7" r="4.2" fill="#36F294" /><path d="M4 16.5l6.8 7.5L28 8.5" fill="none" stroke="#36F294" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round" /></svg>
+          <span>Forma<span class="verde">Certa</span></span>
+        </a>
+        <a class="entrar" href="/" data-origem="topo-entrar">Já tenho conta</a>
+      </div>
+    </header>
+
+    <main>
+      <!-- 1. Atenção: promessa principal -->
+      <section class="hero" id="topo">
+        <div class="largura">
+          <div>
+            <span class="selo">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /><path d="M9 12l2 2 4-4" /></svg>
+              Profissionais com CREF conferido
+            </span>
+            <h1>Personal trainer online <span class="verde">com CREF</span></h1>
+            <p class="sub">
+              <strong>Avaliação física com profissional</strong>, treino feito para o seu objetivo e acompanhamento de verdade, tudo no celular.
+              Converse com o personal antes de contratar.
+            </p>
+            <div class="acoes">
+              <a class="cta" href="/?cadastro=aluno&abrir=personal" data-origem="hero">Encontrar meu personal</a>
+              <a class="cta-sec" href="#como-funciona">Como funciona</a>
+            </div>
+            <ul class="confianca">
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5" /></svg>Criar conta e conversar com o personal é grátis</li>
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5" /></svg>Você vê o preço do serviço antes de pagar</li>
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5" /></svg>Pagamento seguro dentro do app, por Pix ou cartão</li>
+            </ul>
+          </div>
+          <img class="hero-foto" src="/lp/hero.webp" width="900" height="892" alt="Aluno fazendo agachamento enquanto o app FormaCerta marca os pontos do corpo e o ângulo do joelho" fetchpriority="high" />
+        </div>
+      </section>
+
+      <!-- 2. Interesse: as dúvidas reais de quem pensa em contratar -->
+      <section id="por-que">
+        <div class="largura">
+          <p class="rotulo">Personal online vale a pena?</p>
+          <h2 class="titulo-secao">Vale quando o acompanhamento é de verdade</h2>
+          <p class="intro">Quem pensa em contratar um personal online costuma ter os mesmos receios. Veja como o FormaCerta responde a cada um.</p>
+          <div class="grade tres">
+            <div class="cartao dor">
+              <p class="fala">“Vou pagar e receber um treino genérico.”</p>
+              <p class="resposta">O personal monta a ficha <strong>a partir da sua avaliação</strong>, do seu objetivo e da sua rotina. Você vê o nome, a foto e o CREF de quem atende.</p>
+            </div>
+            <div class="cartao dor">
+              <p class="fala">“Ninguém vai corrigir meu exercício.”</p>
+              <p class="resposta">O app <strong>analisa sua postura e seus movimentos pela câmera</strong> e o personal recebe o resultado, o histórico dos treinos e o seu retorno.</p>
+            </div>
+            <div class="cartao dor">
+              <p class="fala">“Não sei se compensa.”</p>
+              <p class="resposta">Você <strong>conversa de graça</strong> antes, vê o preço de cada serviço no chat e só paga o que escolher. Sem fidelidade.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. Como funciona -->
+      <section id="como-funciona">
+        <div class="largura">
+          <p class="rotulo">Como contratar um personal trainer online</p>
+          <h2 class="titulo-secao">Do cadastro ao primeiro treino em 4 passos</h2>
+          <p class="intro">Tudo acontece dentro do app FormaCerta, que funciona no navegador do celular ou do computador.</p>
+          <ol class="passos">
+            <li><h3>Crie sua conta grátis</h3><p>Nome, e-mail e senha. Seu acesso de aluno sai na hora.</p></li>
+            <li><h3>Escolha o seu personal</h3><p>Veja foto, cidade, especialidades e o CREF, com link para conferir no Conselho.</p></li>
+            <li><h3>Converse no chat</h3><p>Tire dúvidas, veja os serviços e o valor de cada um e contrate pelo app.</p></li>
+            <li><h3>Avaliação, treino e acompanhamento</h3><p>Faça a avaliação, receba sua ficha e siga com o personal acompanhando.</p></li>
+          </ol>
+        </div>
+      </section>
+
+      <!-- 4. Desejo: o que o aluno recebe -->
+      <section id="o-que-recebe">
+        <div class="largura telas">
+          <div class="celulares">
+            <img class="celular" src="/lp/avaliacao.webp" width="390" height="900" alt="Tela de resultado da análise de corrida no FormaCerta, com nota e pontos medidos" loading="lazy" />
+            <img class="celular" src="/lp/treino.webp" width="390" height="750" alt="Tela de treino em andamento no FormaCerta, com cronômetro, séries, carga e descanso" loading="lazy" />
+          </div>
+          <div>
+            <p class="rotulo">O que você recebe</p>
+            <h2 class="titulo-secao">Consultoria de treino online, com tecnologia que mede</h2>
+            <ul class="lista-check">
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5" /></svg><div><strong>Avaliação física com profissional</strong><span>Postura por fotos com medida dos ângulos, testes de flexibilidade, medidas do corpo e análise de corrida.</span></div></li>
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5" /></svg><div><strong>Treino personalizado no app</strong><span>Ficha A, B, C com séries, carga, descanso e vídeo de como fazer cada exercício.</span></div></li>
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5" /></svg><div><strong>Correção do movimento</strong><span>Grave o exercício: o app conta as repetições e aponta o que ajustar.</span></div></li>
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5" /></svg><div><strong>Acompanhamento de verdade</strong><span>Chat com o personal, chamada de vídeo quando contratar, histórico de cada treino e o seu retorno de esforço.</span></div></li>
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5" /></svg><div><strong>Sua evolução em gráfico</strong><span>Cada reavaliação mostra o que melhorou e o que piorou desde a primeira.</span></div></li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- 5. Objetivos (termos de busca por objetivo) -->
+      <section id="objetivos">
+        <div class="largura">
+          <p class="rotulo">Para o seu objetivo</p>
+          <h2 class="titulo-secao">Encontre o personal certo para você</h2>
+          <p class="intro">Cada profissional mostra as especialidades no perfil. Busque pelo que você precisa.</p>
+          <div class="objetivos">
+            <div class="objetivo"><h3>Personal trainer para emagrecer</h3><p>Treino e aeróbico ajustados à sua rotina.</p></div>
+            <div class="objetivo"><h3>Ganhar massa muscular</h3><p>Ficha com carga anotada e progressão.</p></div>
+            <div class="objetivo"><h3>Postura e mobilidade</h3><p>Avaliação postural e exercícios corretivos.</p></div>
+            <div class="objetivo"><h3>Corrida</h3><p>Análise da passada pelo vídeo.</p></div>
+            <div class="objetivo"><h3>Pessoas 60+</h3><p>Avaliação específica para idosos.</p></div>
+            <div class="objetivo"><h3>Presencial ou perto de você</h3><p>Busque por cidade: alguns também atendem presencialmente.</p></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 6. Decisão: botões de dúvida -->
+      <section id="duvidas">
+        <div class="largura">
+          <p class="rotulo">Dúvidas</p>
+          <h2 class="titulo-secao">Antes de contratar, tire suas dúvidas</h2>
+          <div class="botoes-duvida" role="list">
+            <button type="button" data-abrir="custo">Quanto custa?</button>
+            <button type="button" data-abrir="acompanhamento">Como funciona o acompanhamento?</button>
+            <button type="button" data-abrir="personalizado">Meu treino será personalizado?</button>
+            <button type="button" data-abrir="avaliacao">Como é feita a avaliação?</button>
+            <button type="button" data-abrir="quem">Quem vai me atender?</button>
+            <button type="button" data-abrir="resposta">Quando o personal responde?</button>
+          </div>
+
+          <div id="lista-duvidas">
+            <details id="custo">
+              <summary>Quanto custa um personal trainer online?</summary>
+              <div class="resposta">
+                <p><strong>Criar a conta e conversar com o personal é grátis.</strong> Cada profissional oferece serviços como avaliação postural, avaliação completa, ficha de treino e acompanhamento online mensal.</p>
+                <p>O valor de cada serviço aparece no chat, antes de você pagar. O pagamento é feito dentro do app, por Pix ou cartão, e você só paga o serviço que escolher.</p>
+              </div>
+            </details>
+            <details id="acompanhamento">
+              <summary>Como funciona o acompanhamento?</summary>
+              <div class="resposta">
+                <p>Você fala com o personal pelo <strong>chat do app</strong>. Ele vê o histórico de cada treino que você faz, a carga que você anotou e como foi o esforço, e ajusta a ficha quando precisa.</p>
+                <p>Se quiser, também dá para contratar <strong>chamada de vídeo</strong> para treinar ao vivo com ele. O que está incluído em cada serviço é combinado no chat antes de contratar.</p>
+              </div>
+            </details>
+            <details id="personalizado">
+              <summary>Meu treino será personalizado?</summary>
+              <div class="resposta">
+                <p>Sim. Antes de montar a ficha, o personal tem os seus dados: <strong>objetivo, medidas, rotina e o resultado da sua avaliação</strong>. A ficha é feita para você, não copiada de um modelo.</p>
+                <p>Conforme você treina e conta como foi, o personal acompanha a sua evolução e muda o que for preciso.</p>
+              </div>
+            </details>
+            <details id="avaliacao">
+              <summary>Como é feita a avaliação física online?</summary>
+              <div class="resposta">
+                <p>Pelo próprio celular. Você preenche seus dados (altura, idade, objetivo), anota as medidas e faz as fotos de postura de 4 lados, seguindo as instruções na tela. <strong>O app mede os ângulos do corpo</strong> e o personal analisa o resultado.</p>
+                <p>Conforme o serviço, entram também testes de flexibilidade, análise de corrida e avaliação específica para idosos. Você recebe o resultado com um plano de ação e pode baixar em PDF.</p>
+              </div>
+            </details>
+            <details id="quem">
+              <summary>Quem vai me atender?</summary>
+              <div class="resposta">
+                <p>Um <strong>profissional de Educação Física com registro no CREF</strong>, que você mesmo escolhe. No perfil aparecem foto, cidade, especialidades, uma apresentação e o número do CREF.</p>
+                <p>O FormaCerta confere o cadastro antes de liberar o profissional, e você pode conferir o registro no site oficial do Conselho (CONFEF) com um toque.</p>
+              </div>
+            </details>
+            <details id="resposta">
+              <summary>Quando o personal responde?</summary>
+              <div class="resposta">
+                <p>O personal recebe um aviso no celular a cada mensagem nova no chat. Os horários de atendimento e o prazo de resposta são combinados com ele <strong>antes de você contratar</strong>, então pergunte no chat.</p>
+              </div>
+            </details>
+            <details id="fotos">
+              <summary>Avaliação por fotos funciona?</summary>
+              <div class="resposta">
+                <p>Ela serve para acompanhar a postura e os desvios visíveis ao longo do tempo, com as mesmas medidas a cada reavaliação. As medidas por foto têm margem de alguns graus e <strong>não substituem um diagnóstico</strong>: em caso de dor, procure um médico ou fisioterapeuta.</p>
+              </div>
+            </details>
+            <details id="evoluindo">
+              <summary>Como saber se estou evoluindo? Quando refazer a avaliação?</summary>
+              <div class="resposta">
+                <p>Cada reavaliação é comparada com a primeira, em gráficos que mostram o que melhorou e o que piorou. O app avisa você quando chega a hora de refazer a avaliação.</p>
+              </div>
+            </details>
+            <details id="presencial">
+              <summary>Tem personal trainer perto de mim?</summary>
+              <div class="resposta">
+                <p>Na lista de profissionais você pode buscar pela sua cidade. Alguns personais também oferecem aula presencial; pergunte no chat.</p>
+              </div>
+            </details>
+          </div>
+        </div>
+      </section>
+
+      <!-- 7. Ação -->
+      <section class="final" id="comecar">
+        <div class="largura">
+          <div class="caixa">
+            <h2 class="titulo-secao">Comece hoje com um personal de verdade</h2>
+            <p>Crie sua conta grátis, escolha um profissional com CREF e converse antes de decidir.</p>
+            <a class="cta" href="/?cadastro=aluno&abrir=personal" data-origem="final">Criar conta grátis e encontrar personal</a>
+            <p class="miudo">Sem cartão para criar a conta.</p>
+          </div>
+          <p class="aviso" style="margin-top: 24px; text-align: left; margin-bottom: 0">
+            <strong>Triagem, não diagnóstico.</strong> As análises do app ajudam o profissional de Educação Física a orientar o seu treino.
+            Elas não substituem avaliação médica ou de fisioterapeuta. Em caso de dor, procure um profissional de saúde.
+          </p>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <div class="largura">
+        <a class="logo" href="/" aria-label="FormaCerta">
+          <svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="17" cy="7" r="4.2" fill="#36F294" /><path d="M4 16.5l6.8 7.5L28 8.5" fill="none" stroke="#36F294" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round" /></svg>
+          <span>Forma<span class="verde">Certa</span></span>
+        </a>
+        <div>Treine certo. <span class="verde">Evolua sempre.</span></div>
+        <div>É personal trainer? <a href="/?cadastro=profissional" data-origem="rodape-personal">Cadastre-se como profissional</a></div>
+        <div>Dúvidas: <a href="mailto:ney.comercial@gmail.com">ney.comercial@gmail.com</a></div>
+      </div>
+    </footer>
+
+    <div class="fixo" id="fixo">
+      <a class="cta" href="/?cadastro=aluno&abrir=personal" data-origem="fixo">Encontrar meu personal</a>
+    </div>
+
+    <script>
+      // Botões de dúvida: abrem e mostram a resposta certa.
+      document.querySelectorAll('[data-abrir]').forEach(function (b) {
+        b.addEventListener('click', function () {
+          var alvo = document.getElementById(b.getAttribute('data-abrir'))
+          if (!alvo) return
+          document.querySelectorAll('[data-abrir]').forEach(function (o) { o.classList.toggle('ativo', o === b) })
+          alvo.open = true
+          alvo.scrollIntoView({ block: 'start' })
+        })
+      })
+
+      // Dados estruturados das perguntas (rich results do Google), lidos do próprio texto da página.
+      var perguntas = Array.prototype.map.call(document.querySelectorAll('#lista-duvidas details'), function (d) {
+        return {
+          '@type': 'Question',
+          name: d.querySelector('summary').textContent.trim(),
+          acceptedAnswer: { '@type': 'Answer', text: d.querySelector('.resposta').textContent.replace(/\s+/g, ' ').trim() },
+        }
+      })
+      document.getElementById('faq-ld').textContent = JSON.stringify({ '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: perguntas })
+
+      // Botão fixo no celular: aparece depois que o botão principal sai da tela.
+      var fixo = document.getElementById('fixo')
+      var principal = document.querySelector('.hero .cta')
+      var final = document.querySelector('#comecar .cta')
+      if ('IntersectionObserver' in window && principal) {
+        var visiveis = new Set()
+        var obs = new IntersectionObserver(function (itens) {
+          itens.forEach(function (i) { i.isIntersecting ? visiveis.add(i.target) : visiveis.delete(i.target) })
+          var passou = principal.getBoundingClientRect().bottom < 0
+          fixo.classList.toggle('mostrar', passou && visiveis.size === 0)
+        })
+        obs.observe(principal)
+        if (final) obs.observe(final)
+      }
+
+    </script>
+  </body>
+</html>
