@@ -8,10 +8,19 @@ import { Suporte } from './Suporte'
 import { Termos } from './Termos'
 
 type Modo = 'entrar' | 'cadastrar' | 'esqueci'
+type Papel = 'profissional' | 'aluno'
+
+// Link da landing page: ...?cadastro=aluno ou ...?cadastro=profissional
+// abre direto em "Criar conta" com o tipo de conta já escolhido.
+function cadastroDoLink(): Papel | null {
+  const valor = new URLSearchParams(window.location.search).get('cadastro')
+  return valor === 'aluno' || valor === 'profissional' ? valor : null
+}
 
 export function Entrar() {
-  const [modo, setModo] = useState<Modo>('entrar')
-  const [papel, setPapel] = useState<'profissional' | 'aluno'>('profissional')
+  const [doLink] = useState(cadastroDoLink)
+  const [modo, setModo] = useState<Modo>(doLink ? 'cadastrar' : 'entrar')
+  const [papel, setPapel] = useState<Papel>(doLink ?? 'profissional')
   const [nome, setNome] = useState('')
   const [registro, setRegistro] = useState('')
   const [email, setEmail] = useState('')
