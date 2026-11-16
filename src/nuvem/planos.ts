@@ -33,6 +33,8 @@ export type ConfigCobranca = {
   planos_para: 'testadores' | 'todos'
   /** Desligado, ninguém fica travado: todos usam tudo, como antes dos planos. */
   travar_recursos?: boolean
+  /** Ligado, o aluno que se cadastra sozinho espera o administrador liberar. */
+  aluno_aguarda_liberacao?: boolean
 }
 
 export type Assinatura = {
@@ -463,7 +465,15 @@ export async function lerTravas(): Promise<boolean | null> {
   return error || !data ? null : data.travar_recursos !== false
 }
 
-export async function salvarConfig(c: Partial<Pick<ConfigCobranca, 'comissao_pct' | 'dias_gratis' | 'planos_para' | 'gateway' | 'travar_recursos'>>) {
+/** Se o aluno que se cadastra sozinho espera liberação. null = SQL novo ainda não rodado. */
+export async function lerAlunoAguarda(): Promise<boolean | null> {
+  const { data, error } = await supabase.from('config_cobranca').select('aluno_aguarda_liberacao').maybeSingle()
+  return error || !data ? null : data.aluno_aguarda_liberacao !== false
+}
+
+export async function salvarConfig(
+  c: Partial<Pick<ConfigCobranca, 'comissao_pct' | 'dias_gratis' | 'planos_para' | 'gateway' | 'travar_recursos' | 'aluno_aguarda_liberacao'>>,
+) {
   const { error } = await supabase.from('config_cobranca').update({ ...c, atualizado_em: new Date().toISOString() }).eq('id', true)
   return error ? erroAmigavel(error) : null
 }
