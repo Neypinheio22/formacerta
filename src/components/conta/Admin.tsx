@@ -5,6 +5,7 @@ import { ModerarVitrine } from '../vitrine/ModerarVitrine'
 import { AdminPagamentos, AdminPlanos, AdminRepasses } from '../planos/AdminCobranca'
 import { AdminPrecos } from '../planos/AdminPrecos'
 import { AdminVendas } from '../planos/AdminVendas'
+import { lerAlunoAguarda, salvarConfig } from '../../nuvem/planos'
 import { ROTULO_TIPO, listarResultados, type ResultadoNuvem, type TipoResultado } from '../../nuvem/resultados'
 
 type Aba = 'vendas' | 'aguardando' | 'profissionais' | 'alunos' | 'resultados' | 'vitrine' | 'planos' | 'precos' | 'pagamentos' | 'repasses'
@@ -67,7 +68,7 @@ export function Admin({ onVoltar }: { onVoltar: () => void }) {
       </header>
 
       <h1>Administração</h1>
-      <p className="dica-sec">Você gerencia todos os profissionais, alunos, resultados, fotos da vitrine, planos, pagamentos e repasses do FormaCerta. Alunos entram direto; só os profissionais esperam a sua liberação.</p>
+      <p className="dica-sec">Você gerencia todos os profissionais, alunos, resultados, fotos da vitrine, planos, pagamentos e repasses do FormaCerta. Você recebe um e-mail a cada cadastro novo.</p>
 
       <div className="numeros">
         <div>
@@ -119,6 +120,7 @@ export function Admin({ onVoltar }: { onVoltar: () => void }) {
 
       {!carregando && (aba === 'aguardando' || aba === 'profissionais' || aba === 'alunos') && (
         <>
+          {aba === 'aguardando' && <QuemEspera />}
           {aba !== 'aguardando' && (
             <label className="campo">
               <input placeholder="Buscar por nome ou e-mail" value={busca} onChange={(e) => setBusca(e.target.value)} />
@@ -216,5 +218,44 @@ function ResumoResultados({ resultados, nomePorId }: { resultados: ResultadoNuve
         </ul>
       </section>
     </>
+  )
+}
+
+/** O administrador escolhe se o aluno que se cadastra sozinho espera liberação. */
+function QuemEspera() {
+  const [aguarda, setAguarda] = useState<boolean | null>(null)
+  const [erro, setErro] = useState<string | null>(null)
+
+  useEffect(() => {
+    lerAlunoAguarda().then(setAguarda)
+  }, [])
+
+  // Sem o SQL novo a coluna não existe: o quadro não aparece.
+  if (aguarda === null) return null
+
+  async function mudar(v: boolean) {
+    const e = await salvarConfig({ aluno_aguarda_liberacao: v })
+    setErro(e)
+    if (!e) setAguarda(v)
+  }
+
+  return (
+    <section className="cartao formulario">
+      <h2>Aluno que se cadastra sozinho</h2>
+      <div className="escolha">
+        <button className={aguarda ? 'ativo' : ''} onClick={() => mudar(true)}>
+          Espera eu liberar
+        </button>
+        <button className={!aguarda ? 'ativo' : ''} onClick={() => mudar(false)}>
+          Entra direto
+        </button>
+      </div>
+      <p className="dica-sec">
+        {aguarda
+          ? 'O aluno novo fica aqui em Aguardando até você liberar. O personal sempre espera. Aluno cadastrado pelo personal entra direto.'
+          : 'O aluno novo entra na hora, no plano Grátis (o que é do Aluno Pro continua travado até ele pagar). O personal sempre espera.'}
+      </p>
+      {erro && <p className="mensagem erro">{erro}</p>}
+    </section>
   )
 }
