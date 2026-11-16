@@ -6,6 +6,10 @@ import { AceiteLgpd } from './AceiteLgpd'
 import { Privacidade } from './Privacidade'
 import { Suporte } from './Suporte'
 import { Termos } from './Termos'
+import { CamposEmail } from './CamposEmail'
+import { ConfiraEmail } from './ConfiraEmail'
+import { dominioRecebeEmail, emailValidoParaCadastro } from '../../nuvem/email'
+import { reenviarConfirmacao } from '../../nuvem/alunosNovos'
 
 type Modo = 'entrar' | 'cadastrar' | 'esqueci'
 
@@ -15,6 +19,8 @@ export function Entrar() {
   const [nome, setNome] = useState('')
   const [registro, setRegistro] = useState('')
   const [email, setEmail] = useState('')
+  const [confirma, setConfirma] = useState('')
+  const [confirmando, setConfirmando] = useState<string | null>(null)
   const [senha, setSenha] = useState('')
   const [aceito, setAceito] = useState(false)
   const [saude, setSaude] = useState(false)
@@ -41,10 +47,15 @@ export function Entrar() {
       if (erro) setErro(erro)
       else setAviso('Se este e-mail tiver cadastro, chega um link para você criar uma senha nova.')
     } else {
+      if (!(await dominioRecebeEmail(email))) {
+        setErro(`O endereço "${email.trim().split('@')[1]}" não recebe e-mails. Confira o que vem depois do @.`)
+        setEnviando(false)
+        return
+      }
       const r = await cadastrar({ email, senha, nome, papel, registro, termosVersao: VERSAO_TERMOS })
       if (r.erro) setErro(r.erro)
       else if (r.confirmar) {
-        setAviso('Cadastro feito. Abra o link que chegou no seu e-mail para confirmar. Depois disso, o administrador libera o seu acesso.')
+        setConfirmando(email.trim())
         setModo('entrar')
       }
     }
@@ -54,12 +65,47 @@ export function Entrar() {
   if (ver === 'termos') return <Termos onVoltar={() => setVer(null)} />
   if (ver === 'privacidade') return <Privacidade onVoltar={() => setVer(null)} />
 
+  async function reenviarDoEntrar() {
+    setEnviando(true)
+    const e = await reenviarConfirmacao(email)
+    setEnviando(false)
+    if (e) setErro(e)
+    else {
+      setErro(null)
+      setAviso('Enviamos o link de novo. Confira a caixa de entrada e o spam.')
+    }
+  }
+  const naoConfirmado = modo === 'entrar' && !!erro && erro.startsWith('Confirme o seu e-mail')
+
   const emailOk = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.trim())
   const pronto =
     emailOk &&
     (modo === 'esqueci' ||
       (modo === 'entrar' && senha.length > 0) ||
-      (modo === 'cadastrar' && nome.trim() !== '' && !senhaFraca(senha) && aceito && saude))
+      (modo === 'cadastrar' && emailValidoParaCadastro(email, confirma) && nome.trim() !== '' && !senhaFraca(senha) && aceito && saude))
+
+  if (confirmando)
+    return (
+      <div className="tela">
+        <header className="marca">
+          <Logo size={30} />
+        </header>
+        <ConfiraEmail
+          email={confirmando}
+          aguardaLiberacao={papel === 'profissional'}
+          onErreiEmail={() => {
+            setConfirmando(null)
+            setConfirma('')
+            trocar('cadastrar')
+          }}
+          onEntrar={() => {
+            setConfirmando(null)
+            setSenha('')
+            trocar('entrar')
+          }}
+        />
+      </div>
+    )
 
   return (
     <div className="tela">
@@ -99,10 +145,14 @@ export function Entrar() {
           </>
         )}
 
-        <label className="campo">
-          E-mail
-          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" inputMode="email" />
-        </label>
+        {modo === 'cadastrar' ? (
+          <CamposEmail email={email} confirma={confirma} onEmail={setEmail} onConfirma={setConfirma} />
+        ) : (
+          <label className="campo">
+            E-mail
+            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" inputMode="email" autoCapitalize="none" />
+          </label>
+        )}
 
         {modo !== 'esqueci' && (
           <label className="campo">
@@ -129,6 +179,11 @@ export function Entrar() {
         )}
 
         {erro && <p className="mensagem erro">{erro}</p>}
+        {naoConfirmado && (
+          <button type="button" className="botao-sec" disabled={enviando} onClick={reenviarDoEntrar}>
+            Reenviar e-mail de confirmação
+          </button>
+        )}
         {aviso && <p className="mensagem ok">{aviso}</p>}
 
         <button className="botao grande" type="submit" disabled={!pronto || enviando}>
