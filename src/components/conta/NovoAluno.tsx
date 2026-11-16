@@ -1,19 +1,27 @@
 import { useState } from 'react'
 import { senhaFraca } from '../../nuvem/conta'
 import { cadastrarAluno } from '../../nuvem/gestao'
+import { dominioRecebeEmail, emailValidoParaCadastro } from '../../nuvem/email'
+import { CamposEmail } from './CamposEmail'
 
 /** Cria a conta do aluno no app (e-mail e senha). Com `nomeFixo`, liga à ficha que já existe com esse nome. */
 export function NovoAluno({ onCancelar, onCriado, nomeFixo }: { onCancelar: () => void; onCriado: () => void; nomeFixo?: string }) {
   const [nome, setNome] = useState(nomeFixo ?? '')
   const [email, setEmail] = useState('')
+  const [confirma, setConfirma] = useState('')
   const [senha, setSenha] = useState('')
   const [erro, setErro] = useState<string | null>(null)
   const [enviando, setEnviando] = useState(false)
-  const pronto = nome.trim() !== '' && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.trim()) && !senhaFraca(senha)
+  const pronto = nome.trim() !== '' && emailValidoParaCadastro(email, confirma) && !senhaFraca(senha)
 
   async function criar(e: React.FormEvent) {
     e.preventDefault()
     setEnviando(true)
+    if (!(await dominioRecebeEmail(email))) {
+      setEnviando(false)
+      setErro(`O endereço "${email.trim().split('@')[1]}" não recebe e-mails. Confira o que vem depois do @.`)
+      return
+    }
     const erro = await cadastrarAluno({ nome, email, senha })
     setEnviando(false)
     if (erro) setErro(erro)
@@ -34,10 +42,7 @@ export function NovoAluno({ onCancelar, onCriado, nomeFixo }: { onCancelar: () =
           <input value={nome} onChange={(e) => setNome(e.target.value)} maxLength={120} />
         </label>
       )}
-      <label className="campo">
-        E-mail do aluno
-        <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} inputMode="email" />
-      </label>
+      <CamposEmail rotulo="E-mail do aluno" email={email} confirma={confirma} onEmail={setEmail} onConfirma={setConfirma} />
       <label className="campo">
         Senha inicial
         <input value={senha} onChange={(e) => setSenha(e.target.value)} autoComplete="off" />
