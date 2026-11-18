@@ -9,6 +9,14 @@ export type Ferramentas = {
   consultarCadastro(email: string): Promise<unknown>
   reenviarConfirmacao(email: string): Promise<unknown>
   passarParaHumano(motivo: string, resumo: string): Promise<unknown>
+  /** Manda um código de 6 números para o e-mail da conta (prova que a conta é da pessoa). */
+  vincularConta(email: string): Promise<unknown>
+  /** Confere o código e liga a conversa à conta. */
+  confirmarCodigo(codigo: string): Promise<unknown>
+  /** Pede o plano para a conta ligada e, se tiver cobrança, gera o Pix (o código vai numa mensagem à parte). */
+  gerarPix(plano: string, ciclo: string): Promise<unknown>
+  /** A pessoa não quer mais lembretes. */
+  pararLembretes(): Promise<unknown>
 }
 
 export type Turno = { autor: 'entrada' | 'robo' | 'humano'; texto: string }
@@ -35,8 +43,34 @@ O que o app faz:
 4. Depois de confirmar, o cadastro passa por uma conferência rápida da equipe e é liberado. Quando liberar, é só entrar com e-mail e senha.
 Esqueceu a senha: na tela de entrar, tocar em "Esqueci minha senha".
 
-# Planos
-Use a ferramenta ver_planos para preços e o que cada plano inclui. Nunca invente preço, desconto ou promoção. Pagamento é pelo próprio app (Pix ou cartão, pelo Mercado Pago).
+# Planos e venda
+Use a ferramenta ver_planos para preços, dias grátis e o que cada plano inclui. Nunca invente preço, desconto ou promoção.
+
+Você também é vendedor: seu objetivo é ajudar a pessoa a assinar. Descubra se ela é aluno ou personal, mostre o plano certo pelo benefício para ela (não só a lista de recursos) e termine convidando a assinar, com o passo a passo. Sem pressão e sem insistir se ela disser que não quer.
+- Aluno: indique o *Aluno Pro* (análise da corrida, exercício em vídeo que conta repetições e corrige, Central de Inteligência e evolução em gráficos). Se o personal dele já assina o Essencial, Pro ou Estúdio, o aluno ganha o Aluno Pro sem pagar nada: pergunte se ele tem personal que usa o FormaCerta.
+- Personal: comece pelo grátis (até 2 alunos) para testar; para quem já atende, indique o *Pro* (alunos ilimitados e os alunos dele ganham o Aluno Pro); quem está começando, o *Essencial*; estúdio ou equipe, o *Estúdio*. Lembre que pelo app ele também vende avaliações e consultorias aos próprios alunos.
+- Se ver_planos mostrar dias grátis, destaque: o primeiro plano pago começa com esses dias grátis, sem pagar nada na hora, e o app avisa 3 dias antes de acabar.
+- Plano anual sai mais barato que 12 meses: compare quando ajudar.
+
+# Fechar a venda aqui no WhatsApp (Pix)
+Quando a pessoa quiser assinar e já tiver conta liberada, ofereça resolver aqui mesmo, sem ela precisar procurar no app:
+1. Peça o e-mail da conta e chame vincular_conta. Um código de 6 números vai para esse e-mail.
+2. Peça para ela digitar o código aqui e chame confirmar_codigo. Sem o código certo, não mexa em plano nenhum.
+3. Confirme o plano e se é mensal ou anual, e chame gerar_pix.
+   - acao "teste": não cobra nada agora. Avise que os dias grátis começaram e até quando; o app avisa antes de acabar e aí ela paga (pode pedir o Pix por aqui).
+   - acao "pagar": o Pix foi gerado. O código copia e cola vai sozinho numa mensagem logo depois da sua. Na sua resposta, diga o valor e o que está pagando, explique: copiar o código da próxima mensagem, abrir o app do banco, Pix → Pix Copia e Cola, colar e pagar. O plano ativa sozinho quando o pagamento cai e você avisa aqui. O código vale por 24 horas. NUNCA escreva você mesmo um código Pix.
+   - acao "ja_tem": ela já tem o plano pelo personal; explique que não precisa pagar.
+   - erro de troca de plano ou cortesia: passe para humano.
+4. Se a conta ainda não está liberada, o e-mail não confirmou ou ela não tem conta: ajude com o cadastro (e consultar_cadastro) e diga que, quando liberar, você gera o Pix por aqui.
+Cartão ou boleto: só pelo app (passo a passo abaixo). A conta ligada vale só para esta conversa; se aparecer [Conta ligada] no começo da conversa, não precisa pedir o código de novo.
+
+Como assinar pelo app (passo a passo para mandar):
+1. Entrar em https://formacerta.app.br com e-mail e senha (quem não tem conta, cria antes: veja "Como se cadastrar").
+2. Tocar em *Conta*, na barra de baixo da tela.
+3. Tocar em *Meu plano e pagamentos*.
+4. Escolher o plano e se quer mensal ou anual, e tocar para assinar.
+5. Pagar por *Pix* ou *cartão* (Mercado Pago). O plano libera na hora em que o pagamento é aprovado.
+Se a pessoa tiver problema para pagar ou o plano não liberar, passe para humano.
 
 # Ferramentas
 - ver_planos: preços e recursos atuais.
@@ -44,6 +78,8 @@ Use a ferramenta ver_planos para preços e o que cada plano inclui. Nunca invent
 - reenviar_confirmacao: só quando o cadastro existe e o e-mail ainda não foi confirmado.
 - passar_para_humano: quando a pessoa pedir para falar com uma pessoa, reclamar, tiver problema com pagamento, cobrança, reembolso ou cancelamento, quiser parceria ou negociação, perguntar algo de saúde que exige um profissional, ou quando você não souber resolver. Chame a ferramenta e, na resposta, avise que o Ney, da equipe FormaCerta, vai continuar a conversa por aqui assim que puder. Essa é a sua última mensagem na conversa.
 - Se o cadastro estiver aguardando liberação há muito tempo, ou estiver bloqueado, passe para humano.
+- vincular_conta, confirmar_codigo e gerar_pix: para fechar a venda por Pix (veja acima). Não diga se um e-mail tem conta antes de a pessoa confirmar o código, além do que consultar_cadastro permite.
+- parar_lembretes: quando a pessoa disser que não quer mais receber mensagens ou lembretes (ou tocar em "Não tenho interesse"). Responda com educação e não insista.
 
 # Como escrever
 - Português do Brasil, simples, simpático e direto, como uma pessoa da equipe. Trate por "você".
@@ -55,6 +91,48 @@ Use a ferramenta ver_planos para preços e o que cada plano inclui. Nunca invent
 - Se a mensagem for áudio, foto ou vídeo que você não consegue ver, peça para escrever em texto.`
 
 const FERRAMENTAS: Anthropic.Beta.BetaTool[] = [
+  {
+    name: 'vincular_conta',
+    description: 'Manda um código de 6 números para o e-mail da conta do FormaCerta. É o primeiro passo para gerar o Pix: prova que a conta é de quem está conversando.',
+    input_schema: {
+      type: 'object',
+      properties: { email: { type: 'string', description: 'E-mail da conta, exatamente como a pessoa escreveu.' } },
+      required: ['email'],
+      additionalProperties: false,
+    },
+    strict: true,
+  },
+  {
+    name: 'confirmar_codigo',
+    description: 'Confere o código de 6 números que a pessoa recebeu por e-mail. Se estiver certo, liga a conversa à conta e devolve o tipo de conta e o plano atual.',
+    input_schema: {
+      type: 'object',
+      properties: { codigo: { type: 'string', description: 'O código que a pessoa digitou (só os números).' } },
+      required: ['codigo'],
+      additionalProperties: false,
+    },
+    strict: true,
+  },
+  {
+    name: 'gerar_pix',
+    description: 'Pede o plano para a conta ligada a esta conversa. Se for o primeiro plano pago com dias grátis, começa o teste sem cobrar; se tiver cobrança, gera o Pix e o código copia e cola é mandado sozinho logo depois da sua resposta. Só funciona depois de confirmar_codigo.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        plano: { type: 'string', enum: ['aluno-pro', 'personal-essencial', 'personal-pro', 'personal-estudio'], description: 'Id do plano (veja ver_planos).' },
+        ciclo: { type: 'string', enum: ['mensal', 'anual'] },
+      },
+      required: ['plano', 'ciclo'],
+      additionalProperties: false,
+    },
+    strict: true,
+  },
+  {
+    name: 'parar_lembretes',
+    description: 'A pessoa não quer receber lembretes do FormaCerta por WhatsApp. Depois disso só respondemos quando ela escrever.',
+    input_schema: { type: 'object', properties: {}, additionalProperties: false },
+    strict: true,
+  },
   {
     name: 'ver_planos',
     description: 'Lista os planos do FormaCerta (aluno e personal), com preço mensal e anual em reais, limite de alunos e o que cada um inclui, e quantos dias grátis tem o primeiro plano pago.',
@@ -110,13 +188,21 @@ async function executar(f: Ferramentas, nome: string, entrada: Record<string, un
       return await f.reenviarConfirmacao(texto('email'))
     case 'passar_para_humano':
       return await f.passarParaHumano(texto('motivo'), texto('resumo'))
+    case 'vincular_conta':
+      return await f.vincularConta(texto('email'))
+    case 'confirmar_codigo':
+      return await f.confirmarCodigo(texto('codigo'))
+    case 'gerar_pix':
+      return await f.gerarPix(texto('plano'), texto('ciclo'))
+    case 'parar_lembretes':
+      return await f.pararLembretes()
     default:
       return { erro: `Ferramenta desconhecida: ${nome}` }
   }
 }
 
 /** Junta o histórico em mensagens para o Claude (mensagens seguidas do mesmo lado viram uma só). */
-export function montarConversa(historico: Turno[], nome: string): Anthropic.Beta.BetaMessageParam[] {
+export function montarConversa(historico: Turno[], nome: string, contexto = ''): Anthropic.Beta.BetaMessageParam[] {
   const msgs: Anthropic.Beta.BetaMessageParam[] = []
   for (const t of historico) {
     const papel = t.autor === 'entrada' ? 'user' : 'assistant'
@@ -127,15 +213,16 @@ export function montarConversa(historico: Turno[], nome: string): Anthropic.Beta
   }
   // A conversa precisa começar pela pessoa.
   while (msgs.length && msgs[0].role !== 'user') msgs.shift()
-  if (msgs.length && nome) msgs[0].content = `[Nome no WhatsApp: ${nome}]\n${msgs[0].content as string}`
+  const cabeca = [nome ? `[Nome no WhatsApp: ${nome}]` : '', contexto].filter(Boolean).join('\n')
+  if (msgs.length && cabeca) msgs[0].content = `${cabeca}\n${msgs[0].content as string}`
   return msgs
 }
 
 export type Resposta = { texto: string; passouParaHumano: boolean }
 
 /** Gera a resposta do agente para a conversa. Texto vazio = não responder. */
-export async function responder(cliente: Anthropic, modelo: string, historico: Turno[], nome: string, f: Ferramentas): Promise<Resposta> {
-  const mensagens = montarConversa(historico, nome)
+export async function responder(cliente: Anthropic, modelo: string, historico: Turno[], nome: string, f: Ferramentas, contexto = ''): Promise<Resposta> {
+  const mensagens = montarConversa(historico, nome, contexto)
   if (!mensagens.length || mensagens[mensagens.length - 1].role !== 'user') return { texto: '', passouParaHumano: false }
 
   let passouParaHumano = false
@@ -185,4 +272,38 @@ export async function responder(cliente: Anthropic, modelo: string, historico: T
     mensagens.push({ role: 'user', content: resultados })
   }
   return { texto: '', passouParaHumano }
+}
+
+const NAO_ENVIAR = 'NAO_ENVIAR'
+
+/**
+ * Lembrete para quem parou de responder. Devolve o texto, ou null quando não
+ * vale mandar (a pessoa já resolveu, recusou, assinou ou a conversa acabou bem).
+ */
+export async function escreverLembrete(cliente: Anthropic, modelo: string, historico: Turno[], nome: string, contexto = ''): Promise<string | null> {
+  const mensagens = montarConversa(historico, nome, contexto)
+  if (!mensagens.length) return null
+  const tarefa = `[Tarefa interna, não é mensagem da pessoa] A pessoa parou de responder há quase 24 horas. Decida se vale mandar UM lembrete.
+Mande só se ela mostrou interesse (perguntou de preço, plano, cadastro, como funciona) e ainda não concluiu. Se ela já assinou, recusou, pediu para não receber mensagens, a conversa terminou bem (agradeceu, resolveu) ou foi passada para a equipe, responda só ${NAO_ENVIAR}.
+Se for mandar: no máximo 2 frases curtas, simpáticas e sem pressão, retomando o ponto em que ela parou (ex.: o plano que ela olhou, o Pix gerado, o cadastro) e com uma pergunta simples para ela responder. Responda só com o texto do lembrete.`
+  const ultima = mensagens[mensagens.length - 1]
+  if (ultima.role === 'user') ultima.content = `${ultima.content as string}\n\n${tarefa}`
+  else mensagens.push({ role: 'user', content: tarefa })
+  const r = await cliente.beta.messages.create({
+    model: modelo,
+    max_tokens: 1000,
+    system: [{ type: 'text', text: INSTRUCOES, cache_control: { type: 'ephemeral' } }],
+    messages: mensagens,
+    output_config: { effort: 'low' },
+    betas: ['server-side-fallback-2026-07-01'],
+    fallbacks: 'default',
+  })
+  if (r.stop_reason === 'refusal') return null
+  const texto = r.content
+    .filter((b): b is Anthropic.Beta.BetaTextBlock => b.type === 'text')
+    .map((b) => b.text)
+    .join('\n')
+    .trim()
+  if (!texto || texto.includes(NAO_ENVIAR)) return null
+  return texto
 }
