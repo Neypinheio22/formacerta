@@ -6,10 +6,11 @@ import { AdminPagamentos, AdminPlanos, AdminRepasses } from '../planos/AdminCobr
 import { AdminPrecos } from '../planos/AdminPrecos'
 import { AdminVendas } from '../planos/AdminVendas'
 import { AdminAlunosNovos } from './AdminAlunosNovos'
+import { AdminWhatsApp } from './AdminWhatsApp'
 import { lerAlunoAguarda, salvarConfig } from '../../nuvem/planos'
 import { ROTULO_TIPO, listarResultados, type ResultadoNuvem, type TipoResultado } from '../../nuvem/resultados'
 
-type Aba = 'vendas' | 'novos' | 'aguardando' | 'profissionais' | 'alunos' | 'resultados' | 'vitrine' | 'planos' | 'precos' | 'pagamentos' | 'repasses'
+type Aba = 'vendas' | 'novos' | 'whatsapp' | 'aguardando' | 'profissionais' | 'alunos' | 'resultados' | 'vitrine' | 'planos' | 'precos' | 'pagamentos' | 'repasses'
 
 /** Tela do administrador: libera, bloqueia e exclui profissionais e alunos. */
 export function Admin({ onVoltar }: { onVoltar: () => void }) {
@@ -89,6 +90,9 @@ export function Admin({ onVoltar }: { onVoltar: () => void }) {
         </button>
         <button className={aba === 'novos' ? 'ativo' : ''} onClick={() => setAba('novos')}>
           Alunos novos
+        </button>
+        <button className={aba === 'whatsapp' ? 'ativo' : ''} onClick={() => setAba('whatsapp')}>
+          WhatsApp
         </button>
         <button className={aba === 'aguardando' ? 'ativo' : ''} onClick={() => setAba('aguardando')}>
           Aguardando{aguardando.length > 0 && ` (${aguardando.length})`}
@@ -182,6 +186,7 @@ export function Admin({ onVoltar }: { onVoltar: () => void }) {
       {!carregando && aba === 'repasses' && <AdminRepasses />}
       {aba === 'vendas' && <AdminVendas />}
       {aba === 'novos' && <AdminAlunosNovos />}
+      {aba === 'whatsapp' && <AdminWhatsApp />}
     </div>
   )
 }
