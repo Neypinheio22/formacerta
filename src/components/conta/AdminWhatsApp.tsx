@@ -123,7 +123,7 @@ function CartaoConversa({ c, aberta, onAbrir, onMudou }: { c: ConversaWhatsApp; 
           )}
           {msgs && janelaAberta(msgs) && (
             <div className="chat-escrever">
-              <textarea rows={2} placeholder="Responder pelo número do FormaCerta" value={texto} maxLength={4000} onChange={(e) => setTexto(e.target.value)} />
+              <textarea rows={2} placeholder="Responder (a pessoa vê: Atendimento FormaCerta)" value={texto} maxLength={4000} onChange={(e) => setTexto(e.target.value)} />
               <button className="botao chat-enviar" disabled={enviando || !texto.trim()} onClick={enviar} aria-label="Enviar">
                 <Send size={18} />
               </button>

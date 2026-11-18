@@ -11,6 +11,7 @@
 //   WHATSAPP_VERIFY_TOKEN  senha inventada pelo Ney, colada também no Webhook da Meta
 //   ANTHROPIC_API_KEY      chave da IA (console.anthropic.com)
 // Opcionais: WHATSAPP_NUMERO_ID (id do número na Meta), AGENTE_MODELO, AGENTE_HORAS_HUMANO (padrão 12), RESEND_API_KEY e EMAIL_REMETENTE (já existem).
+// Nome que aparece em cima das respostas da equipe pelo app: NOME_ATENDIMENTO (padrão "Atendimento FormaCerta").
 // Venda por Pix: MP_ACCESS_TOKEN (já existe, o mesmo da função mercado-pago).
 // Lembrete de 3 dias: WHATSAPP_MODELO_LEMBRETE (nome do modelo aprovado na Meta) e WHATSAPP_MODELO_IDIOMA (padrão pt_BR).
 //
@@ -475,7 +476,9 @@ async function responderPeloApp(req: Request): Promise<Response> {
   const numeroId = c?.numero_id || Deno.env.get('WHATSAPP_NUMERO_ID') || ''
   if (!c || !numeroId) return json({ erro: 'Conversa não encontrada.' }, 404)
 
-  const enviadoId = await mandarTexto(numeroId, token, c.telefone, texto)
+  // A pessoa vê que agora é alguém da equipe, e não o robô.
+  const nome = (Deno.env.get('NOME_ATENDIMENTO') || 'Atendimento FormaCerta').trim()
+  const enviadoId = await mandarTexto(numeroId, token, c.telefone, `*${nome}:*\n${texto}`)
   if (!enviadoId) {
     return json({ erro: 'O WhatsApp não aceitou. Se a pessoa escreveu há mais de 24 horas, só dá para responder quando ela escrever de novo.' }, 502)
   }
