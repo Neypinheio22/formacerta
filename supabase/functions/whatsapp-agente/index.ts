@@ -39,8 +39,8 @@ async function avisarNey(telefone: string, nome: string, motivo: string, resumo:
       <p><strong>Quem:</strong> ${escapar(nome || 'Sem nome')} (+${escapar(telefone)})<br>
       <strong>Motivo:</strong> ${escapar(motivo)}</p>
       <p>${escapar(resumo)}</p>
-      <p><a href="https://wa.me/${telefone}" style="background:#36f294;color:#020b16;padding:10px 18px;border-radius:999px;text-decoration:none;font-weight:bold">Abrir a conversa</a></p>
-      <p style="color:#555">Responda pelo WhatsApp Business do celular. O robô fica quieto nessa conversa por ${HORAS_PASSOU} horas, ou até você tocar em "Devolver ao robô" em Administração → WhatsApp.</p>
+      <p><a href="${APP}" style="background:#36f294;color:#020b16;padding:10px 18px;border-radius:999px;text-decoration:none;font-weight:bold">Abrir o FormaCerta</a></p>
+      <p style="color:#555">Responda em Administração → WhatsApp. O robô fica quieto nessa conversa por ${HORAS_PASSOU} horas, ou até você tocar em "Devolver ao robô".</p>
     </div>`
   await fetch('https://api.resend.com/emails', {
     method: 'POST',
@@ -69,7 +69,7 @@ async function abrirConversa(telefone: string, nome: string, numeroId = ''): Pro
   return data as Conversa
 }
 
-/** Guarda a mensagem. Devolve false se ela já tinha chegado antes (a Meta repete avisos). */
+/** Guarda a mensagem. Devolve null se ela já tinha chegado antes (a Meta repete avisos). */
 async function guardar(conversaId: string, autor: Turno['autor'], texto: string, waId: string | null): Promise<number | null> {
   const { data, error } = await banco
     .from('whatsapp_mensagens')
@@ -131,7 +131,7 @@ function ferramentas(c: Conversa): Ferramentas {
   }
 }
 
-/** O Ney respondeu pelo celular: guarda e deixa o robô quieto nessa conversa. */
+/** O Ney respondeu pelo celular (só com parceiro de coexistência): guarda e deixa o robô quieto nessa conversa. */
 async function tratarEco(eco: EcoDoCelular) {
   const c = await abrirConversa(eco.para, '')
   const novo = await guardar(c.id, 'humano', eco.texto, eco.id)
