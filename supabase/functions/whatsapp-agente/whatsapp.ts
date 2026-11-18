@@ -94,3 +94,22 @@ export async function marcarLidaDigitando(numeroId: string, token: string, mensa
     body: JSON.stringify({ messaging_product: 'whatsapp', status: 'read', message_id: mensagemId, typing_indicator: { type: 'text' } }),
   }).catch(() => undefined)
 }
+
+/**
+ * Manda um modelo aprovado na Meta (único jeito de escrever para quem não
+ * mandou mensagem nas últimas 24 horas). `parametros` preenche {{1}}, {{2}}… do corpo.
+ */
+export async function mandarModelo(numeroId: string, token: string, para: string, nome: string, idioma: string, parametros: string[]): Promise<string | null> {
+  const componentes = parametros.length ? [{ type: 'body', parameters: parametros.map((text) => ({ type: 'text', text })) }] : []
+  const r = await fetch(`${GRAPH}/${numeroId}/messages`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ messaging_product: 'whatsapp', to: para, type: 'template', template: { name: nome, language: { code: idioma }, components: componentes } }),
+  })
+  if (!r.ok) {
+    console.error('WhatsApp não aceitou o modelo', r.status, await r.text())
+    return null
+  }
+  const corpo = await r.json().catch(() => null)
+  return corpo?.messages?.[0]?.id ?? null
+}
