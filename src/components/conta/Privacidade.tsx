@@ -3,7 +3,8 @@ import { VERSAO_TERMOS } from '../../nuvem/privacidade'
 
 const versao = VERSAO_TERMOS.split('-').reverse().join('/')
 
-/** Política de privacidade (LGPD). Revisar com um advogado antes de abrir o app ao público. */
+/** Política de privacidade (LGPD). Revisar com um advogado antes de abrir o app ao público.
+ * Tem uma cópia pública em public/privacidade.html (link pedido pela Meta): mude as duas juntas. */
 export function Privacidade({ onVoltar }: { onVoltar: () => void }) {
   return (
     <div className="tela">
@@ -50,6 +51,11 @@ export function Privacidade({ onVoltar }: { onVoltar: () => void }) {
             A única exceção é a vitrine (item 6).
           </li>
           <li>
+            <strong>Atendimento pelo WhatsApp:</strong> se você escrever para o número do FormaCerta, guardamos o seu número, o nome do seu perfil e as
+            mensagens da conversa, para responder e dar continuidade ao atendimento. As respostas automáticas são feitas por um assistente de inteligência
+            artificial.
+          </li>
+          <li>
             <strong>Aceites:</strong> a data em que você aceitou estes termos e autorizou o uso dos dados de saúde.
           </li>
         </ul>
@@ -88,6 +94,11 @@ export function Privacidade({ onVoltar }: { onVoltar: () => void }) {
         <ul>
           <li>Supabase: banco de dados e fotos da vitrine, com servidor em São Paulo.</li>
           <li>Resend: envio dos e-mails de aviso e de lembrete (servidores fora do Brasil, com garantias de proteção previstas no art. 33 da LGPD).</li>
+          <li>WhatsApp (Meta): troca de mensagens com o número de atendimento do FormaCerta.</li>
+          <li>
+            Anthropic: inteligência artificial que escreve as respostas automáticas do atendimento pelo WhatsApp (servidores fora do Brasil, com garantias
+            do art. 33 da LGPD). Recebe só as mensagens da conversa e não as usa para treinar modelos.
+          </li>
           <li>Mercado Pago: pagamentos, quando você compra um plano ou uma avaliação. O FormaCerta não guarda número de cartão.</li>
         </ul>
         <p>Também podemos informar dados quando a lei ou uma ordem judicial exigir.</p>
