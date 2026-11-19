@@ -86,6 +86,23 @@ export async function mandarTexto(numeroId: string, token: string, para: string,
   return corpo?.messages?.[0]?.id ?? null
 }
 
+/** Manda uma imagem por link público (JPEG ou PNG, até 5 MB) com legenda. */
+export async function mandarImagem(numeroId: string, token: string, para: string, link: string, legenda: string): Promise<string | null> {
+  const image: { link: string; caption?: string } = { link }
+  if (legenda.trim()) image.caption = legenda.slice(0, 1024)
+  const r = await fetch(`${GRAPH}/${numeroId}/messages`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ messaging_product: 'whatsapp', recipient_type: 'individual', to: para, type: 'image', image }),
+  })
+  if (!r.ok) {
+    console.error('WhatsApp não aceitou a imagem', r.status, await r.text())
+    return null
+  }
+  const corpo = await r.json().catch(() => null)
+  return corpo?.messages?.[0]?.id ?? null
+}
+
 /** Marca como lida e mostra "digitando…" enquanto o agente pensa. */
 export async function marcarLidaDigitando(numeroId: string, token: string, mensagemId: string): Promise<void> {
   await fetch(`${GRAPH}/${numeroId}/messages`, {

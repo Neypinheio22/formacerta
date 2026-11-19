@@ -20,7 +20,7 @@
 import Anthropic from 'npm:@anthropic-ai/sdk@1.4.0'
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { escreverLembrete, MODELO_PADRAO, responder, type Ferramentas, type Turno } from './agente.ts'
-import { assinaturaValida, lerAviso, mandarModelo, mandarTexto, marcarLidaDigitando, type EcoDoCelular, type MensagemRecebida } from './whatsapp.ts'
+import { assinaturaValida, lerAviso, mandarImagem, mandarModelo, mandarTexto, marcarLidaDigitando, type EcoDoCelular, type MensagemRecebida } from './whatsapp.ts'
 
 declare const EdgeRuntime: { waitUntil(p: Promise<unknown>): void }
 
@@ -150,6 +150,23 @@ async function contextoDaConta(c: Conversa): Promise<string> {
   return data ? `[Conta ligada (código confirmado): ${JSON.stringify(data)}]` : ''
 }
 
+type Imagem = { chave: string; titulo: string; quando_usar: string; legenda: string; url: string }
+/** O que vai logo depois da resposta do robô: texto (código do Pix) ou imagem de passo a passo. */
+type Extra = string | { imagem: string; legenda: string; titulo: string }
+const MAX_IMAGENS_POR_RESPOSTA = 2
+
+/** Imagens ligadas em Administração → WhatsApp → Imagens do robô. */
+async function carregarImagens(): Promise<Imagem[]> {
+  const { data, error } = await banco.from('whatsapp_imagens').select('chave, titulo, quando_usar, legenda, url').eq('ativo', true).order('ordem').limit(30)
+  if (error) console.error('Imagens do robô', error.message)
+  return (data ?? []) as Imagem[]
+}
+
+function listaDeImagens(imagens: Imagem[]): string {
+  if (!imagens.length) return ''
+  return `[Imagens que você pode mandar com mandar_imagem:\n${imagens.map((i) => `- ${i.chave}: ${i.titulo}. Quando usar: ${i.quando_usar || i.titulo}`).join('\n')}]`
+}
+
 async function abrirConversa(telefone: string, nome: string, numeroId = '', entrada = false): Promise<Conversa> {
   const dados: Record<string, unknown> = { telefone, ultima_mensagem_em: new Date().toISOString() }
   if (entrada) dados.ultima_entrada_em = dados.ultima_mensagem_em
@@ -186,8 +203,8 @@ async function passarParaHumano(c: Conversa, motivo: string, resumo: string) {
   await avisarNey(c.telefone, c.nome, motivo, resumo)
 }
 
-/** `extras`: mensagens que vão logo depois da resposta do robô (ex.: o código do Pix). */
-function ferramentas(c: Conversa, extras: string[] = []): Ferramentas {
+/** `extras`: mensagens que vão logo depois da resposta do robô (ex.: o código do Pix, imagens). */
+function ferramentas(c: Conversa, extras: Extra[] = [], imagens: Imagem[] = []): Ferramentas {
   return {
     async verPlanos() {
       const [{ data: planos }, { data: config }] = await Promise.all([
@@ -284,6 +301,15 @@ function ferramentas(c: Conversa, extras: string[] = []): Ferramentas {
       await banco.from('whatsapp_conversas').update({ sem_lembretes: true }).eq('id', c.id)
       return { ok: true }
     },
+    async mandarImagem(chave: string) {
+      const img = imagens.find((i) => i.chave === chave.toLowerCase())
+      if (!img) return { erro: `Não existe imagem "${chave}". Use só as chaves da lista: ${imagens.map((i) => i.chave).join(', ') || 'nenhuma'}.` }
+      const fila = extras.filter((e) => typeof e !== 'string')
+      if (fila.some((e) => e.imagem === img.url)) return { ok: true, observacao: 'Essa imagem já vai nesta resposta.' }
+      if (fila.length >= MAX_IMAGENS_POR_RESPOSTA) return { erro: `No máximo ${MAX_IMAGENS_POR_RESPOSTA} imagens por resposta.` }
+      extras.push({ imagem: img.url, legenda: img.legenda, titulo: img.titulo })
+      return { ok: true, vai: 'logo depois da sua resposta, com a legenda', legenda: img.legenda }
+    },
   }
 }
 
@@ -337,10 +363,12 @@ async function tratarMensagem(m: MensagemRecebida) {
   const historico = ((linhas ?? []) as Turno[]).reverse()
 
   let resposta: string
-  const extras: string[] = []
+  const extras: Extra[] = []
   try {
     const cliente = new Anthropic({ apiKey: Deno.env.get('ANTHROPIC_API_KEY') })
-    const r = await responder(cliente, Deno.env.get('AGENTE_MODELO') || MODELO_PADRAO, historico, c.nome, ferramentas(c, extras), await contextoDaConta(c))
+    const [imagens, conta] = await Promise.all([carregarImagens(), contextoDaConta(c)])
+    const contexto = [conta, listaDeImagens(imagens)].filter(Boolean).join('\n')
+    const r = await responder(cliente, Deno.env.get('AGENTE_MODELO') || MODELO_PADRAO, historico, c.nome, ferramentas(c, extras, imagens), contexto)
     resposta = r.texto
     if (!resposta && !r.passouParaHumano) {
       await passarParaHumano(c, 'robô sem resposta', `Última mensagem: ${texto.slice(0, 300)}`)
@@ -351,9 +379,14 @@ async function tratarMensagem(m: MensagemRecebida) {
     await passarParaHumano(c, 'erro no robô', `O robô deu erro ao responder. Última mensagem: ${texto.slice(0, 300)}`)
     resposta = 'Tive um probleminha aqui agora. Já avisei a equipe e o Ney te responde por aqui assim que puder.'
   }
-  for (const texto of resposta ? [resposta, ...extras] : extras) {
-    const enviadoId = await mandarTexto(m.numeroId, token, m.de, texto)
-    if (enviadoId) await guardar(c.id, 'robo', texto, enviadoId)
+  for (const item of resposta ? [resposta, ...extras] : extras) {
+    if (typeof item === 'string') {
+      const enviadoId = await mandarTexto(m.numeroId, token, m.de, item)
+      if (enviadoId) await guardar(c.id, 'robo', item, enviadoId)
+    } else {
+      const enviadoId = await mandarImagem(m.numeroId, token, m.de, item.imagem, item.legenda)
+      if (enviadoId) await guardar(c.id, 'robo', `[Imagem: ${item.titulo}]${item.legenda ? ` ${item.legenda}` : ''}`, enviadoId)
+    }
   }
 }
 
