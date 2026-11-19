@@ -8880,3 +8880,46 @@ p.selo-aluno {
   text-align: left;
   margin: 0;
 }
+
+/* Administração → WhatsApp → Imagens do robô */
+.admin-imagens-robo {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 14px;
+}
+.imagem-robo-corpo {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.imagem-robo-foto {
+  flex: 0 0 140px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: stretch;
+  text-align: center;
+}
+.imagem-robo-foto img {
+  width: 140px;
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+  border-radius: 12px;
+  border: 1px solid var(--borda);
+}
+.imagem-robo-foto > .dica-sec {
+  width: 140px;
+  aspect-ratio: 4 / 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed var(--borda);
+  border-radius: 12px;
+}
+.imagem-robo-campos {
+  flex: 1 1 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}

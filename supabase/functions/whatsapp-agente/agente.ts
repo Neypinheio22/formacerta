@@ -17,6 +17,8 @@ export type Ferramentas = {
   gerarPix(plano: string, ciclo: string): Promise<unknown>
   /** A pessoa não quer mais lembretes. */
   pararLembretes(): Promise<unknown>
+  /** Manda uma das imagens de passo a passo (vai logo depois da resposta). */
+  mandarImagem(chave: string): Promise<unknown>
 }
 
 export type Turno = { autor: 'entrada' | 'robo' | 'humano'; texto: string }
@@ -37,11 +39,11 @@ O que o app faz:
 - É triagem e acompanhamento, não diagnóstico médico.
 
 # Como se cadastrar
-1. Abrir https://formacerta.app.br e tocar em criar conta.
-2. Escolher "Sou personal" ou "Sou aluno", preencher nome, e-mail (duas vezes, igual) e senha, aceitar os termos.
+1. Abrir https://formacerta.app.br e tocar em *Criar conta*.
+2. Em "Eu sou", escolher *Profissional* (personal, fisioterapeuta: pede também o número de registro, como o CREF) ou *Aluno*; preencher nome, e-mail (duas vezes, igual) e senha, aceitar os termos.
 3. Abrir o e-mail de confirmação que chega de avisos@formacerta.app.br e tocar no botão. Se não aparecer, olhar no Spam ou Promoções.
 4. Depois de confirmar, o cadastro passa por uma conferência rápida da equipe e é liberado. Quando liberar, é só entrar com e-mail e senha.
-Esqueceu a senha: na tela de entrar, tocar em "Esqueci minha senha".
+Esqueceu a senha: na tela de entrar, tocar em "Esqueci a senha".
 
 # Planos e venda
 Use a ferramenta ver_planos para preços, dias grátis e o que cada plano inclui. Nunca invente preço, desconto ou promoção.
@@ -58,7 +60,7 @@ Quando a pessoa quiser assinar e já tiver conta liberada, ofereça resolver aqu
 2. Peça para ela digitar o código aqui e chame confirmar_codigo. Sem o código certo, não mexa em plano nenhum.
 3. Confirme o plano e se é mensal ou anual, e chame gerar_pix.
    - acao "teste": não cobra nada agora. Avise que os dias grátis começaram e até quando; o app avisa antes de acabar e aí ela paga (pode pedir o Pix por aqui).
-   - acao "pagar": o Pix foi gerado. O código copia e cola vai sozinho numa mensagem logo depois da sua. Na sua resposta, diga o valor e o que está pagando, explique: copiar o código da próxima mensagem, abrir o app do banco, Pix → Pix Copia e Cola, colar e pagar. O plano ativa sozinho quando o pagamento cai e você avisa aqui. O código vale por 24 horas. NUNCA escreva você mesmo um código Pix.
+   - acao "pagar": o Pix foi gerado. O código copia e cola vai sozinho numa mensagem logo depois da sua. Na sua resposta, diga o valor e o que está pagando, explique: copiar o código da próxima mensagem, abrir o app do banco, Pix → Pix Copia e Cola, colar e pagar. O plano ativa sozinho quando o pagamento cai e você avisa aqui. O código vale por 24 horas. NUNCA escreva você mesmo um código Pix. Se a lista de imagens tiver a de pagar o Pix, mande também com mandar_imagem e encurte a explicação.
    - acao "ja_tem": ela já tem o plano pelo personal; explique que não precisa pagar.
    - erro de troca de plano ou cortesia: passe para humano.
 4. Se a conta ainda não está liberada, o e-mail não confirmou ou ela não tem conta: ajude com o cadastro (e consultar_cadastro) e diga que, quando liberar, você gera o Pix por aqui.
@@ -79,7 +81,14 @@ Se a pessoa tiver problema para pagar ou o plano não liberar, passe para humano
 - passar_para_humano: quando a pessoa pedir para falar com uma pessoa, reclamar, tiver problema com pagamento, cobrança, reembolso ou cancelamento, quiser parceria ou negociação, perguntar algo de saúde que exige um profissional, ou quando você não souber resolver. Chame a ferramenta e, na resposta, avise que o Ney, da equipe FormaCerta, vai continuar a conversa por aqui assim que puder. Essa é a sua última mensagem na conversa.
 - Se o cadastro estiver aguardando liberação há muito tempo, ou estiver bloqueado, passe para humano.
 - vincular_conta, confirmar_codigo e gerar_pix: para fechar a venda por Pix (veja acima). Não diga se um e-mail tem conta antes de a pessoa confirmar o código, além do que consultar_cadastro permite.
+- mandar_imagem: manda uma imagem de passo a passo (a lista das que existem vem em [Imagens que você pode mandar] no começo da conversa). Veja "Imagens" abaixo.
 - parar_lembretes: quando a pessoa disser que não quer mais receber mensagens ou lembretes (ou tocar em "Não tenho interesse"). Responda com educação e não insista.
+
+# Imagens
+Uma imagem explica um processo melhor que um texto longo. Use mandar_imagem quando a situação bater com o "quando usar" de uma imagem da lista, por exemplo: logo depois de gerar um Pix, mande a de como pagar o Pix; quem não acha o e-mail de confirmação, a de confirmar o e-mail.
+- A imagem vai logo depois da sua resposta, com a legenda dela. Então a sua resposta fica curta: diga em uma frase o que fazer e que a imagem abaixo mostra o passo a passo, sem repetir todos os passos.
+- No máximo 2 imagens por resposta. Não mande de novo uma imagem que já aparece como [Imagem: ...] na conversa, a não ser que a pessoa peça.
+- Só use chaves da lista. Se não houver lista ou nenhuma servir, explique em texto.
 
 # Como escrever
 - Português do Brasil, simples, simpático e direto, como uma pessoa da equipe. Trate por "você".
@@ -123,6 +132,17 @@ const FERRAMENTAS: Anthropic.Beta.BetaTool[] = [
         ciclo: { type: 'string', enum: ['mensal', 'anual'] },
       },
       required: ['plano', 'ciclo'],
+      additionalProperties: false,
+    },
+    strict: true,
+  },
+  {
+    name: 'mandar_imagem',
+    description: 'Manda para a pessoa uma imagem de passo a passo do FormaCerta (a imagem vai logo depois da sua resposta, com legenda). Use só uma chave da lista [Imagens que você pode mandar].',
+    input_schema: {
+      type: 'object',
+      properties: { chave: { type: 'string', description: 'A chave da imagem, exatamente como está na lista (ex.: como-pagar-pix).' } },
+      required: ['chave'],
       additionalProperties: false,
     },
     strict: true,
@@ -196,6 +216,8 @@ async function executar(f: Ferramentas, nome: string, entrada: Record<string, un
       return await f.gerarPix(texto('plano'), texto('ciclo'))
     case 'parar_lembretes':
       return await f.pararLembretes()
+    case 'mandar_imagem':
+      return await f.mandarImagem(texto('chave'))
     default:
       return { erro: `Ferramenta desconhecida: ${nome}` }
   }

@@ -1,5 +1,6 @@
 import { Bot, MessageCircle, Send, UserRound } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { AdminImagensRobo } from './AdminImagensRobo'
 import { comNey, janelaAberta, lerMensagens, listarConversas, mudarAtendimento, responderConversa, type ConversaWhatsApp, type MensagemWhatsApp } from '../../nuvem/whatsappAgente'
 
 const hora = (d: string) => new Date(d).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
@@ -7,6 +8,23 @@ const telefone = (t: string) => (t.startsWith('55') && t.length >= 12 ? `(${t.sl
 
 /** Administrador: conversas do robô no WhatsApp, com pausar e devolver ao robô. */
 export function AdminWhatsApp() {
+  const [parte, setParte] = useState<'conversas' | 'imagens'>('conversas')
+  return (
+    <>
+      <div className="escolha">
+        <button className={parte === 'conversas' ? 'ativo' : ''} onClick={() => setParte('conversas')}>
+          Conversas
+        </button>
+        <button className={parte === 'imagens' ? 'ativo' : ''} onClick={() => setParte('imagens')}>
+          Imagens do robô
+        </button>
+      </div>
+      {parte === 'conversas' ? <Conversas /> : <AdminImagensRobo />}
+    </>
+  )
+}
+
+function Conversas() {
   const [lista, setLista] = useState<ConversaWhatsApp[] | null | undefined>(undefined)
   const [aberta, setAberta] = useState<string | null>(null)
 
