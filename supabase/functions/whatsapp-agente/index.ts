@@ -594,14 +594,19 @@ async function responderPeloApp(req: Request): Promise<Response> {
   const { data: perfil } = await banco.from('perfis').select('papel').eq('id', quem.user.id).maybeSingle()
   if (perfil?.papel !== 'admin') return json({ erro: 'Só o administrador pode responder.' }, 403)
 
-  let pedido: { conversa_id?: string; texto?: string }
+  let pedido: { conversa_id?: string; texto?: string; anexo_url?: string; anexo_tipo?: string; anexo_nome?: string }
   try {
     pedido = await req.json()
   } catch {
     return json({ erro: 'Dados inválidos' }, 400)
   }
   const texto = String(pedido.texto ?? '').trim().slice(0, 4000)
-  if (!texto || !/^[0-9a-f-]{36}$/i.test(String(pedido.conversa_id ?? ''))) return json({ erro: 'Escreva a mensagem.' }, 400)
+  // Anexo: só arquivos que o administrador subiu na pasta whatsapp-anexos.
+  const pastaAnexos = `${Deno.env.get('SUPABASE_URL')}/storage/v1/object/public/whatsapp-anexos/`
+  const anexoUrl = String(pedido.anexo_url ?? '')
+  const anexo = anexoUrl.startsWith(pastaAnexos) && anexoUrl.length <= 500 ? { url: anexoUrl, tipo: pedido.anexo_tipo === 'documento' ? 'documento' : 'imagem', nome: String(pedido.anexo_nome ?? '').slice(0, 120) } : null
+  if (anexoUrl && !anexo) return json({ erro: 'Anexo inválido. Envie o arquivo de novo.' }, 400)
+  if ((!texto && !anexo) || !/^[0-9a-f-]{36}$/i.test(String(pedido.conversa_id ?? ''))) return json({ erro: 'Escreva a mensagem ou anexe um arquivo.' }, 400)
 
   const token = Deno.env.get('WHATSAPP_TOKEN')
   if (!token) return json({ erro: 'O WhatsApp ainda não foi ligado (falta o WHATSAPP_TOKEN).' }, 400)
@@ -610,11 +615,22 @@ async function responderPeloApp(req: Request): Promise<Response> {
   if (!c || !numeroId) return json({ erro: 'Conversa não encontrada.' }, 404)
 
   // A pessoa vê que agora é alguém da equipe, e não o robô.
-  const enviadoId = await mandarTexto(numeroId, token, c.telefone, `*${nomeAtendimento()}:*\n${texto}`)
-  if (!enviadoId) {
-    return json({ erro: 'O WhatsApp não aceitou. Se a pessoa escreveu há mais de 24 horas, só dá para responder quando ela escrever de novo.' }, 502)
+  const naoAceitou = 'O WhatsApp não aceitou. Se a pessoa escreveu há mais de 24 horas, só dá para responder quando ela escrever de novo.'
+  if (texto) {
+    const enviadoId = await mandarTexto(numeroId, token, c.telefone, `*${nomeAtendimento()}:*\n${texto}`)
+    if (!enviadoId) return json({ erro: naoAceitou }, 502)
+    await guardar(c.id, 'humano', texto, enviadoId)
   }
-  await guardar(c.id, 'humano', texto, enviadoId)
+  if (anexo) {
+    // Sem texto, a foto vai com a legenda "Atendimento FormaCerta" (a pessoa vê que é da equipe).
+    const legenda = texto ? '' : `*${nomeAtendimento()}*`
+    const id =
+      anexo.tipo === 'documento'
+        ? await mandarDocumento(numeroId, token, c.telefone, anexo.url, anexo.nome || 'arquivo.pdf', legenda)
+        : await mandarImagem(numeroId, token, c.telefone, anexo.url, legenda)
+    if (!id) return json({ erro: texto ? 'A mensagem foi, mas o WhatsApp não aceitou o anexo. Tente de novo.' : naoAceitou }, 502)
+    await guardar(c.id, 'humano', `[${anexo.tipo === 'documento' ? 'Arquivo' : 'Imagem'}: ${anexo.nome || 'anexo'}]`, id)
+  }
   await banco.from('whatsapp_conversas').update({ atendimento: 'humano', humano_ate: daquiHoras(HORAS_HUMANO), motivo_humano: 'Você respondeu pelo app' }).eq('id', c.id)
   return json({ enviado: true })
 }
