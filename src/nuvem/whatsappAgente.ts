@@ -48,8 +48,9 @@ export async function mudarAtendimento(conversaId: string, robo: boolean): Promi
 }
 
 /** Responde a conversa pelo número do FormaCerta. O robô fica quieto nela por 12 horas. */
-export async function responderConversa(conversaId: string, texto: string): Promise<string | null> {
-  const { data, error } = await supabase.functions.invoke('whatsapp-agente', { body: { conversa_id: conversaId, texto } })
+export async function responderConversa(conversaId: string, texto: string, anexo?: { url: string; tipo: 'imagem' | 'documento'; nome: string } | null): Promise<string | null> {
+  const body = { conversa_id: conversaId, texto, ...(anexo ? { anexo_url: anexo.url, anexo_tipo: anexo.tipo, anexo_nome: anexo.nome } : {}) }
+  const { data, error } = await supabase.functions.invoke('whatsapp-agente', { body })
   if (error) {
     const corpo = await (error as { context?: Response }).context?.json?.().catch(() => null)
     return corpo?.erro ?? 'Não deu para enviar agora. Tente de novo.'

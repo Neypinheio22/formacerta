@@ -9218,3 +9218,35 @@ p.selo-aluno {
 .admin-whatsapp .acoes-linha svg {
   flex: none;
 }
+.chat-escrever.com-anexo {
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+}
+.chat-escrever .chat-anexo {
+  grid-column: 1 / -1;
+  margin: 0 6px;
+}
+.chat-clipe {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 1px solid var(--borda);
+  color: var(--texto-sec);
+  cursor: pointer;
+}
+.chat-clipe:hover {
+  color: var(--verde);
+  border-color: var(--verde);
+}
+.chat-clipe.ocupado {
+  opacity: 0.5;
+  cursor: progress;
+}
+.admin-whatsapp .acoes-linha .botao-whatsapp {
+  gap: 4px;
+  padding-left: 8px;
+  padding-right: 8px;
+}

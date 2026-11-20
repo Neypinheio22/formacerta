@@ -281,16 +281,36 @@ function CartaoConversa({
   const situacao = SITUACOES[c.situacao]
   const minhas = etiquetas.filter((e) => c.etiquetas.includes(e.id))
 
+  const [anexo, setAnexo] = useState<{ url: string; tipo: 'imagem' | 'documento'; nome: string } | null>(null)
+  const [subindo, setSubindo] = useState(false)
+
+  async function escolherAnexo(e: React.ChangeEvent<HTMLInputElement>) {
+    const arquivo = e.target.files?.[0]
+    e.target.value = ''
+    if (!arquivo) return
+    setSubindo(true)
+    setErro(null)
+    const r = await subirAnexo(arquivo)
+    setSubindo(false)
+    if (r.erro) return setErro(r.erro)
+    setAnexo({ url: r.url!, tipo: r.tipo!, nome: r.nome! })
+  }
+
   async function enviar() {
     const t = texto.trim()
-    if (!t) return
+    if (!t && !anexo) return
     setEnviando(true)
-    const e = await responderConversa(c.id, t)
+    const e = await responderConversa(c.id, t, anexo)
     setEnviando(false)
     setErro(e)
     if (e) return
+    const agora = new Date().toISOString()
+    const novas: MensagemWhatsApp[] = []
+    if (t) novas.push({ id: Date.now(), autor: 'humano', texto: t, criado_em: agora })
+    if (anexo) novas.push({ id: Date.now() + 1, autor: 'humano', texto: `[${anexo.tipo === 'documento' ? 'Arquivo' : 'Imagem'}: ${anexo.nome}]`, criado_em: agora })
     setTexto('')
-    setMsgs((m) => [...(m ?? []), { id: Date.now(), autor: 'humano', texto: t, criado_em: new Date().toISOString() }])
+    setAnexo(null)
+    setMsgs((m) => [...(m ?? []), ...novas])
     onMudou({ ...c, atendimento: 'humano', humano_ate: new Date(Date.now() + 12 * 3600_000).toISOString(), motivo_humano: 'Você respondeu pelo app', ultimo_autor: 'humano' })
   }
 
@@ -396,9 +416,21 @@ function CartaoConversa({
             <p className="dica-sec">A pessoa escreveu há mais de 24 horas. O WhatsApp só deixa responder quando ela escrever de novo.</p>
           )}
           {msgs && janelaAberta(msgs) && (
-            <div className="chat-escrever">
-              <textarea rows={2} placeholder="Responder (a pessoa vê: Atendimento FormaCerta)" value={texto} maxLength={4000} onChange={(e) => setTexto(e.target.value)} />
-              <button className="botao chat-enviar" disabled={enviando || !texto.trim()} onClick={enviar} aria-label="Enviar">
+            <div className="chat-escrever com-anexo">
+              {anexo && (
+                <p className="anexo-escolhido chat-anexo">
+                  <Paperclip size={14} /> {anexo.nome}
+                  <button className="icone-acao" onClick={() => setAnexo(null)} aria-label="Tirar anexo">
+                    <X size={14} />
+                  </button>
+                </p>
+              )}
+              <label className={`chat-clipe ${subindo ? 'ocupado' : ''}`} title="Anexar foto ou PDF" aria-label="Anexar foto ou PDF">
+                <Paperclip size={18} />
+                <input type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,application/pdf" hidden onChange={escolherAnexo} disabled={subindo || enviando} />
+              </label>
+              <textarea rows={2} placeholder={subindo ? 'Enviando o arquivo…' : 'Responder (a pessoa vê: Atendimento FormaCerta)'} value={texto} maxLength={4000} onChange={(e) => setTexto(e.target.value)} />
+              <button className="botao chat-enviar" disabled={enviando || subindo || (!texto.trim() && !anexo)} onClick={enviar} aria-label="Enviar">
                 <Send size={18} />
               </button>
             </div>
