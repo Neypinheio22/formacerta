@@ -8923,3 +8923,298 @@ p.selo-aluno {
   flex-direction: column;
   gap: 10px;
 }
+
+/* Administração → WhatsApp: etiquetas, funil e mensagens agendadas */
+.chip.pilula {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.chip-neutro svg {
+  vertical-align: -2px;
+}
+.icone-acao {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid var(--borda);
+  border-radius: 999px;
+  color: var(--texto-sec);
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  flex: none;
+}
+.icone-acao:disabled {
+  opacity: 0.3;
+}
+.filtros-etiquetas,
+.atalhos-hora,
+.lista-etiquetas,
+.linha-etiquetas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.filtros-etiquetas {
+  margin-bottom: 14px;
+}
+.linha-etiquetas {
+  margin-top: 10px;
+}
+.filtro {
+  --cor: var(--texto-sec);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 1px solid var(--borda);
+  border-radius: 999px;
+  color: var(--texto);
+  padding: 6px 12px;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+.filtro i {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--cor);
+}
+.filtro.ativo {
+  border-color: var(--verde);
+  color: var(--verde);
+  box-shadow: 0 0 0 1px var(--verde);
+}
+.editar-etiquetas {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.editar-etiquetas h3 {
+  margin: 0;
+}
+.etiqueta-editar {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.etiqueta-editar .icone-acao {
+  width: 24px;
+  height: 24px;
+}
+.cores {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.cores button {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  padding: 0;
+}
+.cores button.ativo {
+  border-color: var(--texto);
+  box-shadow: 0 0 0 2px var(--fundo) inset;
+}
+.funil-linha {
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+.funil-linha .etapa-campo {
+  flex: 1 1 100%;
+  font-size: 0.8rem;
+}
+.funil-linha .etapa-campo select {
+  padding: 10px 12px;
+}
+.painel-conversa {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 14px;
+  border: 1px solid var(--borda-verde);
+  border-radius: 16px;
+  background: rgba(54, 242, 148, 0.04);
+}
+.painel-conversa .campo input,
+.painel-conversa .campo textarea {
+  width: 100%;
+  box-sizing: border-box;
+}
+.etiqueta-alternar {
+  --cor: var(--verde);
+  background: transparent;
+  border: 1px dashed color-mix(in srgb, var(--cor) 60%, transparent);
+  color: var(--cor);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+.etiqueta-alternar.ativo {
+  border-style: solid;
+  background: color-mix(in srgb, var(--cor) 18%, transparent);
+}
+.anotacao-conversa {
+  margin: 8px 0 0;
+  font-size: 0.82rem;
+  color: var(--texto-sec);
+  white-space: pre-wrap;
+}
+.anexar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+}
+.anexo-escolhido {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 0.85rem;
+  overflow-wrap: anywhere;
+}
+.aviso-janela {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(251, 141, 26, 0.12);
+  color: var(--laranja);
+  font-size: 0.82rem;
+}
+.lista-agendadas {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.lista-agendadas h4 {
+  margin: 4px 0 0;
+}
+.linha-agendada {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px;
+  border: 1px solid var(--borda);
+  border-radius: 14px;
+  background: var(--cartao);
+  margin-bottom: 8px;
+}
+.linha-agendada p {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 0.88rem;
+}
+.linha-agendada-topo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+.linha-agendada .botao-sec {
+  align-self: flex-start;
+}
+.funil-colunas {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  padding-bottom: 12px;
+  margin: 0 -4px;
+}
+.funil-coluna {
+  flex: 0 0 min(82%, 280px);
+  scroll-snap-align: start;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 18px;
+  background: rgba(5, 31, 47, 0.6);
+  border: 1px solid var(--borda);
+  border-top: 3px solid var(--cor-etapa, var(--borda));
+  min-height: 200px;
+}
+.funil-coluna.sobre {
+  border-color: var(--verde);
+  background: rgba(54, 242, 148, 0.06);
+}
+.funil-coluna header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.funil-coluna h3 {
+  margin: 0;
+  font-size: 0.95rem;
+}
+.funil-coluna > .dica-sec {
+  margin: 0;
+  font-size: 0.75rem;
+}
+.etapa-novo { --cor-etapa: #3b82f6; }
+.etapa-conversando { --cor-etapa: #14b8a6; }
+.etapa-follow_up { --cor-etapa: var(--laranja); }
+.etapa-aguardando { --cor-etapa: var(--amarelo); }
+.etapa-fechado { --cor-etapa: var(--verde); }
+.etapa-perdido { --cor-etapa: var(--vermelho); }
+.funil-cartao {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: var(--cartao);
+  border: 1px solid var(--borda);
+  cursor: grab;
+}
+.funil-cartao .sem-botao {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.funil-cartao .sem-botao .dica-sec {
+  font-size: 0.75rem;
+}
+.funil-cartao .linha-etiquetas {
+  margin-top: 0;
+}
+.funil-setas {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.funil-setas .dica-sec {
+  font-size: 0.72rem;
+}
+@media (min-width: 1024px) {
+  .funil-colunas {
+    scroll-snap-type: none;
+  }
+  .funil-coluna {
+    flex: 1 0 220px;
+  }
+  .funil-linha .etapa-campo {
+    flex: 2 1 0;
+  }
+}
+.admin-whatsapp .acoes-linha {
+  flex-wrap: wrap;
+}
+.admin-whatsapp .acoes-linha > * {
+  min-width: 96px;
+}
+.admin-whatsapp .acoes-linha svg {
+  flex: none;
+}
