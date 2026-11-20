@@ -103,6 +103,24 @@ export async function mandarImagem(numeroId: string, token: string, para: string
   return corpo?.messages?.[0]?.id ?? null
 }
 
+/** Manda um documento (PDF) por link público, com o nome do arquivo que a pessoa vê. */
+export async function mandarDocumento(numeroId: string, token: string, para: string, link: string, nomeArquivo: string, legenda = ''): Promise<string | null> {
+  const document: { link: string; filename?: string; caption?: string } = { link }
+  if (nomeArquivo.trim()) document.filename = nomeArquivo.slice(0, 120)
+  if (legenda.trim()) document.caption = legenda.slice(0, 1024)
+  const r = await fetch(`${GRAPH}/${numeroId}/messages`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ messaging_product: 'whatsapp', recipient_type: 'individual', to: para, type: 'document', document }),
+  })
+  if (!r.ok) {
+    console.error('WhatsApp não aceitou o documento', r.status, await r.text())
+    return null
+  }
+  const corpo = await r.json().catch(() => null)
+  return corpo?.messages?.[0]?.id ?? null
+}
+
 /** Marca como lida e mostra "digitando…" enquanto o agente pensa. */
 export async function marcarLidaDigitando(numeroId: string, token: string, mensagemId: string): Promise<void> {
   await fetch(`${GRAPH}/${numeroId}/messages`, {

@@ -16,11 +16,12 @@
 // Lembrete de 3 dias: WHATSAPP_MODELO_LEMBRETE (nome do modelo aprovado na Meta) e WHATSAPP_MODELO_IDIOMA (padrão pt_BR).
 //
 // Também é chamada a cada 5 minutos pelo pg_cron com {"tarefa": "lembretes"}:
-// manda os lembretes de 24 horas e 3 dias e avisa quando um Pix gerado aqui foi pago.
+// manda as mensagens agendadas pelo administrador, os lembretes de 24 horas e 3 dias
+// e avisa quando um Pix gerado aqui foi pago (e move a conversa para "Fechou" no funil).
 import Anthropic from 'npm:@anthropic-ai/sdk@1.4.0'
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { escreverLembrete, MODELO_PADRAO, responder, type Ferramentas, type Turno } from './agente.ts'
-import { assinaturaValida, lerAviso, mandarImagem, mandarModelo, mandarTexto, marcarLidaDigitando, type EcoDoCelular, type MensagemRecebida } from './whatsapp.ts'
+import { assinaturaValida, lerAviso, mandarDocumento, mandarImagem, mandarModelo, mandarTexto, marcarLidaDigitando, type EcoDoCelular, type MensagemRecebida } from './whatsapp.ts'
 
 declare const EdgeRuntime: { waitUntil(p: Promise<unknown>): void }
 
@@ -330,6 +331,13 @@ async function tratarMensagem(m: MensagemRecebida) {
   const texto = m.texto || `[Mandou ${ROTULO_TIPO[m.tipo] ?? 'uma mensagem'} que o robô não consegue ver]`
   const minhaId = await guardar(c.id, 'entrada', texto, m.id)
   if (minhaId === null) return
+  // Funil: quem estava em follow-up, aguardando ou perdido e escreveu de novo volta para "Em conversa".
+  await banco
+    .from('whatsapp_conversas')
+    .update({ etapa: 'conversando', etapa_em: new Date().toISOString() })
+    .eq('id', c.id)
+    .in('etapa', ['follow_up', 'aguardando', 'perdido'])
+    .then(({ error }) => error && console.error('Etapa', error.message))
 
   if (c.atendimento === 'humano') {
     if (!c.humano_ate || new Date(c.humano_ate).getTime() > Date.now()) return
@@ -392,7 +400,7 @@ async function tratarMensagem(m: MensagemRecebida) {
 
 // ---- Tarefas do pg_cron (a cada 5 minutos) ----
 
-type ConversaLembrete = Conversa & { ultima_entrada_em: string; lembrete_24h_em: string | null; lembrete_3d_em: string | null }
+type ConversaLembrete = Conversa & { ultima_entrada_em: string; lembrete_24h_em: string | null; lembrete_3d_em: string | null; etapa?: string }
 const horas = (iso: string | null) => (iso ? (Date.now() - new Date(iso).getTime()) / 3600_000 : Infinity)
 const comNey = (c: Conversa) => c.atendimento === 'humano' && (!c.humano_ate || new Date(c.humano_ate).getTime() > Date.now())
 
@@ -411,6 +419,7 @@ async function avisarPixPagos(token: string) {
     // Marca antes de mandar: duas chamadas ao mesmo tempo não mandam duas vezes.
     const { data: marcou } = await banco.from('whatsapp_conversas').update({ pix_avisado_em: new Date().toISOString() }).eq('id', c.id).is('pix_avisado_em', null).select('id')
     if (!marcou?.length || parar) continue
+    await banco.from('whatsapp_conversas').update({ etapa: 'fechado', etapa_em: new Date().toISOString() }).eq('id', c.id)
     const numeroId = c.numero_id || Deno.env.get('WHATSAPP_NUMERO_ID') || ''
     if (!numeroId || horas(c.ultima_entrada_em) > 23.9) continue
     const texto = `✅ Pagamento confirmado! ${pg!.descricao} já está ativo na sua conta. É só entrar em https://formacerta.app.br e aproveitar. Qualquer dúvida, é só chamar aqui. 💚`
@@ -435,7 +444,7 @@ async function mandarLembretes(token: string) {
   for (const tipo of tipos) {
     const { data } = await banco
       .from('whatsapp_conversas')
-      .select(`${CAMPOS_CONVERSA}, ultima_entrada_em, lembrete_24h_em, lembrete_3d_em`)
+      .select(`${CAMPOS_CONVERSA}, ultima_entrada_em, lembrete_24h_em, lembrete_3d_em, etapa`)
       .eq('sem_lembretes', false)
       .gte('ultima_entrada_em', daquiHoras(-tipo.ate))
       .lte('ultima_entrada_em', daquiHoras(-tipo.de))
@@ -444,6 +453,10 @@ async function mandarLembretes(token: string) {
     for (const c of (data ?? []) as unknown as ConversaLembrete[]) {
       try {
         if (comNey(c)) continue
+        // Fechou, perdeu ou já tem mensagem agendada pelo administrador: o robô não manda lembrete.
+        if (c.etapa === 'fechado' || c.etapa === 'perdido') continue
+        const { count: agendadas } = await banco.from('whatsapp_agendadas').select('id', { count: 'exact', head: true }).eq('conversa_id', c.id).eq('situacao', 'agendada')
+        if ((agendadas ?? 0) > 0) continue
         const ja = c[tipo.coluna]
         if (ja && ja >= c.ultima_entrada_em) continue
         // Só se a última mensagem foi do robô (a pessoa não respondeu depois).
@@ -478,9 +491,96 @@ async function mandarLembretes(token: string) {
   }
 }
 
+const nomeAtendimento = () => (Deno.env.get('NOME_ATENDIMENTO') || 'Atendimento FormaCerta').trim()
+
+type Agendada = {
+  id: string
+  texto: string
+  anexo_url: string | null
+  anexo_tipo: 'imagem' | 'documento' | null
+  anexo_nome: string
+  conversa: { id: string; telefone: string; nome: string; numero_id: string; ultima_entrada_em: string | null } | null
+}
+
+/**
+ * Mensagens agendadas pelo administrador que chegaram na hora (a qualquer hora do dia).
+ * Dentro da janela de 24 horas vai o texto (e o anexo). Fora dela o WhatsApp não deixa:
+ * vai o modelo aprovado de lembrete (se existir) ou fica marcada como "não enviada".
+ */
+async function enviarAgendadas(token: string) {
+  const { data, error } = await banco
+    .from('whatsapp_agendadas')
+    .select('id, texto, anexo_url, anexo_tipo, anexo_nome, conversa:whatsapp_conversas(id, telefone, nome, numero_id, ultima_entrada_em)')
+    .eq('situacao', 'agendada')
+    .lte('enviar_em', new Date().toISOString())
+    .order('enviar_em')
+    .limit(20)
+  if (error) return console.error('Agendadas', error.message)
+  const modeloMeta = Deno.env.get('WHATSAPP_MODELO_LEMBRETE') ?? ''
+  const idioma = Deno.env.get('WHATSAPP_MODELO_IDIOMA') || 'pt_BR'
+
+  for (const a of (data ?? []) as unknown as Agendada[]) {
+    // Marca antes de mandar: duas chamadas ao mesmo tempo não mandam duas vezes.
+    const { data: marcou } = await banco.from('whatsapp_agendadas').update({ situacao: 'enviando' }).eq('id', a.id).eq('situacao', 'agendada').select('id')
+    if (!marcou?.length) continue
+    const fim = (situacao: string, observacao = '') =>
+      banco.from('whatsapp_agendadas').update({ situacao, observacao: observacao.slice(0, 500), enviada_em: situacao === 'falhou' ? null : new Date().toISOString() }).eq('id', a.id)
+    try {
+      const c = a.conversa
+      const numeroId = c?.numero_id || Deno.env.get('WHATSAPP_NUMERO_ID') || ''
+      if (!c || !numeroId) {
+        await fim('falhou', 'Conversa não encontrada.')
+        continue
+      }
+      if (horas(c.ultima_entrada_em) > 23.9) {
+        if (!modeloMeta) {
+          await fim('falhou', 'Não enviada: a pessoa não escreve há mais de 24 horas e o WhatsApp só deixa mandar modelo aprovado pela Meta.')
+          continue
+        }
+        const primeiro = c.nome.trim().split(/\s+/)[0] || 'tudo bem'
+        const id = await mandarModelo(numeroId, token, c.telefone, modeloMeta, idioma, [primeiro])
+        if (!id) {
+          await fim('falhou', 'O WhatsApp não aceitou o modelo de lembrete.')
+          continue
+        }
+        await guardar(c.id, 'humano', `[Agendada: janela fechada, foi o modelo "${modeloMeta}" no lugar do texto]`, id)
+        await fim('modelo', 'A janela de 24 horas estava fechada: foi o modelo de lembrete. Quando a pessoa responder, mande o seu texto.')
+        continue
+      }
+      let algum = false
+      if (a.texto.trim()) {
+        const texto = `*${nomeAtendimento()}:*\n${a.texto.trim()}`
+        const id = await mandarTexto(numeroId, token, c.telefone, texto)
+        if (id) {
+          algum = true
+          await guardar(c.id, 'humano', a.texto.trim(), id)
+        }
+      }
+      if (a.anexo_url) {
+        const id =
+          a.anexo_tipo === 'documento'
+            ? await mandarDocumento(numeroId, token, c.telefone, a.anexo_url, a.anexo_nome || 'arquivo.pdf')
+            : await mandarImagem(numeroId, token, c.telefone, a.anexo_url, '')
+        if (id) {
+          algum = true
+          await guardar(c.id, 'humano', `[${a.anexo_tipo === 'documento' ? 'Arquivo' : 'Imagem'}: ${a.anexo_nome || 'anexo'}]`, id)
+        }
+      }
+      if (algum) {
+        await fim('enviada')
+        await banco.from('whatsapp_conversas').update({ ultima_mensagem_em: new Date().toISOString() }).eq('id', c.id)
+      } else await fim('falhou', 'O WhatsApp não aceitou a mensagem.')
+    } catch (e) {
+      console.error('Agendada', a.id, e)
+      await fim('falhou', 'Erro ao enviar. Tente agendar de novo.')
+    }
+  }
+}
+
 async function tarefas() {
   const token = Deno.env.get('WHATSAPP_TOKEN')
   if (!token) return
+  await enviarAgendadas(token).catch((e) => console.error('Agendadas', e))
   await avisarPixPagos(token).catch((e) => console.error('Pix pagos', e))
   await mandarLembretes(token).catch((e) => console.error('Lembretes', e))
 }
@@ -510,8 +610,7 @@ async function responderPeloApp(req: Request): Promise<Response> {
   if (!c || !numeroId) return json({ erro: 'Conversa não encontrada.' }, 404)
 
   // A pessoa vê que agora é alguém da equipe, e não o robô.
-  const nome = (Deno.env.get('NOME_ATENDIMENTO') || 'Atendimento FormaCerta').trim()
-  const enviadoId = await mandarTexto(numeroId, token, c.telefone, `*${nome}:*\n${texto}`)
+  const enviadoId = await mandarTexto(numeroId, token, c.telefone, `*${nomeAtendimento()}:*\n${texto}`)
   if (!enviadoId) {
     return json({ erro: 'O WhatsApp não aceitou. Se a pessoa escreveu há mais de 24 horas, só dá para responder quando ela escrever de novo.' }, 502)
   }

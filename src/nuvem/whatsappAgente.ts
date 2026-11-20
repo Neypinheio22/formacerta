@@ -165,3 +165,139 @@ export async function apagarImagem(img: ImagemRobo): Promise<string | null> {
   await apagarArquivo(img.url)
   return null
 }
+
+// ---- Etiquetas, funil e mensagens agendadas ----
+
+/** Etiqueta automática, pela situação da conta de quem está na conversa. */
+export type SituacaoConversa = 'lead' | 'cadastrado' | 'testando' | 'assinante' | 'aguardando_pagamento' | 'vencido' | 'cortesia' | 'equipe'
+
+export const SITUACOES: Record<SituacaoConversa, { nome: string; cor: string; dica: string }> = {
+  lead: { nome: 'Lead', cor: '#3b82f6', dica: 'Ainda sem conta no app (ou com outro número no cadastro).' },
+  cadastrado: { nome: 'Cadastrado', cor: '#9fb3c2', dica: 'Tem conta, mas sem plano pago.' },
+  testando: { nome: 'Testando', cor: '#facc15', dica: 'Nos dias grátis do plano.' },
+  aguardando_pagamento: { nome: 'Falta pagar', cor: '#fb8d1a', dica: 'Escolheu o plano e ainda não pagou.' },
+  assinante: { nome: 'Assinante', cor: '#36f294', dica: 'Plano pago valendo.' },
+  vencido: { nome: 'Vencido', cor: '#ff5a5f', dica: 'O plano venceu e não renovou.' },
+  cortesia: { nome: 'Cortesia', cor: '#a855f7', dica: 'Plano de cortesia.' },
+  equipe: { nome: 'Equipe', cor: '#14b8a6', dica: 'Conta de administrador.' },
+}
+
+export type Etapa = 'novo' | 'conversando' | 'follow_up' | 'aguardando' | 'fechado' | 'perdido'
+
+export const ETAPAS: { id: Etapa; nome: string; dica: string }[] = [
+  { id: 'novo', nome: 'Novo contato', dica: 'Chegou agora.' },
+  { id: 'conversando', nome: 'Em conversa', dica: 'Tirando dúvidas.' },
+  { id: 'follow_up', nome: 'Fazer follow-up', dica: 'Você precisa chamar de novo.' },
+  { id: 'aguardando', nome: 'Aguardando resposta', dica: 'A bola está com a pessoa.' },
+  { id: 'fechado', nome: 'Fechou', dica: 'Assinou (vai sozinho quando o Pix é pago).' },
+  { id: 'perdido', nome: 'Perdido', dica: 'Não quis agora.' },
+]
+
+export type ConversaPainel = ConversaWhatsApp & {
+  ultima_entrada_em: string | null
+  etiquetas: string[]
+  etapa: Etapa
+  etapa_em: string
+  anotacao: string
+  situacao: SituacaoConversa
+  conta_nome: string | null
+  conta_tipo: string | null
+  conta_ligada: boolean
+  plano: string | null
+  valido_ate: string | null
+  ultimo_autor: 'entrada' | 'robo' | 'humano' | null
+  agendadas: number
+}
+
+/** Conversas com etiqueta automática e etapa. `null` = SQL das etiquetas ainda não rodado. */
+export async function listarPainel(): Promise<ConversaPainel[] | null> {
+  const { data, error } = await supabase.rpc('whatsapp_painel')
+  if (error) return null
+  return (data ?? []) as ConversaPainel[]
+}
+
+export type Etiqueta = { id: string; nome: string; cor: string; ordem: number }
+
+export const CORES_ETIQUETA = ['#36f294', '#3b82f6', '#a855f7', '#14b8a6', '#facc15', '#fb8d1a', '#ff5a5f', '#ec4899', '#9fb3c2']
+
+export async function listarEtiquetas(): Promise<Etiqueta[]> {
+  const { data } = await supabase.from('whatsapp_etiquetas').select('id, nome, cor, ordem').order('ordem').order('criado_em')
+  return (data ?? []) as Etiqueta[]
+}
+
+export async function criarEtiqueta(nome: string, cor: string, ordem: number): Promise<string | null> {
+  const { error } = await supabase.from('whatsapp_etiquetas').insert({ nome: nome.trim(), cor, ordem })
+  if (error?.code === '23505') return 'Já existe uma etiqueta com esse nome.'
+  return error ? erroAmigavel(error) : null
+}
+
+export async function apagarEtiqueta(id: string): Promise<string | null> {
+  const { error } = await supabase.from('whatsapp_etiquetas').delete().eq('id', id)
+  return error ? erroAmigavel(error) : null
+}
+
+/** Muda etiquetas, etapa do funil ou anotação de uma conversa. */
+export async function salvarConversa(id: string, d: Partial<Pick<ConversaPainel, 'etiquetas' | 'etapa' | 'anotacao'>>): Promise<string | null> {
+  const dados: Record<string, unknown> = { ...d }
+  if (d.etapa) dados.etapa_em = new Date().toISOString()
+  const { error } = await supabase.from('whatsapp_conversas').update(dados).eq('id', id)
+  return error ? erroAmigavel(error) : null
+}
+
+export type Agendada = {
+  id: string
+  conversa_id: string
+  texto: string
+  anexo_url: string | null
+  anexo_tipo: 'imagem' | 'documento' | null
+  anexo_nome: string
+  enviar_em: string
+  situacao: 'agendada' | 'enviando' | 'enviada' | 'modelo' | 'falhou' | 'cancelada'
+  observacao: string
+  enviada_em: string | null
+  conversa?: { nome: string; telefone: string } | null
+}
+
+/** Agendadas (de uma conversa, ou todas as recentes). */
+export async function listarAgendadas(conversaId?: string): Promise<Agendada[]> {
+  let q = supabase
+    .from('whatsapp_agendadas')
+    .select('id, conversa_id, texto, anexo_url, anexo_tipo, anexo_nome, enviar_em, situacao, observacao, enviada_em, conversa:whatsapp_conversas(nome, telefone)')
+    .order('enviar_em', { ascending: false })
+    .limit(100)
+  if (conversaId) q = q.eq('conversa_id', conversaId)
+  const { data } = await q
+  return (data ?? []) as unknown as Agendada[]
+}
+
+export async function agendarMensagem(d: Pick<Agendada, 'conversa_id' | 'texto' | 'anexo_url' | 'anexo_tipo' | 'anexo_nome' | 'enviar_em'>): Promise<string | null> {
+  const { error } = await supabase.from('whatsapp_agendadas').insert(d)
+  return error ? erroAmigavel(error) : null
+}
+
+export async function cancelarAgendada(id: string): Promise<string | null> {
+  const { error } = await supabase.from('whatsapp_agendadas').update({ situacao: 'cancelada' }).eq('id', id).eq('situacao', 'agendada')
+  return error ? erroAmigavel(error) : null
+}
+
+const PASTA_ANEXOS = 'whatsapp-anexos'
+
+/** Sobe o anexo da mensagem agendada: foto (vira JPEG) ou PDF até 15 MB. */
+export async function subirAnexo(arquivo: File): Promise<{ url?: string; tipo?: 'imagem' | 'documento'; nome?: string; erro?: string }> {
+  try {
+    const pdf = arquivo.type === 'application/pdf' || arquivo.name.toLowerCase().endsWith('.pdf')
+    if (pdf && arquivo.size > 15 * 1024 * 1024) return { erro: 'O PDF pode ter até 15 MB.' }
+    const blob = pdf ? arquivo : await prepararImagem(arquivo)
+    const caminho = `${crypto.randomUUID()}.${pdf ? 'pdf' : 'jpg'}`
+    const { error } = await supabase.storage.from(PASTA_ANEXOS).upload(caminho, blob, { contentType: pdf ? 'application/pdf' : 'image/jpeg' })
+    if (error) return { erro: erroAmigavel(error) }
+    return { url: supabase.storage.from(PASTA_ANEXOS).getPublicUrl(caminho).data.publicUrl, tipo: pdf ? 'documento' : 'imagem', nome: arquivo.name.slice(0, 120) }
+  } catch (e) {
+    return { erro: e instanceof Error ? e.message : 'Não deu para enviar o arquivo.' }
+  }
+}
+
+/** Janela de 24 horas ainda aberta numa data futura? (conta a partir da última mensagem da pessoa) */
+export function janelaAbertaEm(ultimaEntrada: string | null, quando: Date): boolean {
+  return !!ultimaEntrada && quando.getTime() - new Date(ultimaEntrada).getTime() < 24 * 3600_000
+}
