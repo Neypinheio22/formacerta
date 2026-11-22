@@ -12,7 +12,7 @@ export function respostaInicialLead(historico: TurnoTriagem[], nome: string): st
   if (historico.length !== 1 || historico[0]?.autor !== 'entrada') return null
 
   const texto = normalizar(historico[0].texto)
-  const perguntaGenerica = /\b(posso ter (mais )?informac|quero (mais )?informac|gostaria de (mais )?informac|como funciona|quero saber mais|tenho interesse)\b/.test(texto)
+  const perguntaGenerica = /\b(posso ter (mais )?informac(?:ao|oes)|quero (mais )?informac(?:ao|oes)|gostaria de (mais )?informac(?:ao|oes)|como funciona|quero saber mais|tenho interesse)\b/.test(texto)
   const assuntoEspecifico = /\b(preco|valor|plano|pagamento|pix|cadastro|senha|conta|email|erro|problema|cancelamento|reembolso|dor|lesao|consulta)\b/.test(texto)
   if (!perguntaGenerica || assuntoEspecifico) return null
 
