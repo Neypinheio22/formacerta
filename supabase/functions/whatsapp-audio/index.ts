@@ -1,5 +1,6 @@
 // Entrega uma URL curta de reprodução somente ao administrador autenticado.
 import { createClient } from 'npm:@supabase/supabase-js@2'
+import { baixarAudioMeta } from './audio.ts'
 
 const URL = Deno.env.get('SUPABASE_URL')!
 const KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -36,13 +37,34 @@ Deno.serve(async (req: Request) => {
     const numero = Number((body as { mensagem_id?: unknown }).mensagem_id)
     if (!Number.isSafeInteger(numero) || numero <= 0) return json({ erro: 'Mensagem inválida' }, 400)
     const { data: mensagem, error: erroMensagem } = await banco.from('whatsapp_mensagens')
-      .select('id, autor, midia_tipo, midia_caminho')
+      .select('id, conversa_id, autor, midia_tipo, midia_id, midia_caminho')
       .eq('id', numero).maybeSingle()
     if (erroMensagem) throw erroMensagem
-    if (!mensagem || mensagem.autor !== 'entrada' || mensagem.midia_tipo !== 'audio' || !mensagem.midia_caminho)
+    if (!mensagem || mensagem.autor !== 'entrada' || mensagem.midia_tipo !== 'audio')
       return json({ erro: 'Áudio não está disponível neste atendimento' }, 404)
+
+    let caminho = mensagem.midia_caminho as string | null
+    // Recuperação quando a Meta ainda mantém a mídia, por exemplo após falha temporária no webhook.
+    if (!caminho && mensagem.midia_id) {
+      try {
+        const audio = await baixarAudioMeta(mensagem.midia_id, Deno.env.get('WHATSAPP_TOKEN') ?? '')
+        const extensoes: Record<string, string> = { 'audio/ogg': 'ogg', 'audio/mpeg': 'mp3', 'audio/mp4': 'm4a', 'audio/aac': 'aac', 'audio/amr': 'amr', 'audio/3gpp': '3gp', 'audio/opus': 'opus', 'audio/webm': 'webm', 'audio/x-m4a': 'm4a' }
+        const local = `${mensagem.conversa_id}/${mensagem.id}.${extensoes[audio.tipo] || 'bin'}`
+        const { error: uploadErro } = await banco.storage.from('whatsapp-audios')
+          .upload(local, audio.dados, { contentType: audio.tipo, upsert: false })
+        if (uploadErro && !/already exists|duplicate/i.test(uploadErro.message)) throw uploadErro
+        const { error: updateErro } = await banco.from('whatsapp_mensagens')
+          .update({ midia_caminho: local }).eq('id', mensagem.id)
+        if (updateErro) throw updateErro
+        caminho = local
+      } catch (e) {
+        console.error('Não foi possível recuperar áudio da Meta', e)
+      }
+    }
+    if (!caminho) return json({ erro: 'Áudio indisponível. A Meta pode ter expirado a gravação; peça ao contato para reenviar.' }, 404)
+
     const { data: assinatura, error } = await banco.storage.from('whatsapp-audios')
-      .createSignedUrl(mensagem.midia_caminho, 120)
+      .createSignedUrl(caminho, 120)
     if (error || !assinatura?.signedUrl) return json({ erro: 'Não foi possível abrir este áudio' }, 404)
     return json({ url: assinatura.signedUrl })
   } catch (e) {
