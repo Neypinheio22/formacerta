@@ -1,3 +1,5 @@
-/* Conjunto de dados "FormaCerta Atendimento", identificado no Gerenciador de Eventos da Meta.
-   O carregamento do Pixel depende do consentimento específico de cada visitante. */
-window.FormaCertaMetaConfig = { pixelId: "1684257939706551" };
+/* A fonte "FormaCerta Atendimento" foi exibida na Meta como "ID do app".
+   Um ID de app não comprova a existência de um Pixel Web.
+   Deixe vazio até verificar em Gerenciador de Eventos > Fonte de dados Web > Configurações > ID do conjunto de dados/Pixel.
+   O Pixel só é carregado com consentimento específico do visitante. */
+window.FormaCertaMetaConfig = { pixelId: "" };
