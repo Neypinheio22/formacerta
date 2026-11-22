@@ -1,6 +1,7 @@
 import { Bot, CalendarClock, ChevronLeft, ChevronRight, MessageCircle, Paperclip, Send, Tag, Trash2, UserRound, X } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { AdminImagensRobo } from './AdminImagensRobo'
+import { AdminLeadsCaptacao } from './AdminLeadsCaptacao'
 import {
   agendarMensagem,
   buscarAudioWhatsApp,
@@ -44,7 +45,7 @@ function Pilula({ nome, cor, titulo }: { nome: string; cor: string; titulo?: str
   )
 }
 
-type Parte = 'conversas' | 'funil' | 'agendadas' | 'imagens'
+type Parte = 'conversas' | 'funil' | 'agendadas' | 'imagens' | 'captacao'
 
 /** Administrador: conversas do robô no WhatsApp, etiquetas, funil de follow-up e mensagens agendadas. */
 export function AdminWhatsApp() {
@@ -78,6 +79,7 @@ export function AdminWhatsApp() {
             ['funil', 'Funil'],
             ['agendadas', 'Agendadas'],
             ['imagens', 'Imagens do robô'],
+            ['captacao', 'Leads dos anúncios'],
           ] as [Parte, string][]
         ).map(([id, nome]) => (
           <button key={id} className={parte === id ? 'ativo' : ''} onClick={() => setParte(id)}>
@@ -85,7 +87,9 @@ export function AdminWhatsApp() {
           </button>
         ))}
       </div>
-      {parte === 'imagens' ? (
+      {parte === 'captacao' ? (
+        <AdminLeadsCaptacao />
+      ) : parte === 'imagens' ? (
         <AdminImagensRobo />
       ) : lista === undefined ? (
         <p className="carregando">Carregando…</p>

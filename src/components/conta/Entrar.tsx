@@ -16,9 +16,10 @@ type Modo = 'entrar' | 'cadastrar' | 'esqueci'
 export function Entrar() {
   // Quando vem de uma campanha de avaliação, direciona ao cadastro de aluno.
   // Acesso normal ao app segue abrindo em Entrar, sem mudar a experiência dos usuários existentes.
-  const vindoDaAvaliacao = new URLSearchParams(window.location.search).get('cadastro') === 'aluno'
-  const [modo, setModo] = useState<Modo>(vindoDaAvaliacao ? 'cadastrar' : 'entrar')
-  const [papel, setPapel] = useState<'profissional' | 'aluno'>(vindoDaAvaliacao ? 'aluno' : 'profissional')
+  const perfilCampanha = new URLSearchParams(window.location.search).get('cadastro')
+  const cadastroDireto = perfilCampanha === 'aluno' || perfilCampanha === 'profissional'
+  const [modo, setModo] = useState<Modo>(cadastroDireto ? 'cadastrar' : 'entrar')
+  const [papel, setPapel] = useState<'profissional' | 'aluno'>(perfilCampanha === 'aluno' ? 'aluno' : 'profissional')
   const [nome, setNome] = useState('')
   const [registro, setRegistro] = useState('')
   const [email, setEmail] = useState('')
