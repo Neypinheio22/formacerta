@@ -26,7 +26,7 @@
       ativar();
       if(!ativo)return;
       window.fbq("track","Lead");
-      if(qualificacao==="quente")window.fbq("trackCustom","QualifiedLead");
+      // Classificação comercial permanece apenas no CRM; não enviar QualifiedLead à Meta.
     }
   };
   document.querySelector("#meta_tracking")?.addEventListener("change",(ev)=>{
