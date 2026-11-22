@@ -14,8 +14,11 @@ import { reenviarConfirmacao } from '../../nuvem/alunosNovos'
 type Modo = 'entrar' | 'cadastrar' | 'esqueci'
 
 export function Entrar() {
-  const [modo, setModo] = useState<Modo>('entrar')
-  const [papel, setPapel] = useState<'profissional' | 'aluno'>('profissional')
+  // Quando vem de uma campanha de avaliação, direciona ao cadastro de aluno.
+  // Acesso normal ao app segue abrindo em Entrar, sem mudar a experiência dos usuários existentes.
+  const vindoDaAvaliacao = new URLSearchParams(window.location.search).get('cadastro') === 'aluno'
+  const [modo, setModo] = useState<Modo>(vindoDaAvaliacao ? 'cadastrar' : 'entrar')
+  const [papel, setPapel] = useState<'profissional' | 'aluno'>(vindoDaAvaliacao ? 'aluno' : 'profissional')
   const [nome, setNome] = useState('')
   const [registro, setRegistro] = useState('')
   const [email, setEmail] = useState('')
