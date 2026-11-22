@@ -12,6 +12,8 @@ export type MensagemRecebida = {
   /** Texto da mensagem; vazio quando é áudio, foto etc. */
   texto: string
   tipo: string
+  /** Identificador da mídia enviado pela Meta no webhook de áudio. */
+  midiaId?: string
   /** Número do FormaCerta que recebeu (id da Meta). */
   numeroId: string
 }
@@ -40,7 +42,7 @@ export async function assinaturaValida(corpo: string, cabecalho: string | null, 
 type Valor = {
   metadata?: { phone_number_id?: string }
   contacts?: { wa_id?: string; profile?: { name?: string } }[]
-  messages?: { id?: string; from?: string; type?: string; text?: { body?: string }; button?: { text?: string }; interactive?: { button_reply?: { title?: string }; list_reply?: { title?: string } } }[]
+  messages?: { id?: string; from?: string; type?: string; audio?: { id?: string; mime_type?: string }; text?: { body?: string }; button?: { text?: string }; interactive?: { button_reply?: { title?: string }; list_reply?: { title?: string } } }[]
   message_echoes?: { id?: string; to?: string; type?: string; text?: { body?: string } }[]
 }
 
@@ -58,7 +60,7 @@ export function lerAviso(aviso: unknown): { recebidas: MensagemRecebida[]; ecos:
           if (!m.id || !m.from) continue
           const contato = v.contacts?.find((c) => c.wa_id === m.from) ?? v.contacts?.[0]
           const texto = m.text?.body ?? m.button?.text ?? m.interactive?.button_reply?.title ?? m.interactive?.list_reply?.title ?? ''
-          recebidas.push({ id: m.id, de: m.from, nome: contato?.profile?.name ?? '', texto, tipo: m.type ?? '', numeroId })
+          recebidas.push({ id: m.id, de: m.from, nome: contato?.profile?.name ?? '', texto, tipo: m.type ?? '', midiaId: m.audio?.id, numeroId })
         }
       } else if (mudanca.field === 'smb_message_echoes') {
         for (const e of v.message_echoes ?? []) {

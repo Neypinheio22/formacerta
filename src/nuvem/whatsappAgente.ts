@@ -12,7 +12,15 @@ export type ConversaWhatsApp = {
   ultima_mensagem_em: string
 }
 
-export type MensagemWhatsApp = { id: number; autor: 'entrada' | 'robo' | 'humano'; texto: string; criado_em: string }
+export type MensagemWhatsApp = {
+  id: number
+  autor: 'entrada' | 'robo' | 'humano'
+  texto: string
+  criado_em: string
+  midia_tipo?: string | null
+  midia_id?: string | null
+  midia_caminho?: string | null
+}
 
 /** Robô pausado agora nesta conversa? (o Ney está atendendo) */
 export const comNey = (c: ConversaWhatsApp) => c.atendimento === 'humano' && (!c.humano_ate || new Date(c.humano_ate).getTime() > Date.now())
@@ -31,11 +39,22 @@ export async function listarConversas(): Promise<ConversaWhatsApp[] | null> {
 export async function lerMensagens(conversaId: string): Promise<MensagemWhatsApp[]> {
   const { data } = await supabase
     .from('whatsapp_mensagens')
-    .select('id, autor, texto, criado_em')
+    .select('id, autor, texto, criado_em, midia_tipo, midia_id, midia_caminho')
     .eq('conversa_id', conversaId)
     .order('id', { ascending: false })
     .limit(60)
   return ((data ?? []) as MensagemWhatsApp[]).reverse()
+}
+
+/** Link temporário para ouvir uma mensagem de voz. A Edge Function verifica que a conta é admin. */
+export async function buscarAudioWhatsApp(mensagemId: number): Promise<{ url: string | null; erro: string | null }> {
+  const { data, error } = await supabase.functions.invoke('whatsapp-audio', { body: { mensagem_id: mensagemId } })
+  if (error) {
+    const corpo = await (error as { context?: Response }).context?.json?.().catch(() => null)
+    return { url: null, erro: corpo?.erro || 'Não foi possível abrir o áudio. Tente novamente.' }
+  }
+  if (!data?.url) return { url: null, erro: data?.erro || 'Áudio indisponível.' }
+  return { url: data.url, erro: null }
 }
 
 /** Pausa o robô nesta conversa (você atende) ou devolve para ele. Devolve o erro, se houver. */

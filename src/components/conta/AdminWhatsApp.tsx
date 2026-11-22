@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { AdminImagensRobo } from './AdminImagensRobo'
 import {
   agendarMensagem,
+  buscarAudioWhatsApp,
   apagarEtiqueta,
   cancelarAgendada,
   comNey,
@@ -257,6 +258,45 @@ function EditarEtiquetas({ etiquetas, onMudou }: { etiquetas: Etiqueta[]; onMudo
   )
 }
 
+/** Player independente por balão; só solicita o link privado quando o admin tocar. */
+function AudioDoContato({ mensagem }: { mensagem: MensagemWhatsApp }) {
+  const [url, setUrl] = useState<string | null>(null)
+  const [carregando, setCarregando] = useState(false)
+  const [erro, setErro] = useState<string | null>(null)
+
+  async function ouvir() {
+    setCarregando(true)
+    setErro(null)
+    const resultado = await buscarAudioWhatsApp(mensagem.id)
+    setCarregando(false)
+    setUrl(resultado.url)
+    setErro(resultado.erro)
+  }
+
+  if (!mensagem.midia_id && !mensagem.midia_caminho) {
+    return <p className="dica-sec">Áudio antigo não armazenado. Peça ao contato para reenviar.</p>
+  }
+
+  return (
+    <div className="whatsapp-audio-player">
+      <span className="whatsapp-audio-label">🎙️ Mensagem de voz recebida</span>
+      {url ? (
+        <>
+          <audio controls preload="metadata" src={url} aria-label="Áudio do contato" />
+          <button className="botao-sec whatsapp-audio-recarregar" type="button" onClick={ouvir} disabled={carregando}>
+            {carregando ? 'Atualizando…' : 'Atualizar áudio'}
+          </button>
+        </>
+      ) : (
+        <button className="botao-sec" type="button" onClick={ouvir} disabled={carregando}>
+          {carregando ? 'Carregando áudio…' : '▶ Ouvir áudio'}
+        </button>
+      )}
+      {erro && <span className="dica-sec" role="alert">{erro}</span>}
+    </div>
+  )
+}
+
 function CartaoConversa({
   c,
   etiquetas,
@@ -408,7 +448,13 @@ function CartaoConversa({
           {msgs?.map((m) => (
             <div key={m.id} className={`balao ${m.autor === 'entrada' ? '' : 'minha'}`}>
               {m.autor !== 'entrada' && <span className="balao-hora">{m.autor === 'robo' ? 'Robô' : 'Você'}</span>}
-              <p>{m.texto}</p>
+              {m.midia_tipo === 'audio' ? (
+                <AudioDoContato mensagem={m} />
+              ) : m.texto.startsWith('[Mandou áudio') ? (
+                <p className="dica-sec">Áudio anterior não armazenado. Peça ao contato para reenviar.</p>
+              ) : (
+                <p>{m.texto}</p>
+              )}
               <span className="balao-hora">{hora(m.criado_em)}</span>
             </div>
           ))}

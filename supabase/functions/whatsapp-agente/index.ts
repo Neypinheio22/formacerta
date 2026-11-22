@@ -22,6 +22,7 @@ import Anthropic from 'npm:@anthropic-ai/sdk@1.4.0'
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { escreverLembrete, MODELO_PADRAO, responder, type Ferramentas, type Turno } from './agente.ts'
 import { deveEncaminharAudio, orientacaoContraRepeticao, respostaInicialLead } from './triagem.ts'
+import { baixarAudioMeta } from './audio.ts'
 import { assinaturaValida, lerAviso, mandarDocumento, mandarImagem, mandarModelo, mandarTexto, marcarLidaDigitando, type EcoDoCelular, type MensagemRecebida } from './whatsapp.ts'
 
 declare const EdgeRuntime: { waitUntil(p: Promise<unknown>): void }
@@ -197,6 +198,36 @@ async function guardar(conversaId: string, autor: Turno['autor'], texto: string,
   return data.id as number
 }
 
+/** Salva a gravação em bucket privado e registra o identificador para recuperação.
+ * Falha na mídia não bloqueia o atendimento nem a transferência ao humano.
+ */
+async function salvarAudioDaMensagem(m: MensagemRecebida, idMensagem: number, conversaId: string, token: string) {
+  if (m.tipo !== 'audio') return
+  const { error: erroMeta } = await banco.from('whatsapp_mensagens')
+    .update({ midia_tipo: 'audio', midia_id: m.midiaId || null }).eq('id', idMensagem)
+  if (erroMeta) {
+    console.error('Não foi possível registrar identificador do áudio', erroMeta.message)
+    return
+  }
+  if (!m.midiaId) {
+    console.error('Webhook de áudio sem identificador de mídia')
+    return
+  }
+  try {
+    const audio = await baixarAudioMeta(m.midiaId, token)
+    const extensoes: Record<string, string> = { 'audio/ogg': 'ogg', 'audio/mpeg': 'mp3', 'audio/mp4': 'm4a', 'audio/aac': 'aac', 'audio/amr': 'amr', 'audio/3gpp': '3gp', 'audio/opus': 'opus', 'audio/webm': 'webm', 'audio/x-m4a': 'm4a' }
+    const caminho = `${conversaId}/${idMensagem}.${extensoes[audio.tipo] || 'bin'}`
+    const { error: erroUpload } = await banco.storage.from('whatsapp-audios')
+      .upload(caminho, audio.dados, { contentType: audio.tipo, upsert: false })
+    if (erroUpload) throw erroUpload
+    const { error: erroBanco } = await banco.from('whatsapp_mensagens')
+      .update({ midia_caminho: caminho }).eq('id', idMensagem)
+    if (erroBanco) throw erroBanco
+  } catch (e) {
+    console.error('Não foi possível salvar a gravação recebida', e)
+  }
+}
+
 async function passarParaHumano(c: Conversa, motivo: string, resumo: string) {
   await banco
     .from('whatsapp_conversas')
@@ -332,6 +363,8 @@ async function tratarMensagem(m: MensagemRecebida) {
   const texto = m.texto || `[Mandou ${ROTULO_TIPO[m.tipo] ?? 'uma mensagem'} que o robô não consegue ver]`
   const minhaId = await guardar(c.id, 'entrada', texto, m.id)
   if (minhaId === null) return
+  // Recebe e guarda o áudio antes de encerrar o fluxo ou transferir o atendimento.
+  await salvarAudioDaMensagem(m, minhaId, c.id, token)
   // Funil: quem estava em follow-up, aguardando ou perdido e escreveu de novo volta para "Em conversa".
   await banco
     .from('whatsapp_conversas')
