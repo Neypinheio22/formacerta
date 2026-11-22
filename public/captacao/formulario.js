@@ -66,6 +66,7 @@
       after.classList.add("show");
       after.setAttribute("tabindex","-1");after.focus();
       if(Array.isArray(window.dataLayer))window.dataLayer.push({event:"lead_formacerta_enviado",lead_perfil:perfil});
+      window.FormaCertaMetaPixel?.lead(payload.qualificacao);
     }catch(err){
       status.classList.add("error");
       status.textContent=err instanceof Error?err.message:"Tente novamente.";
