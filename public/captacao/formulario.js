@@ -23,10 +23,12 @@
     if(!form.reportValidity())return;
     btn.disabled=true;btn.textContent="Enviando seus dados…";
     status.className="feedback";status.textContent="";
+    for(const campo of ["nome","telefone","email","consentimento"])get(campo)?.removeAttribute("aria-invalid");
     const nome=get("nome").value.trim();
     const raw=get("telefone").value.replace(/\D/g,"");
-    const telefone=raw.startsWith("55")?raw:"55"+raw;
-    if(!/^55[1-9][0-9][2-9][0-9]{7,8}$/.test(telefone)){
+    // DDD 55 também existe no Brasil: só interpretar 55 como país se houver 12 ou 13 dígitos.
+    const telefone=(raw.startsWith("55") && (raw.length===12 || raw.length===13))?raw:"55"+raw;
+    if(!/^55[1-9][0-9][0-9]{8,9}$/.test(telefone)){
       status.textContent="Informe um número de WhatsApp brasileiro com DDD.";
       status.classList.add("error");btn.disabled=false;btn.textContent="Solicitar acesso gratuito";return;
     }
@@ -44,7 +46,13 @@
         consentimento_marketing:get("marketing")?.checked===true,campanha
       })});
       const payload=await res.json();
-      if(!res.ok||!payload.ok)throw new Error(payload.erro||"Não foi possível registrar sua inscrição.");
+      if(!res.ok||!payload.ok){
+        if(payload.campo){
+          const element=get(payload.campo);
+          if(element) {element.focus();element.setAttribute("aria-invalid","true");}
+        }
+        throw new Error(payload.erro||"Não foi possível registrar sua inscrição.");
+      }
       form.hidden=true;
       document.querySelector(".capture-intro").hidden=true;
       const wa=get("continuar-whatsapp");
