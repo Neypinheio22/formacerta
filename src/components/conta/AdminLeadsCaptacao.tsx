@@ -9,6 +9,10 @@ type Lead = {
   prazo_inicio: 'agora' | '7_dias' | 'pesquisando' | 'nao_informado'
   qualificacao: 'quente' | 'morno' | 'frio' | 'nao_classificado'
 }
+type Resumo = {
+  total: { visitas:number; formularios:number; leads_unicos:number; qualificados:number; whatsapp_cliques:number; aplicativo_cliques:number }
+  por_perfil: Array<{perfil:'aluno'|'profissional';visitas:number;formularios:number;leads_unicos:number;qualificados:number;whatsapp_cliques:number;aplicativo_cliques:number}>
+}
 const etapas: { id: Etapa; nome: string }[] = [
   { id: 'novo', nome: 'Novo' }, { id: 'conversando', nome: 'Em conversa' },
   { id: 'follow_up', nome: 'Fazer follow-up' }, { id: 'aguardando', nome: 'Aguardando resposta' },
@@ -18,6 +22,7 @@ const etapas: { id: Etapa; nome: string }[] = [
 /** Leads captados pelas páginas públicas: não envia mensagens automaticamente. */
 export function AdminLeadsCaptacao() {
   const [leads, setLeads] = useState<Lead[]>([])
+  const [resumo, setResumo] = useState<Resumo | null>(null)
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState('')
   const [alterando, setAlterando] = useState<string | null>(null)
@@ -27,9 +32,14 @@ export function AdminLeadsCaptacao() {
   async function carregar() {
     setCarregando(true)
     setErro('')
-    const { data, error } = await supabase.functions.invoke('captacao-lead', { body: { acao: 'listar' } })
-    if (error || !Array.isArray(data?.leads)) setErro('Não foi possível carregar os contatos. Entre com sua conta de administrador e tente novamente.')
-    else setLeads(data.leads as Lead[])
+    const [consulta, metricas] = await Promise.all([
+      supabase.functions.invoke('captacao-lead', { body: { acao: 'listar' } }),
+      supabase.functions.invoke('captacao-metricas', { body: { acao: 'resumo' } }),
+    ])
+    if (consulta.error || !Array.isArray(consulta.data?.leads)) setErro('Não foi possível carregar os contatos. Entre com sua conta de administrador e tente novamente.')
+    else setLeads(consulta.data.leads as Lead[])
+    if (!metricas.error && metricas.data?.resumo) setResumo(metricas.data.resumo as Resumo)
+    else setResumo(null)
     setCarregando(false)
   }
 
@@ -51,6 +61,26 @@ export function AdminLeadsCaptacao() {
     <div className="admin-whatsapp">
       <h2>Leads dos anúncios</h2>
       <p className="dica-sec">Contatos que preencheram as páginas de captação. A inscrição não significa que a pessoa concluiu o cadastro no app. Nenhuma mensagem é enviada automaticamente por este formulário.</p>
+      {resumo && (
+        <>
+          <h3>Resultados das páginas · últimos 30 dias</h3>
+          <div className="numeros" aria-label="Métricas de conversão das páginas">
+            <div><strong>{resumo.total.visitas}</strong> visitas registradas</div>
+            <div><strong>{resumo.total.formularios}</strong> formulários enviados</div>
+            <div><strong>{resumo.total.qualificados}</strong> leads prioritários</div>
+            <div><strong>{resumo.total.whatsapp_cliques}</strong> cliques para WhatsApp</div>
+            <div><strong>{resumo.total.aplicativo_cliques}</strong> cliques para o app</div>
+          </div>
+          <p className="dica-sec">Taxa de preenchimento: {resumo.total.visitas ? ((resumo.total.formularios/resumo.total.visitas)*100).toFixed(1) : '0,0'}%.
+            Os números representam visitas e ações registradas, não comprovam mensagens enviadas ou avaliações concluídas.
+            A contagem começa com esta implementação e não recupera visitas anteriores.</p>
+          {resumo.por_perfil.map(item => (
+            <p key={item.perfil} className="dica-sec">
+              <strong>{item.perfil === 'aluno' ? 'Alunos' : 'Profissionais'}:</strong> {item.visitas} visitas · {item.formularios} formulários · {item.qualificados} prioritários · {item.whatsapp_cliques} cliques WhatsApp
+            </p>
+          ))}
+        </>
+      )}
       <div className="escolha abas" aria-label="Filtrar leads da página">
         {([['todos', 'Todos'], ['aluno', 'Alunos'], ['profissional', 'Personais']] as const).map(([id, nome]) => (
           <button key={id} className={filtro === id ? 'ativo' : ''} onClick={() => setFiltro(id)}>
