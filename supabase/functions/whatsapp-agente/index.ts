@@ -21,6 +21,7 @@
 import Anthropic from 'npm:@anthropic-ai/sdk@1.4.0'
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { escreverLembrete, MODELO_PADRAO, responder, type Ferramentas, type Turno } from './agente.ts'
+import { deveEncaminharAudio, orientacaoContraRepeticao, respostaInicialLead } from './triagem.ts'
 import { assinaturaValida, lerAviso, mandarDocumento, mandarImagem, mandarModelo, mandarTexto, marcarLidaDigitando, type EcoDoCelular, type MensagemRecebida } from './whatsapp.ts'
 
 declare const EdgeRuntime: { waitUntil(p: Promise<unknown>): void }
@@ -354,6 +355,15 @@ async function tratarMensagem(m: MensagemRecebida) {
   const { data: agora } = await banco.from('whatsapp_conversas').select('atendimento').eq('id', c.id).single()
   if (agora?.atendimento === 'humano') return
 
+  // Não fingir que ouvimos áudios. Preserva a mensagem no histórico e pede atendimento humano.
+  if (deveEncaminharAudio(m.tipo, m.texto)) {
+    await passarParaHumano(c, 'áudio sem transcrição', 'A pessoa enviou um áudio. O atendimento automático não consegue ouvi-lo; verificar a mensagem original no WhatsApp.')
+    const aviso = 'Recebi seu áudio! 😊 Aqui ainda não consigo ouvi-lo. Vou encaminhar para a equipe do FormaCerta. Se preferir, também pode escrever sua dúvida por aqui.'
+    const enviadoId = await mandarTexto(m.numeroId, token, m.de, aviso)
+    if (enviadoId) await guardar(c.id, 'robo', aviso, enviadoId)
+    return
+  }
+
   // Trava de segurança contra custo alto: muitas respostas no dia passam para o Ney.
   const { count } = await banco.from('whatsapp_mensagens').select('id', { count: 'exact', head: true }).eq('conversa_id', c.id).eq('autor', 'robo').gte('criado_em', daquiHoras(-24))
   if ((count ?? 0) >= LIMITE_RESPOSTAS_DIA) {
@@ -370,12 +380,21 @@ async function tratarMensagem(m: MensagemRecebida) {
     .limit(30)
   const historico = ((linhas ?? []) as Turno[]).reverse()
 
+  // Quem chega pelo anúncio e pede informações genéricas recebe resposta curta e útil.
+  // Dúvidas específicas continuam sendo tratadas pelo agente com as ferramentas existentes.
+  const saudacao = respostaInicialLead(historico, c.nome)
+  if (saudacao) {
+    const enviadoId = await mandarTexto(m.numeroId, token, m.de, saudacao)
+    if (enviadoId) await guardar(c.id, 'robo', saudacao, enviadoId)
+    return
+  }
+
   let resposta: string
   const extras: Extra[] = []
   try {
     const cliente = new Anthropic({ apiKey: Deno.env.get('ANTHROPIC_API_KEY') })
     const [imagens, conta] = await Promise.all([carregarImagens(), contextoDaConta(c)])
-    const contexto = [conta, listaDeImagens(imagens)].filter(Boolean).join('\n')
+    const contexto = [conta, listaDeImagens(imagens), orientacaoContraRepeticao(historico)].filter(Boolean).join('\n')
     const r = await responder(cliente, Deno.env.get('AGENTE_MODELO') || MODELO_PADRAO, historico, c.nome, ferramentas(c, extras, imagens), contexto)
     resposta = r.texto
     if (!resposta && !r.passouParaHumano) {
