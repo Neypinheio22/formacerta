@@ -57,6 +57,14 @@ export function Privacidade({ onVoltar }: { onVoltar: () => void }) {
             O envio do formulário não cria uma conta no aplicativo nem autoriza disparos automáticos de mensagens.
           </li>
           <li>
+            <strong>Medição das páginas de captação:</strong> registramos uma visita anônima por carregamento da página, sua origem de campanha (UTM)
+            e se houve envio de formulário ou clique voluntário para WhatsApp ou aplicativo. A medição não usa cookies nem registra
+            nome, telefone ou e-mail nos eventos. Para limitar abuso, o servidor mantém uma identificação técnica derivada do IP.
+            Quando a pessoa envia o formulário, associamos a visita à solicitação para calcular a conversão.
+            Os relatórios administrativos mostram dados agregados para melhoria do atendimento e da divulgação.
+            Essas medições de primeira parte não significam envio automático de dados à Meta.
+          </li>
+          <li>
             <strong>Atendimento pelo WhatsApp:</strong> se você escrever para o número do FormaCerta, guardamos o seu número, o nome do seu perfil e as
             mensagens da conversa, para responder e dar continuidade ao atendimento. As respostas automáticas são feitas por um assistente de inteligência
             artificial.
