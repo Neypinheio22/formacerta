@@ -39,10 +39,15 @@
       status.classList.add("error");btn.disabled=false;btn.textContent="Solicitar acesso gratuito";return;
     }
     try{
+      // Espera o registro da visita, mas nunca impede que o lead seja salvo
+      // caso a medição esteja indisponível.
+      const metrica=window.FormaCertaMetricas;
+      if(metrica)await metrica.pronta;
       const res=await fetch(endpoint,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
         acao:"captar",nome,telefone,email:get("email")?.value.trim()||"",
         perfil,objetivo:get("objetivo").value,prazo_inicio,website:get("website").value,
-        iniciado_em:started,consentimento_contato:get("consentimento").checked,
+        iniciado_em:started,visita_id:metrica?.visita_id||null,
+        consentimento_contato:get("consentimento").checked,
         consentimento_marketing:get("marketing")?.checked===true,campanha
       })});
       const payload=await res.json();
