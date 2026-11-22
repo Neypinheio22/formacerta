@@ -1,3 +1,3 @@
-/* Preencha com o ID numérico do conjunto de dados (Pixel) criado no Gerenciador de Eventos Meta. 
-   Deixe vazio enquanto a fonte Meta não estiver configurada. */
-window.FormaCertaMetaConfig = { pixelId: "" };
+/* Conjunto de dados "FormaCerta Atendimento", identificado no Gerenciador de Eventos da Meta.
+   O carregamento do Pixel depende do consentimento específico de cada visitante. */
+window.FormaCertaMetaConfig = { pixelId: "1684257939706551" };
