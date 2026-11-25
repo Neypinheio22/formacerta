@@ -12,6 +12,27 @@ export function respostaInicialLead(historico: TurnoTriagem[], nome: string): st
   if (historico.length !== 1 || historico[0]?.autor !== 'entrada') return null
 
   const texto = normalizar(historico[0].texto)
+  // Pedidos recorrentes dos anúncios: entregar a instrução antes de enviar imagens.
+  if (/\b(como faco (minha |a )?avaliacao( gratis| gratuita)?|como fazer (minha |a )?avaliacao( gratis| gratuita)?|quero fazer (minha |a )?avaliacao( gratis| gratuita)?|como funciona a avaliacao de postura|como funciona a avaliacao postural)\b/.test(texto)) {
+    const primeiroNome = nome.trim().split(/\s+/)[0]?.replace(/[^\p{L}'-]/gu, '').slice(0, 30)
+    const saudacao = primeiroNome ? 'Olá, ' + primeiroNome + '! 😊' : 'Olá! 😊'
+    if (/como funciona/.test(texto)) {
+      return [
+        saudacao + ' A avaliação postural do FormaCerta é feita por fotos de frente, costas e dos dois lados. Ela ajuda a observar sua postura e acompanhar a evolução, sem substituir uma avaliação clínica.',
+        '',
+        'Sua primeira avaliação é grátis. Para começar, entre em https://formacerta.app.br e escolha *Criar conta*. Quer que eu te ajude nessa etapa?',
+      ].join('\n')
+    }
+    return [
+      saudacao + ' Para fazer sua primeira avaliação postural grátis:',
+      '1. Acesse https://formacerta.app.br e toque em *Criar conta* (ou *Entrar*, se já tiver conta).',
+      '2. Escolha *Aluno*, confirme o e-mail e aguarde a liberação do acesso, se solicitada.',
+      '3. Entre em *Avaliação de postura* e siga as instruções para tirar as fotos.',
+      '',
+      'Você já conseguiu criar sua conta?',
+    ].join('\n')
+  }
+
   const perguntaGenerica = /\b(posso ter (mais )?informac(?:ao|oes)|quero (mais )?informac(?:ao|oes)|gostaria de (mais )?informac(?:ao|oes)|como funciona|quero saber mais|tenho interesse)\b/.test(texto)
   const assuntoEspecifico = /\b(preco|valor|plano|pagamento|pix|cadastro|senha|conta|email|erro|problema|cancelamento|reembolso|dor|lesao|consulta)\b/.test(texto)
   if (!perguntaGenerica || assuntoEspecifico) return null
