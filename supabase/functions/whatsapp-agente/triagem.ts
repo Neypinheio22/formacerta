@@ -13,7 +13,7 @@ export function respostaInicialLead(historico: TurnoTriagem[], nome: string): st
 
   const texto = normalizar(historico[0].texto)
   // Quando já existe cadastro, não mandar o tutorial de criação de conta novamente.
-  if (/\b(ja (tenho|criei|fiz) (uma? )?(conta|cadastro)|ja (me )?cadastrei|sou cadastrad[oa]|tenho cadastro)\b/.test(texto)) {
+  if (/\b(ja (tenho|criei|fiz) ((o|a|um|uma) )?(conta|cadastro)|ja (me )?cadastrei|sou cadastrad[oa]|tenho cadastro)\b/.test(texto)) {
     return 'Que bom! 😊 Você já conseguiu entrar no FormaCerta ou está aguardando a confirmação/liberação do cadastro? Se precisar, ajudo nessa etapa.'
   }
 
