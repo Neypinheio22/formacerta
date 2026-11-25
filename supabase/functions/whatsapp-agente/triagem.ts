@@ -12,6 +12,11 @@ export function respostaInicialLead(historico: TurnoTriagem[], nome: string): st
   if (historico.length !== 1 || historico[0]?.autor !== 'entrada') return null
 
   const texto = normalizar(historico[0].texto)
+  // Quando já existe cadastro, não mandar o tutorial de criação de conta novamente.
+  if (/\b(ja (tenho|criei|fiz) (uma? )?(conta|cadastro)|ja (me )?cadastrei|sou cadastrad[oa]|tenho cadastro)\b/.test(texto)) {
+    return 'Que bom! 😊 Você já conseguiu entrar no FormaCerta ou está aguardando a confirmação/liberação do cadastro? Se precisar, ajudo nessa etapa.'
+  }
+
   // Pedidos recorrentes dos anúncios: entregar a instrução antes de enviar imagens.
   if (/\b(como faco (minha |a )?avaliacao( gratis| gratuita)?|como fazer (minha |a )?avaliacao( gratis| gratuita)?|quero fazer (minha |a )?avaliacao( gratis| gratuita)?|como funciona a avaliacao de postura|como funciona a avaliacao postural)\b/.test(texto)) {
     const primeiroNome = nome.trim().split(/\s+/)[0]?.replace(/[^\p{L}'-]/gu, '').slice(0, 30)
@@ -24,12 +29,11 @@ export function respostaInicialLead(historico: TurnoTriagem[], nome: string): st
       ].join('\n')
     }
     return [
-      saudacao + ' Para fazer sua primeira avaliação postural grátis:',
-      '1. Acesse https://formacerta.app.br e toque em *Criar conta* (ou *Entrar*, se já tiver conta).',
-      '2. Escolha *Aluno*, confirme o e-mail e aguarde a liberação do acesso, se solicitada.',
-      '3. Entre em *Avaliação de postura* e siga as instruções para tirar as fotos.',
+      saudacao + ' Sua primeira avaliação postural é grátis!',
       '',
-      'Você já conseguiu criar sua conta?',
+      'Acesse https://formacerta.app.br, toque em *Criar conta* (ou *Entrar*, se já tiver conta) e confirme seu e-mail. Com o acesso liberado, abra *Avaliação de postura* e siga as instruções das fotos.',
+      '',
+      'Você já tem conta ou precisa de ajuda para começar?',
     ].join('\n')
   }
 
