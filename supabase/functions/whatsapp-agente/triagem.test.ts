@@ -19,8 +19,15 @@ describe('triagem do WhatsApp', () => {
     expect(resposta).toContain('Olá, Ana!')
     expect(resposta).toContain('Criar conta')
     expect(resposta).toContain('https://formacerta.app.br')
-    expect(resposta).toContain('Você já conseguiu criar sua conta?')
+    expect(resposta).toContain('Você já tem conta ou precisa de ajuda para começar?')
+    expect(resposta!.length).toBeLessThan(400)
     expect(resposta).not.toContain('inteligência artificial')
+  })
+
+  it('não pede novo cadastro quando usuário informa já ter conta', () => {
+    const resposta = respostaInicialLead([entrada('Já fiz o cadastro')], 'Ana')
+    expect(resposta).toContain('Você já conseguiu entrar')
+    expect(resposta).not.toContain('Criar conta')
   })
 
   it('explica brevemente como funciona a avaliação postural', () => {
