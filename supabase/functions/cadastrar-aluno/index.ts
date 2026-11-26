@@ -50,11 +50,13 @@ Deno.serve(async (req) => {
     return resposta({ erro: jaExiste ? 'Este e-mail já tem cadastro no FormaCerta.' : 'Não deu para criar a conta. Tente de novo.' }, 400)
   }
 
-  const { error: erroPerfil } = await admin
+  const { data: perfil, error: erroPerfil } = await admin
     .from('perfis')
     .update({ situacao: 'liberado', profissional_id: quem.user.id })
     .eq('id', novo.user.id)
-  if (erroPerfil) return resposta({ erro: 'A conta foi criada, mas não deu para ligar ao seu perfil. Avise o administrador.' }, 500)
+    .select('situacao, profissional_id')
+    .maybeSingle()
+  if (erroPerfil || perfil?.situacao !== 'liberado' || perfil.profissional_id !== quem.user.id) return resposta({ erro: 'A conta foi criada, mas não deu para ligar ao seu perfil. Avise o administrador.' }, 500)
 
   return resposta({ id: novo.user.id })
 })
