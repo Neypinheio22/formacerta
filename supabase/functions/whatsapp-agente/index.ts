@@ -21,7 +21,7 @@
 import Anthropic from 'npm:@anthropic-ai/sdk@1.4.0'
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { escreverLembrete, MODELO_PADRAO, responder, type Ferramentas, type Turno } from './agente.ts'
-import { deveEncaminharAudio, orientacaoContraRepeticao, respostaInicialLead } from './triagem.ts'
+import { deveEncaminharAudio, orientacaoContraRepeticao, respostaDireta, respostaInicialLead } from './triagem.ts'
 import { baixarAudioMeta } from './audio.ts'
 import { assinaturaValida, lerAviso, mandarDocumento, mandarImagem, mandarModelo, mandarTexto, marcarLidaDigitando, type EcoDoCelular, type MensagemRecebida } from './whatsapp.ts'
 
@@ -413,12 +413,10 @@ async function tratarMensagem(m: MensagemRecebida) {
     .limit(30)
   const historico = ((linhas ?? []) as Turno[]).reverse()
 
-  // Quem chega pelo anúncio e pede informações genéricas recebe resposta curta e útil.
-  // Dúvidas específicas continuam sendo tratadas pelo agente com as ferramentas existentes.
-  const saudacao = respostaInicialLead(historico, c.nome)
-  if (saudacao) {
-    const enviadoId = await mandarTexto(m.numeroId, token, m.de, saudacao)
-    if (enviadoId) await guardar(c.id, 'robo', saudacao, enviadoId)
+  const textoTriagem = respostaDireta(historico) ?? respostaInicialLead(historico, c.nome)
+  if (textoTriagem) {
+    const enviadoId = await mandarTexto(m.numeroId, token, m.de, textoTriagem)
+    if (enviadoId) await guardar(c.id, 'robo', textoTriagem, enviadoId)
     return
   }
 

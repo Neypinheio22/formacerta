@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { deveEncaminharAudio, orientacaoContraRepeticao, respostaInicialLead, type TurnoTriagem } from './triagem'
+import { deveEncaminharAudio, orientacaoContraRepeticao, respostaDireta, respostaInicialLead, type TurnoTriagem } from './triagem'
 
 const entrada = (texto: string): TurnoTriagem => ({ autor: 'entrada', texto })
 const robo = (texto: string): TurnoTriagem => ({ autor: 'robo', texto })
@@ -58,5 +58,32 @@ describe('triagem do WhatsApp', () => {
     const h = [entrada('Olá'), robo('É aluno ou personal?'), entrada('Oi ❤️'), robo('Você é aluna ou personal?'), entrada('Oi 😘')]
     expect(orientacaoContraRepeticao(h)).toContain('Não repita essa classificação')
     expect(orientacaoContraRepeticao([entrada('Olá'), robo('É aluno ou personal?')])).toBe('')
+  })
+})
+
+describe('continuidade do atendimento', () => {
+  it('continua o diagnóstico após receber o e-mail solicitado para erro de acesso', () => {
+    const historico = [
+      entrada('Não consegui entrar'),
+      robo('Me manda o e-mail que você usou no cadastro que eu confiro o acesso.'),
+      entrada('O meu mail é aluno@example.com'),
+    ]
+
+    expect(respostaDireta(historico)).toContain('O que aparece na tela')
+    expect(respostaDireta(historico)).not.toContain('aluno@example.com')
+    expect(respostaDireta(historico)).not.toContain('criar conta')
+    expect(respostaDireta(historico.slice(1))).toBeNull()
+    expect(respostaDireta([entrada('Quero pagar com Pix'), ...historico.slice(1)])).toBeNull()
+  })
+
+  it('responde à saudação e depois à intenção específica', () => {
+    const oi = entrada('Oi')
+    const saudacao = respostaDireta([oi])
+    expect(saudacao).toContain('Como posso te ajudar hoje?')
+    const conversa = [oi, robo(saudacao!)]
+    expect(respostaDireta([...conversa, entrada('Aprendendo fazer agachamento')])).toContain('Ver vídeo')
+    expect(respostaDireta([...conversa, entrada('Fazer avaliação')])).toContain('Começar avaliação')
+    expect(respostaDireta([...conversa, entrada('Você pode mandar um vídeo que eu faço perna segunda e quarta?')])).toContain('Qual exercício')
+    expect(respostaDireta([...conversa, entrada('Quero gravar meu agachamento')])).toBeNull()
   })
 })
