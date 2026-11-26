@@ -24,14 +24,18 @@ export async function excluirMinhaConta() {
 }
 
 /** O profissional cria a conta do aluno, que já entra liberado. */
-export async function cadastrarAluno(dados: { nome: string; email: string; senha: string }) {
+export async function cadastrarAluno(dados: { nome: string; email: string; senha: string; fichaId: string }) {
   const { data, error } = await supabase.functions.invoke('cadastrar-aluno', { body: dados })
   if (error) {
     // A função devolve { erro } com a explicação; o cliente só mostra "non-2xx".
     const corpo = await (error as { context?: Response }).context?.json?.().catch(() => null)
-    return corpo?.erro ?? erroAmigavel(error)
+    return { erro: corpo?.erro ?? erroAmigavel(error), retomado: false }
   }
-  return (data as { erro?: string } | null)?.erro ?? null
+  const resultado = data as { id?: string; erro?: string; retomado?: boolean } | null
+  return {
+    erro: resultado?.erro ?? (resultado?.id ? null : 'Não deu para confirmar o cadastro. Atualize a ficha e confira o vínculo.'),
+    retomado: resultado?.retomado === true,
+  }
 }
 
 export async function salvarMeuPerfil(id: string, mudancas: { nome: string; registro: string }) {

@@ -149,10 +149,10 @@ export function FichaAluno({ ficha, meuId, podeEditar, nome, textoVoltar, onVolt
       {modo === 'acesso' && dados && (
         <NovoAluno
           nomeFixo={dados.nome}
+          fichaId={dados.id}
           onCancelar={() => setModo('ver')}
           onCriado={async () => {
             setModo('ver')
-            // O banco liga a conta nova a esta ficha pelo nome.
             const { fichas } = await listarFichas()
             const nova = fichas.find((f) => f.id === dados.id)
             if (nova) setDados(nova)

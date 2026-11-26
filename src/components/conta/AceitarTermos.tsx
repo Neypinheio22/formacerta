@@ -1,7 +1,6 @@
 import { ShieldCheck } from 'lucide-react'
 import { useState } from 'react'
 import { sair, useConta } from '../../nuvem/conta'
-import { excluirMinhaConta } from '../../nuvem/gestao'
 import { aceitarTermos } from '../../nuvem/privacidade'
 import { Logo } from '../Logo'
 import { AceiteLgpd } from './AceiteLgpd'
@@ -31,13 +30,6 @@ export function AceitarTermos() {
     else await recarregar()
   }
 
-  async function apagar() {
-    if (!confirm('Apagar a sua conta e todos os seus dados do FormaCerta? Não tem como desfazer.')) return
-    const e = await excluirMinhaConta()
-    if (e) setErro(e)
-    else await sair()
-  }
-
   return (
     <div className="tela">
       <header className="marca">
@@ -61,12 +53,9 @@ export function AceitarTermos() {
         <button className="botao grande" disabled={!termos || !saude || enviando} onClick={aceitar}>
           {enviando ? 'Aguarde…' : 'Aceito e quero continuar'}
         </button>
-        <p className="dica-sec">Não quer autorizar? Pode só sair, ou apagar a sua conta e tudo o que estiver guardado nela.</p>
+        <p className="dica-sec">Você pode sair agora e decidir depois. Para solicitar a exclusão da sua conta, fale com o suporte abaixo.</p>
         <button className="botao-sec" onClick={() => sair()}>
           Agora não, sair
-        </button>
-        <button className="botao-sec perigo" onClick={apagar}>
-          Não aceito, apagar minha conta
         </button>
       </section>
       <Suporte assunto="Privacidade no FormaCerta" />

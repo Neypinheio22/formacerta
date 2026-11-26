@@ -4,8 +4,8 @@ import { cadastrarAluno } from '../../nuvem/gestao'
 import { dominioRecebeEmail, emailValidoParaCadastro } from '../../nuvem/email'
 import { CamposEmail } from './CamposEmail'
 
-/** Cria a conta do aluno no app (e-mail e senha). Com `nomeFixo`, liga à ficha que já existe com esse nome. */
-export function NovoAluno({ onCancelar, onCriado, nomeFixo }: { onCancelar: () => void; onCriado: () => void; nomeFixo?: string }) {
+/** Cria a conta do aluno e vincula à ficha aberta. */
+export function NovoAluno({ onCancelar, onCriado, nomeFixo, fichaId }: { onCancelar: () => void; onCriado: () => void; nomeFixo?: string; fichaId: string }) {
   const [nome, setNome] = useState(nomeFixo ?? '')
   const [email, setEmail] = useState('')
   const [confirma, setConfirma] = useState('')
@@ -22,11 +22,13 @@ export function NovoAluno({ onCancelar, onCriado, nomeFixo }: { onCancelar: () =
       setErro(`O endereço "${email.trim().split('@')[1]}" não recebe e-mails. Confira o que vem depois do @.`)
       return
     }
-    const erro = await cadastrarAluno({ nome, email, senha })
+    const { erro, retomado } = await cadastrarAluno({ nome, email, senha, fichaId })
     setEnviando(false)
     if (erro) setErro(erro)
     else {
-      alert(`Conta criada. Passe para ${nome.trim().split(' ')[0]} o e-mail e a senha; dá para trocar a senha depois em "Esqueci a senha".`)
+      alert(retomado
+        ? 'Cadastro concluído. O aluno entra com a senha da primeira tentativa ou pode usar "Esqueci a senha".'
+        : `Conta criada. Passe para ${nome.trim().split(' ')[0]} o e-mail e a senha; dá para trocar a senha depois em "Esqueci a senha".`)
       onCriado()
     }
   }
