@@ -7,6 +7,42 @@ function normalizar(texto: string): string {
   return texto.toLocaleLowerCase('pt-BR').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim()
 }
 
+/** Responde aos pedidos mais comuns sem reiniciar o atendimento. */
+export function respostaDireta(historico: TurnoTriagem[]): string | null {
+  const ultimo = historico.at(-1)
+  if (ultimo?.autor !== 'entrada') return null
+
+  const texto = normalizar(ultimo.texto)
+  const anterior = historico.at(-2)
+  const perguntouEmail = anterior?.autor === 'robo' &&
+    /\b(manda|mande|envie|informe|qual)\b.*e[- ]?mail/s.test(normalizar(anterior.texto))
+  const relatouErroDeAcesso = historico.slice(0, -1).reverse().find(turno => turno.autor === 'entrada')
+  if (perguntouEmail && relatouErroDeAcesso &&
+    /\b(nao (consigo|consegui|consegue) (entrar|acessar|fazer login)|erro (ao|para) (entrar|acessar)|problema (no login|de acesso))\b/.test(normalizar(relatouErroDeAcesso.texto)) &&
+    /^(?:(?:o )?(?:meu )?(?:e[- ]?)?mail (?:e )?[: ]*)?[^\s@]+@[^\s@]+\.[^\s@.]+[.!]?$/.test(texto)) {
+    return 'Recebi seu e-mail. O que aparece na tela quando você tenta entrar? Pode me mandar só o texto do aviso, sem senha ou código.'
+  }
+
+  if (historico.length === 1 && /^(oi+|ola|bom dia|boa tarde|boa noite)[!.\s]*$/.test(texto)) {
+    return 'Oi! Aqui é o assistente do FormaCerta. Como posso te ajudar hoje?'
+  }
+
+  if (/^(?:(?:quero|gostaria de) )?fazer (?:a |minha )?avaliacao(?: postural| de postura)?(?: gratis| gratuita)?[!.?]*$/.test(texto)) {
+    return 'A primeira avaliação postural é grátis. Entre no FormaCerta e toque em *Começar avaliação*. Você já consegue entrar na sua conta?'
+  }
+
+  if (/^(?:aprendendo (?:a )?fazer|quero aprender (?:a )?fazer|como (?:fazer|faco)) (?:o )?agachamento[!.?]*$/.test(texto)) {
+    return 'Para assistir à demonstração, abra o agachamento no seu treino e toque em *Ver vídeo*. Quer ajuda para encontrar o exercício no app?'
+  }
+
+  if (/^(?:voce )?pode (?:me )?(?:mandar|enviar) (?:um )?video\b/.test(texto) &&
+    !/\b(gravacao|avaliacao|postura|agachamento|flexao)\b/.test(texto)) {
+    return 'Qual exercício você quer ver em vídeo? Posso te mostrar onde encontrar a demonstração no FormaCerta.'
+  }
+
+  return null
+}
+
 /** Resposta curta apenas para o primeiro pedido genérico de informações. */
 export function respostaInicialLead(historico: TurnoTriagem[], nome: string): string | null {
   if (historico.length !== 1 || historico[0]?.autor !== 'entrada') return null
