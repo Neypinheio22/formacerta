@@ -38,3 +38,16 @@ describe('webhook WhatsApp: áudio do contato', () => {
     expect(lerAviso(aviso).recebidas[0].texto).toBe('Oi')
   })
 })
+
+describe('origem da conversa no WhatsApp', () => {
+  it('preserva o ID de anúncio da Meta apenas quando veio de um anúncio', () => {
+    const mensagem = { id: 'w1', from: '55', type: 'text', text: { body: 'Olá' } }
+    const ler = (referral?: { source_type: string; source_id: string }) =>
+      lerAviso({ entry: [{ changes: [{ field: 'messages', value: { messages: [{ ...mensagem, referral }] } }] }] }).recebidas[0]
+
+    expect(ler({ source_type: 'ad', source_id: '12345678901234567' }).anuncioId).toBe('12345678901234567')
+    expect(ler({ source_type: 'post', source_id: '12345678901234567' }).anuncioId).toBeUndefined()
+    expect(ler({ source_type: 'ad', source_id: 'inválido' }).anuncioId).toBeUndefined()
+    expect(ler().anuncioId).toBeUndefined()
+  })
+})

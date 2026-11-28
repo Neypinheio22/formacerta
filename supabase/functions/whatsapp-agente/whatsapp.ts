@@ -14,6 +14,7 @@ export type MensagemRecebida = {
   tipo: string
   /** Identificador da mídia enviado pela Meta no webhook de áudio. */
   midiaId?: string
+  anuncioId?: string
   /** Número do FormaCerta que recebeu (id da Meta). */
   numeroId: string
 }
@@ -42,7 +43,7 @@ export async function assinaturaValida(corpo: string, cabecalho: string | null, 
 type Valor = {
   metadata?: { phone_number_id?: string }
   contacts?: { wa_id?: string; profile?: { name?: string } }[]
-  messages?: { id?: string; from?: string; type?: string; audio?: { id?: string; mime_type?: string }; text?: { body?: string }; button?: { text?: string }; interactive?: { button_reply?: { title?: string }; list_reply?: { title?: string } } }[]
+  messages?: { id?: string; from?: string; type?: string; referral?: { source_type?: string; source_id?: string }; audio?: { id?: string; mime_type?: string }; text?: { body?: string }; button?: { text?: string }; interactive?: { button_reply?: { title?: string }; list_reply?: { title?: string } } }[]
   message_echoes?: { id?: string; to?: string; type?: string; text?: { body?: string } }[]
 }
 
@@ -60,7 +61,9 @@ export function lerAviso(aviso: unknown): { recebidas: MensagemRecebida[]; ecos:
           if (!m.id || !m.from) continue
           const contato = v.contacts?.find((c) => c.wa_id === m.from) ?? v.contacts?.[0]
           const texto = m.text?.body ?? m.button?.text ?? m.interactive?.button_reply?.title ?? m.interactive?.list_reply?.title ?? ''
-          recebidas.push({ id: m.id, de: m.from, nome: contato?.profile?.name ?? '', texto, tipo: m.type ?? '', midiaId: m.audio?.id, numeroId })
+          const idAnuncio = m.referral?.source_id
+          const anuncioId = m.referral?.source_type === 'ad' && typeof idAnuncio === 'string' && /^\d{1,32}$/.test(idAnuncio) ? idAnuncio : undefined
+          recebidas.push({ anuncioId, id: m.id, de: m.from, nome: contato?.profile?.name ?? '', texto, tipo: m.type ?? '', midiaId: m.audio?.id, numeroId })
         }
       } else if (mudanca.field === 'smb_message_echoes') {
         for (const e of v.message_echoes ?? []) {
