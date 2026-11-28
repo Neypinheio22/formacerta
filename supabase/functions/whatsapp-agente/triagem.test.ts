@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { deveEncaminharAudio, orientacaoContraRepeticao, respostaDireta, respostaInicialLead, type TurnoTriagem } from './triagem'
+import { deveEncaminharAudio, orientacaoContraRepeticao, recebeuEmailParaAcesso, respostaDireta, respostaInicialLead, type TurnoTriagem } from './triagem'
 
 const entrada = (texto: string): TurnoTriagem => ({ autor: 'entrada', texto })
 const robo = (texto: string): TurnoTriagem => ({ autor: 'robo', texto })
@@ -17,10 +17,11 @@ describe('triagem do WhatsApp', () => {
   it('orienta diretamente quem pergunta como fazer avaliação grátis', () => {
     const resposta = respostaInicialLead([entrada('Como faço minha avaliação grátis?')], 'Ana')
     expect(resposta).toContain('Olá, Ana!')
-    expect(resposta).toContain('Criar conta')
-    expect(resposta).toContain('https://formacerta.app.br')
-    expect(resposta).toContain('Você já tem conta ou precisa de ajuda para começar?')
-    expect(resposta!.length).toBeLessThan(400)
+    expect(resposta).toContain('Você já tem conta no FormaCerta')
+    expect(resposta!.length).toBeLessThan(150)
+    const conversa = [entrada('Como faço minha avaliação grátis?'), robo(resposta!)]
+    expect(respostaDireta([...conversa, entrada('Já tenho conta')])).toContain('Começar avaliação')
+    expect(respostaDireta([...conversa, entrada('Não tenho conta')])).toContain('Criar conta')
     expect(resposta).not.toContain('inteligência artificial')
   })
 
@@ -69,11 +70,16 @@ describe('continuidade do atendimento', () => {
       entrada('O meu mail é aluno@example.com'),
     ]
 
-    expect(respostaDireta(historico)).toContain('O que aparece na tela')
-    expect(respostaDireta(historico)).not.toContain('aluno@example.com')
-    expect(respostaDireta(historico)).not.toContain('criar conta')
-    expect(respostaDireta(historico.slice(1))).toBeNull()
-    expect(respostaDireta([entrada('Quero pagar com Pix'), ...historico.slice(1)])).toBeNull()
+    expect(recebeuEmailParaAcesso(historico)).toBe(true)
+    expect(recebeuEmailParaAcesso(historico.slice(1))).toBe(false)
+    expect(recebeuEmailParaAcesso([entrada('Quero pagar com Pix'), ...historico.slice(1)])).toBe(false)
+  })
+
+  it('explica o canal de pagamento sem iniciar uma assinatura', () => {
+    const resposta = respostaDireta([entrada('Posso pagar por aqui?')])
+    expect(resposta).toContain('Pix nesta conversa')
+    expect(resposta).toContain('cartão')
+    expect(respostaDireta([entrada('Paguei por aqui, mas não liberou')])).toBeNull()
   })
 
   it('responde à saudação e depois à intenção específica', () => {
@@ -84,6 +90,7 @@ describe('continuidade do atendimento', () => {
     expect(respostaDireta([...conversa, entrada('Aprendendo fazer agachamento')])).toContain('Ver vídeo')
     expect(respostaDireta([...conversa, entrada('Fazer avaliação')])).toContain('Começar avaliação')
     expect(respostaDireta([...conversa, entrada('Você pode mandar um vídeo que eu faço perna segunda e quarta?')])).toContain('Qual exercício')
+    expect(respostaDireta([...conversa, entrada('Pode mandar um vídeo de agachamento?')])).toContain('Ver vídeo')
     expect(respostaDireta([...conversa, entrada('Quero gravar meu agachamento')])).toBeNull()
   })
 })

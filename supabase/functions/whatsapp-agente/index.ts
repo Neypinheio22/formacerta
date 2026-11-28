@@ -21,7 +21,7 @@
 import Anthropic from 'npm:@anthropic-ai/sdk@1.4.0'
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { escreverLembrete, MODELO_PADRAO, responder, type Ferramentas, type Turno } from './agente.ts'
-import { deveEncaminharAudio, orientacaoContraRepeticao, respostaDireta, respostaInicialLead } from './triagem.ts'
+import { deveEncaminharAudio, orientacaoContraRepeticao, recebeuEmailParaAcesso, respostaDireta, respostaInicialLead } from './triagem.ts'
 import { baixarAudioMeta } from './audio.ts'
 import { assinaturaValida, lerAviso, mandarDocumento, mandarImagem, mandarModelo, mandarTexto, marcarLidaDigitando, type EcoDoCelular, type MensagemRecebida } from './whatsapp.ts'
 
@@ -229,10 +229,18 @@ async function salvarAudioDaMensagem(m: MensagemRecebida, idMensagem: number, co
 }
 
 async function passarParaHumano(c: Conversa, motivo: string, resumo: string) {
-  await banco
+  const { error } = await banco
     .from('whatsapp_conversas')
     .update({ atendimento: 'humano', humano_ate: daquiHoras(HORAS_PASSOU), motivo_humano: motivo.slice(0, 500) })
     .eq('id', c.id)
+  if (error) throw new Error(error.message)
+
+  const { error: etapaErro } = await banco.from('whatsapp_conversas')
+    .update({ etapa: 'follow_up', etapa_em: new Date().toISOString() })
+    .eq('id', c.id)
+    .in('etapa', ['novo', 'conversando', 'aguardando'])
+  if (etapaErro) console.error('Etapa do atendimento humano', etapaErro.message)
+
   await avisarNey(c.telefone, c.nome, motivo, resumo)
 }
 
@@ -362,6 +370,10 @@ async function tratarMensagem(m: MensagemRecebida) {
   const c = await abrirConversa(m.de, m.nome, m.numeroId, true)
   const texto = m.texto || `[Mandou ${ROTULO_TIPO[m.tipo] ?? 'uma mensagem'} que o robô não consegue ver]`
   const minhaId = await guardar(c.id, 'entrada', texto, m.id)
+  if (m.anuncioId) {
+    const { error } = await banco.rpc('whatsapp_registrar_anuncio', { p_conversa: c.id, p_anuncio: m.anuncioId })
+    if (error) console.error('Origem do anúncio', error.message)
+  }
   if (minhaId === null) return
   // Recebe e guarda o áudio antes de encerrar o fluxo ou transferir o atendimento.
   await salvarAudioDaMensagem(m, minhaId, c.id, token)
@@ -370,7 +382,7 @@ async function tratarMensagem(m: MensagemRecebida) {
     .from('whatsapp_conversas')
     .update({ etapa: 'conversando', etapa_em: new Date().toISOString() })
     .eq('id', c.id)
-    .in('etapa', ['follow_up', 'aguardando', 'perdido'])
+    .in('etapa', c.atendimento === 'humano' ? ['aguardando', 'perdido'] : ['follow_up', 'aguardando', 'perdido'])
     .then(({ error }) => error && console.error('Etapa', error.message))
 
   if (c.atendimento === 'humano') {
@@ -391,7 +403,7 @@ async function tratarMensagem(m: MensagemRecebida) {
   // Não fingir que ouvimos áudios. Preserva a mensagem no histórico e pede atendimento humano.
   if (deveEncaminharAudio(m.tipo, m.texto)) {
     await passarParaHumano(c, 'áudio sem transcrição', 'A pessoa enviou um áudio. O atendimento automático não consegue ouvi-lo; verificar a mensagem original no WhatsApp.')
-    const aviso = 'Recebi seu áudio! 😊 Aqui ainda não consigo ouvi-lo. Vou encaminhar para a equipe do FormaCerta. Se preferir, também pode escrever sua dúvida por aqui.'
+    const aviso = 'Recebi seu áudio! 😊 Aqui ainda não consigo ouvi-lo. Encaminhei para a equipe do FormaCerta. Se preferir, também pode escrever sua dúvida por aqui.'
     const enviadoId = await mandarTexto(m.numeroId, token, m.de, aviso)
     if (enviadoId) await guardar(c.id, 'robo', aviso, enviadoId)
     return
@@ -412,6 +424,14 @@ async function tratarMensagem(m: MensagemRecebida) {
     .order('id', { ascending: false })
     .limit(30)
   const historico = ((linhas ?? []) as Turno[]).reverse()
+
+  if (recebeuEmailParaAcesso(historico)) {
+    await passarParaHumano(c, 'acesso à conta', 'A pessoa relatou dificuldade de acesso e informou o e-mail no histórico. Verifique o cadastro e continue pelo painel.')
+    const aviso = 'Recebi seu e-mail e encaminhei o problema de acesso para a equipe. Se apareceu algum aviso na tela, pode mandar o texto aqui para ajudar na verificação.'
+    const enviadoId = await mandarTexto(m.numeroId, token, m.de, aviso)
+    if (enviadoId) await guardar(c.id, 'robo', aviso, enviadoId)
+    return
+  }
 
   const textoTriagem = respostaDireta(historico) ?? respostaInicialLead(historico, c.nome)
   if (textoTriagem) {

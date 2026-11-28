@@ -7,6 +7,19 @@ function normalizar(texto: string): string {
   return texto.toLocaleLowerCase('pt-BR').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim()
 }
 
+const ABERTURA_AVALIACAO = 'Sua primeira avaliação de postura é grátis 😊 Você já tem conta no FormaCerta ou quer ajuda para começar?'
+
+export function recebeuEmailParaAcesso(historico: TurnoTriagem[]): boolean {
+  const ultimo = historico.at(-1)
+  if (ultimo?.autor !== 'entrada' || !/[^\s@]+@[^\s@]+\.[^\s@.]+/.test(ultimo.texto)) return false
+
+  const anterior = historico.at(-2)
+  const pediuEmail = anterior?.autor === 'robo' &&
+    /\b(manda|mande|envie|informe|qual|passe|passa|diga|diz)\b.*e[- ]?mail/s.test(normalizar(anterior.texto))
+  const motivo = historico.slice(0, -1).reverse().find(turno => turno.autor === 'entrada')
+  return Boolean(pediuEmail && motivo && /\b(nao (consigo|consegui|consegue) (entrar|acessar|fazer login)|erro (ao|para) (entrar|acessar)|problema (no login|de acesso)|nao (chegou|recebi).{0,35}e[- ]?mail|aguardando (a )?liberacao)\b/.test(normalizar(motivo.texto)))
+}
+
 /** Responde aos pedidos mais comuns sem reiniciar o atendimento. */
 export function respostaDireta(historico: TurnoTriagem[]): string | null {
   const ultimo = historico.at(-1)
@@ -14,13 +27,17 @@ export function respostaDireta(historico: TurnoTriagem[]): string | null {
 
   const texto = normalizar(ultimo.texto)
   const anterior = historico.at(-2)
-  const perguntouEmail = anterior?.autor === 'robo' &&
-    /\b(manda|mande|envie|informe|qual)\b.*e[- ]?mail/s.test(normalizar(anterior.texto))
-  const relatouErroDeAcesso = historico.slice(0, -1).reverse().find(turno => turno.autor === 'entrada')
-  if (perguntouEmail && relatouErroDeAcesso &&
-    /\b(nao (consigo|consegui|consegue) (entrar|acessar|fazer login)|erro (ao|para) (entrar|acessar)|problema (no login|de acesso))\b/.test(normalizar(relatouErroDeAcesso.texto)) &&
-    /^(?:(?:o )?(?:meu )?(?:e[- ]?)?mail (?:e )?[: ]*)?[^\s@]+@[^\s@]+\.[^\s@.]+[.!]?$/.test(texto)) {
-    return 'Recebi seu e-mail. O que aparece na tela quando você tenta entrar? Pode me mandar só o texto do aviso, sem senha ou código.'
+  if (anterior?.autor === 'robo' && anterior.texto.endsWith(ABERTURA_AVALIACAO)) {
+    if (/^(sim|ja tenho( conta)?|tenho( conta)?|ja fiz (o )?cadastro)[!.\s]*$/.test(texto)) {
+      return 'Entre em https://formacerta.app.br e toque em *Começar avaliação*. O app vai te guiar nas quatro fotos.'
+    }
+    if (/^(nao|nao tenho( conta)?|quero ajuda( para comecar)?|como comeco)[!.?\s]*$/.test(texto)) {
+      return 'Abra https://formacerta.app.br, toque em *Criar conta* e escolha *Aluno* se a avaliação for para você. Confirme o e-mail para continuar.'
+    }
+  }
+
+  if (/^(?:posso|da para|tem como) pagar (?:com pix )?(?:por aqui|aqui|pelo whatsapp)[?.!]*$/.test(texto)) {
+    return 'Dá para pagar por Pix nesta conversa depois de confirmar sua conta e o plano. Para pagar com cartão, abra *Conta → Meu plano e pagamentos* no app.'
   }
 
   if (historico.length === 1 && /^(oi+|ola|bom dia|boa tarde|boa noite)[!.\s]*$/.test(texto)) {
@@ -36,8 +53,10 @@ export function respostaDireta(historico: TurnoTriagem[]): string | null {
   }
 
   if (/^(?:voce )?pode (?:me )?(?:mandar|enviar) (?:um )?video\b/.test(texto) &&
-    !/\b(gravacao|avaliacao|postura|agachamento|flexao)\b/.test(texto)) {
-    return 'Qual exercício você quer ver em vídeo? Posso te mostrar onde encontrar a demonstração no FormaCerta.'
+    !/\b(gravacao|avaliacao|postura|meu video)\b/.test(texto)) {
+    return /\bagachamento\b/.test(texto)
+      ? 'Para assistir à demonstração, abra o agachamento no seu treino e toque em *Ver vídeo*. Quer ajuda para encontrar o exercício no app?'
+      : 'Qual exercício você quer ver em vídeo? Posso te mostrar onde encontrar a demonstração no FormaCerta.'
   }
 
   return null
@@ -64,16 +83,10 @@ export function respostaInicialLead(historico: TurnoTriagem[], nome: string): st
         'Sua primeira avaliação é grátis. Para começar, entre em https://formacerta.app.br e escolha *Criar conta*. Quer que eu te ajude nessa etapa?',
       ].join('\n')
     }
-    return [
-      saudacao + ' Sua primeira avaliação postural é grátis!',
-      '',
-      'Acesse https://formacerta.app.br, toque em *Criar conta* (ou *Entrar*, se já tiver conta) e confirme seu e-mail. Com o acesso liberado, abra *Avaliação de postura* e siga as instruções das fotos.',
-      '',
-      'Você já tem conta ou precisa de ajuda para começar?',
-    ].join('\n')
+    return saudacao + ' ' + ABERTURA_AVALIACAO
   }
 
-  const perguntaGenerica = /\b(posso ter (mais )?informac(?:ao|oes)|quero (mais )?informac(?:ao|oes)|gostaria de (mais )?informac(?:ao|oes)|como funciona|quero saber mais|tenho interesse)\b/.test(texto)
+  const perguntaGenerica = /\b(posso (ter|saber) (mais )?informac(?:ao|oes)|quero (mais )?informac(?:ao|oes)|gostaria de (mais )?informac(?:ao|oes)|como funciona|quero saber mais|tenho interesse)\b/.test(texto)
   const assuntoEspecifico = /\b(preco|valor|plano|pagamento|pix|cadastro|senha|conta|email|erro|problema|cancelamento|reembolso|dor|lesao|consulta)\b/.test(texto)
   if (!perguntaGenerica || assuntoEspecifico) return null
 
